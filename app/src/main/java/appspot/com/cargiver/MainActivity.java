@@ -1,15 +1,19 @@
 package appspot.com.cargiver;
 
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.res.ColorStateList;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.content.ContextCompat;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -20,20 +24,35 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
 import android.widget.Toast;
 
-import java.util.Set;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final String TAG = MainActivity.class.getName(); // TAG for logging
 
-    // Bluetooth
+    // Intent request codes
+    private static final int REQUEST_CONNECT_DEVICE_SECURE = 1;
     private final static int REQUEST_ENABLE_BT = 1; // for bluetooth request response code
+
+
     private static boolean bluetooth_enabled = false;
     private static boolean has_bluetooth = true;
     private static BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+    /**
+     * Newly discovered devices
+     */
+    private ArrayList<BluetoothDevice> mNewDevicesArrayList;
+
+
+    // progress bar for search
+    private ProgressDialog mProgressDlg;
+
+    private FragmentManager fragmentManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +60,42 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        // Register for Bluetooth scanning changes
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+        registerReceiver(mReceiver, filter);
+
+        // progress bar for bluetooth scan
+        mProgressDlg = new ProgressDialog(this);
+        mProgressDlg.setMessage("Scanning...");
+        mProgressDlg.setCancelable(false);
+        mProgressDlg.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                // Cancel Discovery
+                mBluetoothAdapter.cancelDiscovery();
+            }
+        });
+        // Set  fragment manager
+        fragmentManager = getFragmentManager(); // For AppCompat use getSupportFragmentManager
+
+        // if we are just starting
+        if (savedInstanceState == null) {
+            // Create Main Fragment
+            MainFragment main = new MainFragment();
+            // In case this activity was started with special instructions from an
+            // Intent, pass the Intent's extras to the fragment as arguments
+            main.setArguments(getIntent().getExtras());
+            // load default activity
+            fragmentManager.beginTransaction().replace(R.id.fragment_container,main).commit();
+        }
+
+
+        mNewDevicesArrayList = new ArrayList<BluetoothDevice>();
 
         final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         // If the adapter is null, then Bluetooth is not supported so update bluetooth icon
@@ -61,11 +116,17 @@ public class MainActivity extends AppCompatActivity
                             .setAction("Action", null).show();
                 }
                 else  {
-                    // bluetooth exist check if enabled
+                    // Bluetooth exist check if enabled
                     if (!mBluetoothAdapter.isEnabled()) {
                         // ask user to enable bluetooth
                         Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                         startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+                    }
+                    // Bluetooth is now enabled, so set up scan
+                    else {
+
+                        mBluetoothAdapter.startDiscovery();
+                        mProgressDlg.show();
                     }
                 }
             }
@@ -81,6 +142,50 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
     }
 
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+
+            // Handle Bluetooth actions
+            if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
+                final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
+
+                if (state == BluetoothAdapter.STATE_OFF) {
+                    // TODO: switch icon to red
+                    Log.w(TAG, "Bluetooth Disabled");
+                    CharSequence text = "Failed Enabling Bluetooth";
+                    int duration = Toast.LENGTH_SHORT;
+
+                    Toast toast = Toast.makeText(context, text, duration);
+                    toast.show();
+                }
+            } else if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
+                mProgressDlg.show();
+            } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
+                Log.d(TAG, "Discovery Finished");
+                mProgressDlg.dismiss();
+                // Open device_list_fragment
+                Fragment scanFragmenet = new DeviceListFragment();
+                // add the scanned devices
+                Bundle bundle=new Bundle();
+                bundle.putParcelableArrayList("device.list", mNewDevicesArrayList);
+                scanFragmenet.setArguments(bundle);
+                if (scanFragmenet != null) {
+                    fragmentManager.beginTransaction().replace(R.id.fragment_container, scanFragmenet).commit();
+                }
+            }
+            // when discovery finds a device
+            else if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                // Get the BluetoothDevice object from the Intent
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                // If it's already paired, skip it, because it's been listed already
+                if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
+                    mNewDevicesArrayList.add(device);
+                }
+            }
+        }
+    };
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // Check response to bluetooth enable
@@ -88,9 +193,12 @@ public class MainActivity extends AppCompatActivity
             // Make sure the request was successful
             if (resultCode == RESULT_OK) {
                 bluetooth_enabled = true;
-
+                Log.w(TAG, "Bluetooth Enabled");
+                // Bluetooth is now enabled, so set up scan
+                mBluetoothAdapter.startDiscovery();
             }
             else {
+                Log.w(TAG, "Bluetooth Enabled");
                 Context context = getApplicationContext();
                 CharSequence text = "Failed Enabling Bluetooth";
                 int duration = Toast.LENGTH_SHORT;
@@ -99,6 +207,13 @@ public class MainActivity extends AppCompatActivity
                 toast.show();
             }
         }
+    }
+
+    /**
+     * Set up the UI and background operations OBD bluetooth connection
+     */
+    private void setupConnection() {
+        Log.d(TAG, "setupConnection()");
     }
 
     @Override
@@ -156,5 +271,13 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        // Unregister broadcast listeners
+        this.unregisterReceiver(mReceiver);
     }
 }
