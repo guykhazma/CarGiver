@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/device_list_fragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/title_new_devices"
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:layout_centerVertical="true"
+        android:layout_toEndOf="@+id/guideline"
+        android:background="#666"
+        android:paddingLeft="5dp"
+        android:text="@string/title_other_devices"
+        android:textColor="#fff"
+        android:visibility="visible"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="245dp" />
+
+    <ListView
+        android:id="@+id/new_devices"
+        android:layout_width="match_parent"
+        android:layout_height="243dp"
+        android:layout_alignParentBottom="true"
+        android:layout_toEndOf="@+id/guideline"
+        android:layout_weight="2"
+        android:stackFromBottom="true"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="270dp" />
+
+    <Button
+        android:id="@+id/button_scan"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/title_paired_devices"
+        android:layout_alignParentTop="true"
+        android:text="@string/button_scan"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:layout_editor_absoluteY="0dp" />
+
+    <TextView
+        android:id="@+id/title_paired_devices"
+        android:layout_width="382dp"
+        android:layout_height="20dp"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/button_scan"
+        android:background="#666"
+        android:paddingLeft="5dp"
+        android:text="@string/title_paired_devices"
+        android:textColor="#fff"
+        android:visibility="visible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteY="47dp" />
+
+    <ListView
+        android:id="@+id/paired_devices"
+        android:layout_width="match_parent"
+        android:layout_height="175dp"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/title_paired_devices"
+        android:layout_weight="1"
+        android:stackFromBottom="true"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="67dp" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_begin="20dp" />
+
+</RelativeLayout>

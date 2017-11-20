@@ -11,9 +11,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -24,8 +24,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ArrayAdapter;
 import android.widget.Toast;
+
+import com.firebase.ui.auth.AuthUI;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
 
@@ -34,24 +39,21 @@ public class MainActivity extends AppCompatActivity
 
     private static final String TAG = MainActivity.class.getName(); // TAG for logging
 
-    // Intent request codes
-    private static final int REQUEST_CONNECT_DEVICE_SECURE = 1;
+    /*--------------------------Bluetooth-----------------------------------------------*/
     private final static int REQUEST_ENABLE_BT = 1; // for bluetooth request response code
-
-
     private static boolean bluetooth_enabled = false;
     private static boolean has_bluetooth = true;
     private static BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+    private ArrayList<BluetoothDevice> mNewDevicesArrayList; // Newly discovered devices
+    private ProgressDialog mProgressDlg; // progress bar for search
 
-    /**
-     * Newly discovered devices
-     */
-    private ArrayList<BluetoothDevice> mNewDevicesArrayList;
+    /*----------------------------------Login----------------------------------------*/
+    private FirebaseAuth.AuthStateListener authListener;
+    private String username;
+    private String photoUrl;
+    private String emailAddress;
 
-
-    // progress bar for search
-    private ProgressDialog mProgressDlg;
-
+    /*---------------------------------Fragment Related---------------------------------*/
     private FragmentManager fragmentManager;
 
     @Override
@@ -61,7 +63,28 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        // Register for Bluetooth scanning changes
+        /*---------------------Login Listener-------------------------------------*/
+        authListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                FirebaseUser user = firebaseAuth.getCurrentUser();
+                if (user != null) {
+                    // if user is logged
+                    // TODO: update nav_header_main
+                    username = user.getDisplayName();
+                    photoUrl = user.getPhotoUrl().toString();
+                    emailAddress = user.getEmail();
+                } else {
+                    // user is not logged redirecting to login activity
+                    startActivity(new Intent(getBaseContext(), LoginActivity.class));
+                    finish();
+                }
+            }
+        };
+        FirebaseAuth.getInstance().addAuthStateListener(authListener);
+
+        /*------------------------- Bluetooth Init-------------------------------*/
+        // Listen to bluetooth events
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
@@ -80,6 +103,21 @@ public class MainActivity extends AppCompatActivity
                 mBluetoothAdapter.cancelDiscovery();
             }
         });
+
+        mNewDevicesArrayList = new ArrayList<BluetoothDevice>(); // will save newly found devices
+
+        // Bluetooth action button
+        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        // If the adapter is null, then Bluetooth is not supported so update bluetooth icon
+        if (mBluetoothAdapter == null) {
+            Log.w(TAG, "Device has no bluetooth");
+            has_bluetooth = false;
+            // TODO: check if theme should be  context.getTheme() as in https://stackoverflow.com/questions/33140706/android-dynamically-change-fabfloating-action-button-icon-from-code
+            fab.setImageDrawable(getResources().getDrawable(R.drawable.stat_sys_data_bluetooth_disabled, null));
+            //TODO: set background to grey to indicate unclickable
+        }
+
+        /*-------------------- Main Fragment initialization --------------------------------------------*/
         // Set  fragment manager
         fragmentManager = getFragmentManager(); // For AppCompat use getSupportFragmentManager
 
@@ -94,44 +132,8 @@ public class MainActivity extends AppCompatActivity
             fragmentManager.beginTransaction().replace(R.id.fragment_container,main).commit();
         }
 
-
-        mNewDevicesArrayList = new ArrayList<BluetoothDevice>();
-
-        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        // If the adapter is null, then Bluetooth is not supported so update bluetooth icon
-        if (mBluetoothAdapter == null) {
-            Log.w(TAG, "Device has no bluetooth");
-            has_bluetooth = false;
-            // TODO: check if theme should be  context.getTheme() as in https://stackoverflow.com/questions/33140706/android-dynamically-change-fabfloating-action-button-icon-from-code
-            fab.setImageDrawable(getResources().getDrawable(R.drawable.stat_sys_data_bluetooth_disabled, null));
-            //fab.setBackgroundColor();
-        }
-
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // check for bluetooth support
-                if (!has_bluetooth) {
-                    Snackbar.make(view, "Oops...It seems your phone doesn't have Bluetooth", Snackbar.LENGTH_LONG)
-                            .setAction("Action", null).show();
-                }
-                else  {
-                    // Bluetooth exist check if enabled
-                    if (!mBluetoothAdapter.isEnabled()) {
-                        // ask user to enable bluetooth
-                        Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                        startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-                    }
-                    // Bluetooth is now enabled, so set up scan
-                    else {
-
-                        mBluetoothAdapter.startDiscovery();
-                        mProgressDlg.show();
-                    }
-                }
-            }
-        });
-
+        // Drawer init and Navigation
+        // TODO: arrange it when getting to this code
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -142,6 +144,9 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
     }
 
+    /**
+     * Broadcast receiver reacts to bluetooth events
+     */
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -186,6 +191,12 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
+    /**
+     * Reaction to activities according to activities codes
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // Check response to bluetooth enable
@@ -209,13 +220,8 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    /**
-     * Set up the UI and background operations OBD bluetooth connection
-     */
-    private void setupConnection() {
-        Log.d(TAG, "setupConnection()");
-    }
 
+    // Menu on back pressed - auto generated
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -264,8 +270,16 @@ public class MainActivity extends AppCompatActivity
 
         } else if (id == R.id.nav_share) {
 
-        } else if (id == R.id.nav_send) {
-
+        } else if (id == R.id.nav_sign_out) {
+            AuthUI.getInstance()
+                    .signOut(this)
+                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                        public void onComplete(@NonNull Task<Void> task) {
+                            // user is now signed out
+                            startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                            finish();
+                        }
+                    });
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -279,5 +293,28 @@ public class MainActivity extends AppCompatActivity
 
         // Unregister broadcast listeners
         this.unregisterReceiver(mReceiver);
+    }
+
+    // Bluetooth FAB on click
+    public void bluetoothFBOnClick(View view){
+        // check for bluetooth support
+        if (!has_bluetooth) {
+            Snackbar.make(view, "Oops...It seems your phone doesn't have Bluetooth", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+        }
+        else  {
+            // Bluetooth exist check if enabled
+            if (!mBluetoothAdapter.isEnabled()) {
+                // ask user to enable bluetooth
+                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+            }
+            // Bluetooth is now enabled, so set up scan
+            else {
+
+                mBluetoothAdapter.startDiscovery();
+                mProgressDlg.show();
+            }
+        }
     }
 }
