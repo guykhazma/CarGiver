@@ -23,16 +23,16 @@
         android:text="CarGiver"
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:textColor="	#d7ecfd"
-        android:textSize="70sp" />
+        android:textSize="70dp" />
 
     <Button
         android:id="@+id/btn_login"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/textView"
+        android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="155dp"
-        android:text="Login"
-        android:onClick="onClickLogin"/>
+        android:layout_marginBottom="80dp"
+        android:onClick="onClickLogin"
+        android:text="Login" />
 
 </RelativeLayout>
