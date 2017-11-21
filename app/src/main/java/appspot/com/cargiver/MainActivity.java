@@ -31,6 +31,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 
@@ -56,6 +58,9 @@ public class MainActivity extends AppCompatActivity
     /*---------------------------------Fragment Related---------------------------------*/
     private FragmentManager fragmentManager;
 
+    /*------------------ Firebase DB-----------------------*/
+    private DatabaseReference mDatabase;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,17 +68,23 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        /*------------------init DB----------------------*/
+        mDatabase = FirebaseDatabase.getInstance().getReference();
         /*---------------------Login Listener-------------------------------------*/
         authListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
-                    // if user is logged
                     // TODO: update nav_header_main
                     username = user.getDisplayName();
                     photoUrl = user.getPhotoUrl().toString();
                     emailAddress = user.getEmail();
+                    User newUser = new User(username, emailAddress);
+                    // add user to db TODO: add it only if it is a new registration
+                    mDatabase.child("users").child(user.getUid()).setValue(newUser);
+
+
                 } else {
                     // user is not logged redirecting to login activity
                     startActivity(new Intent(getBaseContext(), LoginActivity.class));

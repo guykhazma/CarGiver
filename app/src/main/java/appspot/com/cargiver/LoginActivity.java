@@ -23,6 +23,7 @@ public class LoginActivity extends AppCompatActivity {
     // login variables
     private FirebaseAuth.AuthStateListener authListener;
     private static final int RC_SIGN_IN = 123;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +51,8 @@ public class LoginActivity extends AppCompatActivity {
             IdpResponse response = IdpResponse.fromResultIntent(data);
 
             if (resultCode == RESULT_OK) {
+                mAuth = FirebaseAuth.getInstance();
+
                 // Successfully signed in move to main activity
                 startActivity(new Intent(getBaseContext(), MainActivity.class));
             } else {
