@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity
         /*------------------init DB----------------------*/
         mDatabase = FirebaseDatabase.getInstance().getReference();
         /*---------------------Login Listener-------------------------------------*/
-        authListener = new FirebaseAuth.AuthStateListener() {
+        /*authListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         };
-        FirebaseAuth.getInstance().addAuthStateListener(authListener);
+        FirebaseAuth.getInstance().addAuthStateListener(authListener);*/
 
         /*------------------------- Bluetooth Init-------------------------------*/
         // Listen to bluetooth events

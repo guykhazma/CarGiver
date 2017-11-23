@@ -18,8 +18,8 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:name=".LoginActivity"
+            android:theme="@style/FullscreenThemeNoTitleBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -27,9 +27,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".LoginActivity"
-            android:theme="@style/FullscreenThemeNoTitleBar">
-        </activity>
+            android:name=".MainSuperActivity"
+            android:label="@string/title_activity_main_super"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity android:name=".DriverOrSuperActivity"></activity>
     </application>
 
 </manifest>
