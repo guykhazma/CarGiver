@@ -63,7 +63,7 @@ public class DeviceListFragment extends Fragment {
             }
         });
 
-        // get scan results from main activity
+        // get scan results from main_driver activity
         ArrayList<BluetoothDevice> mNewDevicesArrayList= getArguments().getParcelableArrayList("device.list");
         ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.device_name, getDeviceNames(mNewDevicesArrayList));
 
@@ -210,7 +210,7 @@ public class DeviceListFragment extends Fragment {
     };
 
     /**
-     * Extracts string list from the device list we got from main activity
+     * Extracts string list from the device list we got from main_driver activity
      * @param btArray
      * @return
      */

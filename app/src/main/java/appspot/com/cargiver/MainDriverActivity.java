@@ -36,10 +36,10 @@ import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity
+public class MainDriverActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private static final String TAG = MainActivity.class.getName(); // TAG for logging
+    private static final String TAG = MainDriverActivity.class.getName(); // TAG for logging
 
     /*--------------------------Bluetooth-----------------------------------------------*/
     private final static int REQUEST_ENABLE_BT = 1; // for bluetooth request response code
@@ -59,40 +59,37 @@ public class MainActivity extends AppCompatActivity
     private FragmentManager fragmentManager;
 
     /*------------------ Firebase DB-----------------------*/
-    private DatabaseReference mDatabase;
+    private DatabaseReference dbRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+
+        // make sure user is logged if not redirect to start activity to handle this
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) {
+            startActivity(new Intent(getBaseContext(), StartActivity.class));
+            finish();
+        }
+
+        setContentView(R.layout.activity_main_driver);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_driver);
         setSupportActionBar(toolbar);
 
+        // Drawer init and Navigation
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout_driver);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
+
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view_driver);
+        navigationView.setNavigationItemSelectedListener(this);
+
+
+
         /*------------------init DB----------------------*/
-        mDatabase = FirebaseDatabase.getInstance().getReference();
-        /*---------------------Login Listener-------------------------------------*/
-        /*authListener = new FirebaseAuth.AuthStateListener() {
-            @Override
-            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                FirebaseUser user = firebaseAuth.getCurrentUser();
-                if (user != null) {
-                    // TODO: update nav_header_main
-                    username = user.getDisplayName();
-                    photoUrl = user.getPhotoUrl().toString();
-                    emailAddress = user.getEmail();
-                    User newUser = new User(username, emailAddress);
-                    // add user to db TODO: add it only if it is a new registration
-                    mDatabase.child("users").child(user.getUid()).setValue(newUser);
-
-
-                } else {
-                    // user is not logged redirecting to login activity
-                    startActivity(new Intent(getBaseContext(), LoginActivity.class));
-                    finish();
-                }
-            }
-        };
-        FirebaseAuth.getInstance().addAuthStateListener(authListener);*/
+        dbRef = FirebaseDatabase.getInstance().getReference();
 
         /*------------------------- Bluetooth Init-------------------------------*/
         // Listen to bluetooth events
@@ -135,24 +132,13 @@ public class MainActivity extends AppCompatActivity
         // if we are just starting
         if (savedInstanceState == null) {
             // Create Main Fragment
-            MainFragment main = new MainFragment();
+            MainDriverFragment main = new MainDriverFragment();
             // In case this activity was started with special instructions from an
             // Intent, pass the Intent's extras to the fragment as arguments
             main.setArguments(getIntent().getExtras());
             // load default activity
-            fragmentManager.beginTransaction().replace(R.id.fragment_container,main).commit();
+            fragmentManager.beginTransaction().replace(R.id.fragment_container_driver,main).commit();
         }
-
-        // Drawer init and Navigation
-        // TODO: arrange it when getting to this code
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
-        toggle.syncState();
-
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
     }
 
     /**
@@ -187,7 +173,7 @@ public class MainActivity extends AppCompatActivity
                 bundle.putParcelableArrayList("device.list", mNewDevicesArrayList);
                 scanFragmenet.setArguments(bundle);
                 if (scanFragmenet != null) {
-                    fragmentManager.beginTransaction().replace(R.id.fragment_container, scanFragmenet).commit();
+                    fragmentManager.beginTransaction().replace(R.id.fragment_container_driver, scanFragmenet).commit();
                 }
             }
             // when discovery finds a device
@@ -235,7 +221,7 @@ public class MainActivity extends AppCompatActivity
     // Menu on back pressed - auto generated
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout_driver);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
@@ -246,7 +232,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
+        getMenuInflater().inflate(R.menu.main_driver, menu);
         return true;
     }
 
@@ -287,13 +273,13 @@ public class MainActivity extends AppCompatActivity
                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                         public void onComplete(@NonNull Task<Void> task) {
                             // user is now signed out
-                            startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                            startActivity(new Intent(MainDriverActivity.this, LoginActivity.class));
                             finish();
                         }
                     });
         }
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout_driver);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
