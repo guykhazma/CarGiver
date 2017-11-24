@@ -24,6 +24,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
@@ -33,6 +35,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
 
@@ -86,7 +89,15 @@ public class MainDriverActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view_driver);
         navigationView.setNavigationItemSelectedListener(this);
 
-
+        // Fill current user details
+        View navHeaderView= navigationView.getHeaderView(0);
+        TextView txt = (TextView) navHeaderView.findViewById(R.id.name);
+        txt.setText(user.getDisplayName());
+        TextView email = (TextView) navHeaderView.findViewById(R.id.email);
+        email.setText(user.getEmail());
+        // load image
+        ImageView img = (ImageView) navHeaderView.findViewById(R.id.imageView);
+        Picasso.with(getBaseContext()).load(user.getPhotoUrl()).into(img);
 
         /*------------------init DB----------------------*/
         dbRef = FirebaseDatabase.getInstance().getReference();

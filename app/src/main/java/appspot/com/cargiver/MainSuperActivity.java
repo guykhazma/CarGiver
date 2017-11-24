@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -14,12 +15,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.squareup.picasso.Picasso;
 
 public class MainSuperActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -46,11 +50,22 @@ public class MainSuperActivity extends AppCompatActivity
         toggle.syncState();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view_super);
+        navigationView.setNavigationItemSelectedListener(this);
+
         Menu menu = navigationView.getMenu();
         Menu submenu = menu.addSubMenu("My Cars");
         // TODO: replace with real code to load cars
         submenu.add("Car 1");
-        navigationView.setNavigationItemSelectedListener(this);
+
+        // Fill current user details
+        View navHeaderView= navigationView.getHeaderView(0);
+        TextView txt = (TextView) navHeaderView.findViewById(R.id.name);
+        txt.setText(user.getDisplayName());
+        TextView email = (TextView) navHeaderView.findViewById(R.id.email);
+        email.setText(user.getEmail());
+        // load image
+        ImageView img = (ImageView) navHeaderView.findViewById(R.id.imageView);
+        Picasso.with(getBaseContext()).load(user.getPhotoUrl()).into(img);
     }
 
     @Override
