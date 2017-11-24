@@ -5,15 +5,17 @@ package appspot.com.cargiver;
  */
 
 public class Car {
-    String number;
-    String model;
+    String carName;
+    String carNumber;
+    String carColor;
 
     public Car() {
         // Default constructor required for calls to DataSnapshot.getValue(User.class)
     }
 
-    public Car(String number, String model) {
-        this.model = model;
-        this.number = number;
+    public Car(String carName, String carNumber, String carColor) {
+        this.carName = carName;
+        this.carNumber = carNumber;
+        this.carColor = carColor;
     }
 }

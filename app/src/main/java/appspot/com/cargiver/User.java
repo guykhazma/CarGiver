@@ -7,7 +7,7 @@ import java.util.List;
  * Class for representing a user
  */
 
-
+// User is identified in the DB by UID provided to the user by firebase
 
 public class User {
 
