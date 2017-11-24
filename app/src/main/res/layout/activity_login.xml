@@ -33,6 +33,6 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="80dp"
         android:onClick="onClickLogin"
-        android:text="Login" />
+        android:text="Enter" />
 
 </RelativeLayout>

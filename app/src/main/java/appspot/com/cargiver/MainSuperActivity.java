@@ -46,6 +46,10 @@ public class MainSuperActivity extends AppCompatActivity
         toggle.syncState();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view_super);
+        Menu menu = navigationView.getMenu();
+        Menu submenu = menu.addSubMenu("My Cars");
+        // TODO: replace with real code to load cars
+        submenu.add("Car 1");
         navigationView.setNavigationItemSelectedListener(this);
     }
 
@@ -87,31 +91,23 @@ public class MainSuperActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
-        }
-        else if (id == R.id.nav_sign_out) {
+        if (id == R.id.nav_main_supervisor) {
+            // Redirect to navigation main
+        } else if (id == R.id.nav_drives_supervisor) {
+            // Redirect to manage supervisors fragment
+        } else if (id == R.id.nav_manage_drivers_supervisor) {
+            // Redirect to manage drives fragment
+        } else if (id == R.id.nav_sign_out_driver) {
             AuthUI.getInstance()
                     .signOut(this)
                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                         public void onComplete(@NonNull Task<Void> task) {
                             // user is now signed out
-                            startActivity(new Intent(MainSuperActivity.this, LoginActivity.class));
+                            startActivity(new Intent(getBaseContext(), LoginActivity.class));
                             finish();
                         }
                     });
         }
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout_super);
         drawer.closeDrawer(GravityCompat.START);
         return true;
