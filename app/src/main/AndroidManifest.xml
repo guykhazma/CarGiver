@@ -18,34 +18,42 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <activity
-            android:name=".StartActivity"
-            android:theme="@style/AppCompat.noDisplay">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+        <!--
+       <service android:name=".BluetoothOBDService"
+           android:description="Bluetooth service for OBD connections on background"
+           android:exported="false"
+           android:label="Bluetooth OBD Service"
+           android:process=":BluetoothOBD" >
+       </service>-->
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+       <activity
+           android:name=".StartActivity"
+           android:theme="@style/AppCompat.noDisplay">
+           <intent-filter>
+               <action android:name="android.intent.action.MAIN" />
 
-        <activity
-            android:name=".LoginActivity"
-            android:theme="@style/FullscreenThemeNoTitleBar">
-        </activity>
+               <category android:name="android.intent.category.LAUNCHER" />
+           </intent-filter>
+       </activity>
 
-        <activity
-            android:name=".MainSuperActivity"
-            android:label="@string/title_activity_main_super"
-            android:theme="@style/AppTheme.NoActionBar" />
+       <activity
+           android:name=".LoginActivity"
+           android:theme="@style/FullscreenThemeNoTitleBar">
+       </activity>
 
-        <activity
-            android:name=".MainDriverActivity"
-            android:theme="@style/AppTheme.NoActionBar" />
+       <activity
+           android:name=".MainSuperActivity"
+           android:label="@string/title_activity_main_super"
+           android:theme="@style/AppTheme.NoActionBar" />
 
-        <activity
-            android:name=".DriverOrSuperActivity"
-            android:theme="@style/FullscreenThemeNoTitleBar">
-        </activity>
-    </application>
+       <activity
+           android:name=".MainDriverActivity"
+           android:theme="@style/AppTheme.NoActionBar" />
+
+       <activity
+           android:name=".DriverOrSuperActivity"
+           android:theme="@style/FullscreenThemeNoTitleBar">
+       </activity>
+   </application>
 
 </manifest>

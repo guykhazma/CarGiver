@@ -55,12 +55,6 @@ public class MainDriverActivity extends AppCompatActivity
     private ArrayList<BluetoothDevice> mNewDevicesArrayList; // Newly discovered devices
     private ProgressDialog mProgressDlg; // progress bar for search
 
-    /*----------------------------------Login----------------------------------------*/
-    private FirebaseAuth.AuthStateListener authListener;
-    private String username;
-    private String photoUrl;
-    private String emailAddress;
-
     /*------------------ Firebase DB-----------------------*/
     private DatabaseReference dbRef;
 
@@ -88,8 +82,6 @@ public class MainDriverActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view_driver);
         navigationView.setNavigationItemSelectedListener(this);
-        // set menu as selected on startup
-        navigationView.getMenu().getItem(0).setChecked(true);
 
         // Fill current user details
         View navHeaderView= navigationView.getHeaderView(0);
@@ -105,27 +97,10 @@ public class MainDriverActivity extends AppCompatActivity
         dbRef = FirebaseDatabase.getInstance().getReference();
 
         /*------------------------- Bluetooth Init-------------------------------*/
-        // Listen to bluetooth events
+        // Register for broadcasts
         IntentFilter filter = new IntentFilter();
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
-        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
-        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         registerReceiver(mReceiver, filter);
-
-        // progress bar for bluetooth scan
-        mProgressDlg = new ProgressDialog(this);
-        mProgressDlg.setMessage("Scanning...");
-        mProgressDlg.setCancelable(false);
-        mProgressDlg.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-                // Cancel Discovery
-                mBluetoothAdapter.cancelDiscovery();
-            }
-        });
-
-        mNewDevicesArrayList = new ArrayList<BluetoothDevice>(); // will save newly found devices
 
         // Bluetooth action button
         final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -145,7 +120,7 @@ public class MainDriverActivity extends AppCompatActivity
             // Intent, pass the Intent's extras to the fragment as arguments
             main.setArguments(getIntent().getExtras());
             // load default activity
-            getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver,main).commit();
+            getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver,main,"MAIN").commit();
         }
     }
 
@@ -176,33 +151,21 @@ public class MainDriverActivity extends AppCompatActivity
                     fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#DD2C00")));
                     Toast toast = Toast.makeText(getApplicationContext(), "Bluetooth Enabled", Toast.LENGTH_SHORT);
                     toast.show();
+                } else if (state == BluetoothAdapter.STATE_DISCONNECTED || state == BluetoothAdapter.STATE_DISCONNECTING) {
+                    Log.w(TAG, "Bluetooth Connection Lost");
+                    // Switch to inactive bluetooth
+                    fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
+                    fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#DD2C00")));
+                    Toast toast = Toast.makeText(getApplicationContext(), "Bluetooth Connection Lost", Toast.LENGTH_SHORT);
+                    toast.show();
                 }
-            } else if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
-                mProgressDlg.show();
-            } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-                Log.d(TAG, "Discovery Finished");
-                mProgressDlg.dismiss();
-                // Open device_list_fragment
-                Fragment scanFragmenet = new DeviceListFragment();
-                // add the scanned devices
-                Bundle bundle=new Bundle();
-                bundle.putParcelableArrayList("device.list", mNewDevicesArrayList);
-                scanFragmenet.setArguments(bundle);
-                if (scanFragmenet != null) {
-                    FragmentTransaction transaction = getFragmentManager().beginTransaction();
-                    transaction.replace(R.id.fragment_container_driver, scanFragmenet);
-                    // add to stack to allow return to menu on back press
-                    transaction.addToBackStack(null);
-                    transaction.commit();
-                }
-            }
-            // when discovery finds a device
-            else if (BluetoothDevice.ACTION_FOUND.equals(action)) {
-                // Get the BluetoothDevice object from the Intent
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                // If it's already paired, skip it, because it's been listed already
-                if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
-                    mNewDevicesArrayList.add(device);
+                else if (state == BluetoothAdapter.STATE_CONNECTED)  {
+                    Log.w(TAG, "Bluetooth Connection Lost");
+                    // Switch to inactive bluetooth
+                    fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
+                    fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+                    Toast toast = Toast.makeText(getApplicationContext(), "Connected to", Toast.LENGTH_SHORT);
+                    toast.show();
                 }
             }
         }
@@ -327,10 +290,20 @@ public class MainDriverActivity extends AppCompatActivity
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
             }
-            // Bluetooth is now enabled, so set up scan
+            // Bluetooth is now enabled, so go to scan page
             else {
-                mBluetoothAdapter.startDiscovery();
-                mProgressDlg.show();
+                // open scan page only if it is not opened yet
+                if (getFragmentManager().findFragmentByTag("BT_scan") == null) {
+                    Fragment scanFragmenet = new DeviceListFragment();
+                    FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                    transaction.replace(R.id.fragment_container_driver, scanFragmenet, "BT_scan");
+                    // add to stack to allow return to menu on back press
+                    transaction.addToBackStack(null);
+                    transaction.commit();
+                    // remove menu selection from drawer
+                    NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view_driver);
+                    navigationView.getMenu().getItem(0).setChecked(false);
+                }
             }
         }
     }

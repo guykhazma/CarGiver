@@ -2,6 +2,7 @@ package appspot.com.cargiver;
 
 import android.app.Activity;
 import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -11,6 +12,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.support.design.widget.NavigationView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -47,7 +49,7 @@ public class DeviceListFragment extends Fragment {
     /**
      * Newly discovered devices
      */
-    private ArrayAdapter<String> mNewDevicesArrayAdapter;
+    private ArrayAdapter<String> newDevicesArrayAdapter;
 
     // progress bar for search
     private ProgressDialog mProgressDlg;
@@ -59,18 +61,12 @@ public class DeviceListFragment extends Fragment {
         scanButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 doDiscovery();
-                v.setVisibility(View.GONE);
             }
         });
-        /*
-        // get scan results from main_driver activity
-        ArrayList<BluetoothDevice> mNewDevicesArrayList= getArguments().getParcelableArrayList("device.list");
-        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.device_name, getDeviceNames(mNewDevicesArrayList));
 
-        // Initialize array adapters. One for already paired devices and
-        // one for newly discovered devices
+        // Initialize array adapters. One for already paired devices and one for new
+        newDevicesArrayAdapter= new ArrayAdapter<String>(getActivity(), R.layout.device_name);
         ArrayAdapter<String> pairedDevicesArrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.device_name);
-        mNewDevicesArrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.device_name);
 
         // Find and set up the ListView for paired devices
         ListView pairedListView = (ListView) view.findViewById(R.id.paired_devices);
@@ -79,15 +75,13 @@ public class DeviceListFragment extends Fragment {
 
         // Find and set up the ListView for newly discovered devices
         ListView newDevicesListView = (ListView) view.findViewById(R.id.new_devices);
-        newDevicesListView.setAdapter(mNewDevicesArrayAdapter);
+        newDevicesListView.setAdapter(newDevicesArrayAdapter);
         newDevicesListView.setOnItemClickListener(mDeviceClickListener);
 
-        // Register for broadcasts when a device is discovered
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        getActivity().registerReceiver(mReceiver, filter);
-
-        // Register for broadcasts when discovery has finished
-        filter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+        // Register for broadcasts
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
+        filter.addAction(BluetoothDevice.ACTION_FOUND);
         getActivity().registerReceiver(mReceiver, filter);
 
         // progress bar for bluetooth scan
@@ -105,10 +99,8 @@ public class DeviceListFragment extends Fragment {
 
         // Get the local Bluetooth adapter
         mBtAdapter = BluetoothAdapter.getDefaultAdapter();
-
         // Get a set of currently paired devices
         Set<BluetoothDevice> pairedDevices = mBtAdapter.getBondedDevices();
-
         // If there are paired devices, add each one to the ArrayAdapter
         if (pairedDevices.size() > 0) {
             view.findViewById(R.id.title_paired_devices).setVisibility(View.VISIBLE);
@@ -118,7 +110,7 @@ public class DeviceListFragment extends Fragment {
         } else {
             String noDevices = getResources().getText(R.string.none_paired).toString();
             pairedDevicesArrayAdapter.add(noDevices);
-        }*/
+        }
 
         // Inflate the layout for this fragment
         return view;
@@ -131,6 +123,13 @@ public class DeviceListFragment extends Fragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        // do discovery
+        doDiscovery();
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
 
@@ -138,9 +137,8 @@ public class DeviceListFragment extends Fragment {
         if (mBtAdapter != null) {
             mBtAdapter.cancelDiscovery();
         }
-
-        // Unregister broadcast listeners
-        //this.unregisterReceiver(mReceiver);
+        //Unregister broadcast listeners
+        this.getActivity().unregisterReceiver(mReceiver);
     }
 
     /**
@@ -148,7 +146,10 @@ public class DeviceListFragment extends Fragment {
      */
     private void doDiscovery() {
         Log.d(TAG, "doDiscovery()");
+        mProgressDlg.show();
         getActivity().setTitle(R.string.scanning);
+        // clear recent found devices
+        newDevicesArrayAdapter.clear();
 
         // If we're already discovering, stop it
         if (mBtAdapter.isDiscovering()) {
@@ -196,14 +197,16 @@ public class DeviceListFragment extends Fragment {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 // If it's already paired, skip it, because it's been listed already
                 if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
-                    mNewDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+                    newDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
                 }
                 // When discovery is finished, change the Activity title
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
-                //setTitle(R.string.select_device);
-                if (mNewDevicesArrayAdapter.getCount() == 0) {
+                Log.d(TAG, "Discovery Finished");
+                getActivity().setTitle("Bluetooth devices");
+                mProgressDlg.dismiss();
+                if (newDevicesArrayAdapter.getCount() == 0) {
                     String noDevices = getResources().getText(R.string.none_found).toString();
-                    mNewDevicesArrayAdapter.add(noDevices);
+                    newDevicesArrayAdapter.add(noDevices);
                 }
             }
         }
