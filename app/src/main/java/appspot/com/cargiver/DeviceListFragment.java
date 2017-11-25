@@ -6,6 +6,7 @@ import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -25,8 +26,11 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Created by GK on 11/17/2017.
@@ -39,9 +43,9 @@ public class DeviceListFragment extends Fragment {
      */
     private static final String TAG = "DeviceListFragment";
     /**
-     * Return Intent extra
+     * Bluetooth UUID
      */
-    public static String EXTRA_DEVICE_ADDRESS = "device_address";
+    private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     /**
      * Member fields
@@ -184,15 +188,43 @@ public class DeviceListFragment extends Fragment {
             String info = ((TextView) v).getText().toString();
             String address = info.substring(info.length() - 17);
 
-            // Create the result Intent and include the MAC address
-            Intent intent = new Intent();
-            intent.putExtra(EXTRA_DEVICE_ADDRESS, address);
-
+            // Connect
+            Log.d(TAG, "connect to: " + info + " " +address );
+            BluetoothDevice device = mBtAdapter.getRemoteDevice(address);
+            // Start the thread to connect with the given device
+            ConnectThread connect = new ConnectThread(device, true);
+            connect.start();
             // Set result and finish this Activity
             //setResult(Activity.RESULT_OK, intent);
             //finish();
         }
     };
+
+    public static BluetoothSocket connect(BluetoothDevice dev) throws IOException {
+        BluetoothSocket sock = null;
+        BluetoothSocket sockFallback = null;
+
+        Log.d(TAG, "Starting Bluetooth connection..");
+        try {
+            sock = dev.createRfcommSocketToServiceRecord(MY_UUID);
+            sock.connect();
+        } catch (Exception e1) {
+            Log.e(TAG, "There was an error while establishing Bluetooth connection. Falling back..", e1);
+            Class<?> clazz = sock.getRemoteDevice().getClass();
+            Class<?>[] paramTypes = new Class<?>[]{Integer.TYPE};
+            try {
+                Method m = clazz.getMethod("createRfcommSocket", paramTypes);
+                Object[] params = new Object[]{Integer.valueOf(1)};
+                sockFallback = (BluetoothSocket) m.invoke(sock.getRemoteDevice(), params);
+                sockFallback.connect();
+                sock = sockFallback;
+            } catch (Exception e2) {
+                Log.e(TAG, "Couldn't fallback while establishing Bluetooth connection.", e2);
+                throw new IOException(e2.getMessage());
+            }
+        }
+        return sock;
+    }
 
     /**
      * The BroadcastReceiver that listens for discovered devices and changes the title when
@@ -239,5 +271,70 @@ public class DeviceListFragment extends Fragment {
         else
             devices.add("No Bluetooth devices found");
         return devices;
+    }
+
+    // thread for handling connection
+    private class ConnectThread extends Thread {
+        private  BluetoothSocket sock = null;
+        private  BluetoothSocket sockFallback = null;
+        private  BluetoothDevice device = null;
+        private boolean secure;
+
+        public ConnectThread(BluetoothDevice device, boolean secure) {
+            this.device = device;
+            this.secure = secure;
+        }
+
+        @Override
+        public void run() {
+            Log.e(TAG, "In thread");
+            try {
+                if (secure) {
+                    try {
+                        sock = device.createRfcommSocketToServiceRecord(MY_UUID);
+                        sock.connect();
+                    } catch (Exception e1) {
+                        Log.e(TAG, "There was an error while establishing Bluetooth connection. Falling back..", e1);
+                        Class<?> clazz = sock.getRemoteDevice().getClass();
+                        Class<?>[] paramTypes = new Class<?>[]{Integer.TYPE};
+                        // TODO: add to service
+                        try {
+                            Method m = clazz.getMethod("createRfcommSocket", paramTypes);
+                            Object[] params = new Object[]{Integer.valueOf(1)};
+                            sockFallback = (BluetoothSocket) m.invoke(sock.getRemoteDevice(), params);
+                            sockFallback.connect();
+                            sock = sockFallback;
+                        } catch (Exception e2) {
+                            Log.e(TAG, "Couldn't fallback while establishing Bluetooth connection.", e2);
+                            throw new IOException(e2.getMessage());
+                        }
+                    }
+                } else {
+                    try {
+                        sock = device.createInsecureRfcommSocketToServiceRecord(MY_UUID);
+                        sock.connect();
+                    } catch (Exception e1) {
+                        Log.e(TAG, "There was an error while establishing Bluetooth connection. Falling back..", e1);
+                        Class<?> clazz = sock.getRemoteDevice().getClass();
+                        Class<?>[] paramTypes = new Class<?>[]{Integer.TYPE};
+                        // TODO: add to service
+                        try {
+                            Method m = clazz.getMethod("createRfcommSocket", paramTypes);
+                            Object[] params = new Object[]{Integer.valueOf(1)};
+                            sockFallback = (BluetoothSocket) m.invoke(sock.getRemoteDevice(), params);
+                            sockFallback.connect();
+                            sock = sockFallback;
+                        } catch (Exception e2) {
+                            Log.e(TAG, "Couldn't fallback while establishing Bluetooth connection.", e2);
+                            throw new IOException(e2.getMessage());
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "Socket create() failed", e);
+            }
+        }
+
+
     }
 }

@@ -99,7 +99,11 @@ public class MainDriverActivity extends AppCompatActivity
         /*------------------------- Bluetooth Init-------------------------------*/
         // Register for broadcasts
         IntentFilter filter = new IntentFilter();
+        // Adapter changes
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
+        // connection changes
+        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         registerReceiver(mReceiver, filter);
 
         // Bluetooth action button
@@ -130,12 +134,12 @@ public class MainDriverActivity extends AppCompatActivity
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-
+            final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
             // Handle Bluetooth actions
             if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
                 final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
-                final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 
+                Log.w(TAG, "State Change + " + state);
                 if (state == BluetoothAdapter.STATE_OFF) {
                     Log.w(TAG, "Bluetooth Disabled");
                     // Switch to inactive bluetooth
@@ -152,22 +156,21 @@ public class MainDriverActivity extends AppCompatActivity
                     Toast toast = Toast.makeText(getApplicationContext(), "Bluetooth Enabled", Toast.LENGTH_SHORT);
                     toast.show();
 
-                } else if (state == BluetoothAdapter.STATE_DISCONNECTED || state == BluetoothAdapter.STATE_DISCONNECTING) {
-                    Log.w(TAG, "Bluetooth Connection Lost");
-                    // Switch to inactive bluetooth
-                    fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
-                    fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#DD2C00")));
-                    Toast toast = Toast.makeText(getApplicationContext(), "Bluetooth Connection Lost", Toast.LENGTH_SHORT);
-                    toast.show();
                 }
-                else if (state == BluetoothAdapter.STATE_CONNECTED)  {
-                    Log.w(TAG, "Bluetooth Connection Lost");
-                    // Switch to inactive bluetooth
-                    fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
-                    fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
-                    Toast toast = Toast.makeText(getApplicationContext(), "Connected to", Toast.LENGTH_SHORT);
-                    toast.show();
-                }
+            } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
+                Log.w(TAG, "Bluetooth Connection Lost");
+                // Switch to inactive bluetooth
+                fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
+                fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#DD2C00")));
+                Toast toast = Toast.makeText(getApplicationContext(), "Bluetooth Connection Lost", Toast.LENGTH_SHORT);
+                toast.show();
+            } else if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action))  {
+                Log.w(TAG, "Bluetooth Connection Lost");
+                // Switch to inactive bluetooth
+                fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
+                fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+                Toast toast = Toast.makeText(getApplicationContext(), "Connected to", Toast.LENGTH_SHORT);
+                toast.show();
             }
         }
     };
