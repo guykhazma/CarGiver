@@ -22,6 +22,8 @@ public class MainDriverFragment extends Fragment {
         NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_driver);
         navigationView.getMenu().getItem(0).setChecked(true);
 
+        getActivity().setTitle("Main");
+
         return view;
     }
 }
