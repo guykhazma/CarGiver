@@ -126,6 +126,7 @@ public class DeviceListFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
+        // Disable the floating button to avoid opening multiple
         final FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
         fab.setEnabled(false);
         // do discovery
@@ -135,6 +136,7 @@ public class DeviceListFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
+        // Enable the floating button to avoid opening multiple
         final FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
         fab.setEnabled(true);
     }
