@@ -12,6 +12,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -125,8 +126,17 @@ public class DeviceListFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
+        final FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
+        fab.setEnabled(false);
         // do discovery
         doDiscovery();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        final FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
+        fab.setEnabled(true);
     }
 
     @Override
