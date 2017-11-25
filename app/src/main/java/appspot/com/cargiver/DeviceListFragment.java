@@ -62,7 +62,7 @@ public class DeviceListFragment extends Fragment {
                 v.setVisibility(View.GONE);
             }
         });
-
+        /*
         // get scan results from main_driver activity
         ArrayList<BluetoothDevice> mNewDevicesArrayList= getArguments().getParcelableArrayList("device.list");
         ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.device_name, getDeviceNames(mNewDevicesArrayList));
@@ -118,7 +118,7 @@ public class DeviceListFragment extends Fragment {
         } else {
             String noDevices = getResources().getText(R.string.none_paired).toString();
             pairedDevicesArrayAdapter.add(noDevices);
-        }
+        }*/
 
         // Inflate the layout for this fragment
         return view;

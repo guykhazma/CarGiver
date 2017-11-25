@@ -2,6 +2,7 @@ package appspot.com.cargiver;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -10,6 +11,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -58,9 +61,6 @@ public class MainDriverActivity extends AppCompatActivity
     private String photoUrl;
     private String emailAddress;
 
-    /*---------------------------------Fragment Related---------------------------------*/
-    private FragmentManager fragmentManager;
-
     /*------------------ Firebase DB-----------------------*/
     private DatabaseReference dbRef;
 
@@ -88,6 +88,8 @@ public class MainDriverActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view_driver);
         navigationView.setNavigationItemSelectedListener(this);
+        // set menu as selected on startup
+        navigationView.getMenu().getItem(0).setChecked(true);
 
         // Fill current user details
         View navHeaderView= navigationView.getHeaderView(0);
@@ -128,18 +130,13 @@ public class MainDriverActivity extends AppCompatActivity
         // Bluetooth action button
         final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         // If the adapter is null, then Bluetooth is not supported so update bluetooth icon
-        if (mBluetoothAdapter == null) {
-            Log.w(TAG, "Device has no bluetooth");
-            has_bluetooth = false;
-            // TODO: check if theme should be  context.getTheme() as in https://stackoverflow.com/questions/33140706/android-dynamically-change-fabfloating-action-button-icon-from-code
+        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
+            Log.w(TAG, "Device has no bluetooth or bluetooth is disabled");
             fab.setImageDrawable(getResources().getDrawable(R.drawable.stat_sys_data_bluetooth_disabled, null));
-            //TODO: set background to grey to indicate unclickable
+            fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#9E9E9E")));
         }
 
         /*-------------------- Main Fragment initialization --------------------------------------------*/
-        // Set  fragment manager
-        fragmentManager = getFragmentManager(); // For AppCompat use getSupportFragmentManager
-
         // if we are just starting
         if (savedInstanceState == null) {
             // Create Main Fragment
@@ -148,7 +145,7 @@ public class MainDriverActivity extends AppCompatActivity
             // Intent, pass the Intent's extras to the fragment as arguments
             main.setArguments(getIntent().getExtras());
             // load default activity
-            fragmentManager.beginTransaction().replace(R.id.fragment_container_driver,main).commit();
+            getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver,main).commit();
         }
     }
 
@@ -162,14 +159,22 @@ public class MainDriverActivity extends AppCompatActivity
             // Handle Bluetooth actions
             if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(action)) {
                 final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
+                final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
 
                 if (state == BluetoothAdapter.STATE_OFF) {
-                    // TODO: switch icon to red
                     Log.w(TAG, "Bluetooth Disabled");
-                    CharSequence text = "Failed Enabling Bluetooth";
-                    int duration = Toast.LENGTH_SHORT;
-
-                    Toast toast = Toast.makeText(context, text, duration);
+                    // Switch to inactive bluetooth
+                    fab.setImageDrawable(getResources().getDrawable(R.drawable.stat_sys_data_bluetooth_disabled, null));
+                    fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#9E9E9E")));
+                    Toast toast = Toast.makeText(getApplicationContext(), "Bluetooth disconnected", Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+                else if (state == BluetoothAdapter.STATE_ON) {
+                    Log.w(TAG, "Bluetooth Enabled");
+                    // Switch to inactive bluetooth
+                    fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
+                    fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#DD2C00")));
+                    Toast toast = Toast.makeText(getApplicationContext(), "Bluetooth Enabled", Toast.LENGTH_SHORT);
                     toast.show();
                 }
             } else if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(action)) {
@@ -184,7 +189,11 @@ public class MainDriverActivity extends AppCompatActivity
                 bundle.putParcelableArrayList("device.list", mNewDevicesArrayList);
                 scanFragmenet.setArguments(bundle);
                 if (scanFragmenet != null) {
-                    fragmentManager.beginTransaction().replace(R.id.fragment_container_driver, scanFragmenet).commit();
+                    FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                    transaction.replace(R.id.fragment_container_driver, scanFragmenet);
+                    // add to stack to allow return to menu on back press
+                    transaction.addToBackStack(null);
+                    transaction.commit();
                 }
             }
             // when discovery finds a device
@@ -208,21 +217,20 @@ public class MainDriverActivity extends AppCompatActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // Check response to bluetooth enable
+        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         if (requestCode == REQUEST_ENABLE_BT) {
             // Make sure the request was successful
             if (resultCode == RESULT_OK) {
-                bluetooth_enabled = true;
                 Log.w(TAG, "Bluetooth Enabled");
                 // Bluetooth is now enabled, so set up scan
                 mBluetoothAdapter.startDiscovery();
             }
             else {
-                Log.w(TAG, "Bluetooth Enabled");
-                Context context = getApplicationContext();
-                CharSequence text = "Failed Enabling Bluetooth";
-                int duration = Toast.LENGTH_SHORT;
-
-                Toast toast = Toast.makeText(context, text, duration);
+                Log.w(TAG, "Bluetooth Disabled");
+                // Switch color to red
+                fab.setImageDrawable(getResources().getDrawable(R.drawable.stat_sys_data_bluetooth_disabled, null));
+                fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#9E9E9E")));
+                Toast toast = Toast.makeText(getApplicationContext(), "Bluetooth is disabled", Toast.LENGTH_SHORT);
                 toast.show();
             }
         }
@@ -269,10 +277,17 @@ public class MainDriverActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_main_driver) {
-            // Redirect to navigation main
+            // pop back fragments till reaching menu
+            getFragmentManager().popBackStack(0,FragmentManager.POP_BACK_STACK_INCLUSIVE);
+
         } else if (id == R.id.nav_manage_supervisors_driver) {
+            // pop back fragments till reaching menu
+            getFragmentManager().popBackStack(0,FragmentManager.POP_BACK_STACK_INCLUSIVE);
             // Redirect to manage supervisors fragment
+
         } else if (id == R.id.nav_drives_driver) {
+            // pop back fragments till reaching menu
+            getFragmentManager().popBackStack(0,FragmentManager.POP_BACK_STACK_INCLUSIVE);
             // Redirect to manage drives fragment
         } else if (id == R.id.nav_sign_out_driver) {
             AuthUI.getInstance()
@@ -314,7 +329,6 @@ public class MainDriverActivity extends AppCompatActivity
             }
             // Bluetooth is now enabled, so set up scan
             else {
-
                 mBluetoothAdapter.startDiscovery();
                 mProgressDlg.show();
             }

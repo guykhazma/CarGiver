@@ -51,6 +51,8 @@ public class MainSuperActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view_super);
         navigationView.setNavigationItemSelectedListener(this);
+        // set menu as selected on startup
+        navigationView.getMenu().getItem(0).setChecked(true);
 
         Menu menu = navigationView.getMenu();
         Menu submenu = menu.addSubMenu("My Cars");
