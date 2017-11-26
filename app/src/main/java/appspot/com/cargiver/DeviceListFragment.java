@@ -25,6 +25,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -52,9 +53,10 @@ public class DeviceListFragment extends Fragment {
      */
     private BluetoothAdapter mBtAdapter;
     /**
-     * Newly discovered devices
+     * Devices
      */
     private ArrayAdapter<String> newDevicesArrayAdapter;
+    private ArrayAdapter<String> pairedDevicesArrayAdapter;
 
     // progress bar for search
     private ProgressDialog mProgressDlg;
@@ -71,7 +73,7 @@ public class DeviceListFragment extends Fragment {
 
         // Initialize array adapters. One for already paired devices and one for new
         newDevicesArrayAdapter= new ArrayAdapter<String>(getActivity(), R.layout.device_name);
-        ArrayAdapter<String> pairedDevicesArrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.device_name);
+        pairedDevicesArrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.device_name);
 
         // Find and set up the ListView for paired devices
         ListView pairedListView = (ListView) view.findViewById(R.id.paired_devices);
@@ -133,8 +135,6 @@ public class DeviceListFragment extends Fragment {
         // Disable the floating button to avoid opening multiple
         final FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
         fab.setEnabled(false);
-        // do discovery
-        doDiscovery();
     }
 
     @Override
@@ -166,6 +166,24 @@ public class DeviceListFragment extends Fragment {
         getActivity().setTitle(R.string.scanning);
         // clear recent found devices
         newDevicesArrayAdapter.clear();
+        pairedDevicesArrayAdapter.clear();
+
+        // refill paired devices
+        // Get a set of currently paired devices
+        Set<BluetoothDevice> pairedDevices = mBtAdapter.getBondedDevices();
+        // If there are paired devices, add each one to the ArrayAdapter
+        if (pairedDevices.size() > 0) {
+            getView().findViewById(R.id.title_paired_devices).setVisibility(View.VISIBLE);
+            for (BluetoothDevice device : pairedDevices) {
+                if (device.getName().equals(BluetoothOBDService.dev.getName()))
+                    pairedDevicesArrayAdapter.add(device.getName() + " - Connected\n" + device.getAddress());
+                else
+                    pairedDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+            }
+        } else {
+            String noDevices = getResources().getText(R.string.none_paired).toString();
+            pairedDevicesArrayAdapter.add(noDevices);
+        }
 
         // If we're already discovering, stop it
         if (mBtAdapter.isDiscovering()) {
@@ -187,16 +205,32 @@ public class DeviceListFragment extends Fragment {
             // Get the device MAC address, which is the last 17 chars in the View
             String info = ((TextView) v).getText().toString();
             String address = info.substring(info.length() - 17);
+            if (!BluetoothOBDService.isConnecting) {
+                if (BluetoothOBDService.dev == null) {
+                    // Connect
+                    Log.d(TAG, "connect to: " + info + " " + address);
+                    BluetoothDevice device = mBtAdapter.getRemoteDevice(address);
+                    // Start the thread to connect with the given device
+                    BluetoothOBDService.connect(device, true);
+                }
+                else if (BluetoothOBDService.dev.getAddress() != address) {
+                    // Connect
+                    Log.d(TAG, "connect to: " + info + " " + address);
+                    BluetoothDevice device = mBtAdapter.getRemoteDevice(address);
+                    // Start the thread to connect with the given device
+                    BluetoothOBDService.connect(device, true);
+                }
+                else {
+                    Toast toast = Toast.makeText(getActivity().getApplicationContext(), "Already connected to " + BluetoothOBDService.dev.getName(), Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+            }
+            else {
+                Toast toast = Toast.makeText(getActivity().getApplicationContext(), "Connection already in action", Toast.LENGTH_SHORT);
+                toast.show();
+            }
 
-            // Connect
-            Log.d(TAG, "connect to: " + info + " " +address );
-            BluetoothDevice device = mBtAdapter.getRemoteDevice(address);
-            // Start the thread to connect with the given device
-            ConnectThread connect = new ConnectThread(device, true);
-            connect.start();
-            // Set result and finish this Activity
-            //setResult(Activity.RESULT_OK, intent);
-            //finish();
+
         }
     };
 
@@ -241,7 +275,7 @@ public class DeviceListFragment extends Fragment {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 // If it's already paired, skip it, because it's been listed already
                 if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
-                    newDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+                        newDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
                 }
                 // When discovery is finished, change the Activity title
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
@@ -273,68 +307,4 @@ public class DeviceListFragment extends Fragment {
         return devices;
     }
 
-    // thread for handling connection
-    private class ConnectThread extends Thread {
-        private  BluetoothSocket sock = null;
-        private  BluetoothSocket sockFallback = null;
-        private  BluetoothDevice device = null;
-        private boolean secure;
-
-        public ConnectThread(BluetoothDevice device, boolean secure) {
-            this.device = device;
-            this.secure = secure;
-        }
-
-        @Override
-        public void run() {
-            Log.e(TAG, "In thread");
-            try {
-                if (secure) {
-                    try {
-                        sock = device.createRfcommSocketToServiceRecord(MY_UUID);
-                        sock.connect();
-                    } catch (Exception e1) {
-                        Log.e(TAG, "There was an error while establishing Bluetooth connection. Falling back..", e1);
-                        Class<?> clazz = sock.getRemoteDevice().getClass();
-                        Class<?>[] paramTypes = new Class<?>[]{Integer.TYPE};
-                        // TODO: add to service
-                        try {
-                            Method m = clazz.getMethod("createRfcommSocket", paramTypes);
-                            Object[] params = new Object[]{Integer.valueOf(1)};
-                            sockFallback = (BluetoothSocket) m.invoke(sock.getRemoteDevice(), params);
-                            sockFallback.connect();
-                            sock = sockFallback;
-                        } catch (Exception e2) {
-                            Log.e(TAG, "Couldn't fallback while establishing Bluetooth connection.", e2);
-                            throw new IOException(e2.getMessage());
-                        }
-                    }
-                } else {
-                    try {
-                        sock = device.createInsecureRfcommSocketToServiceRecord(MY_UUID);
-                        sock.connect();
-                    } catch (Exception e1) {
-                        Log.e(TAG, "There was an error while establishing Bluetooth connection. Falling back..", e1);
-                        Class<?> clazz = sock.getRemoteDevice().getClass();
-                        Class<?>[] paramTypes = new Class<?>[]{Integer.TYPE};
-                        // TODO: add to service
-                        try {
-                            Method m = clazz.getMethod("createRfcommSocket", paramTypes);
-                            Object[] params = new Object[]{Integer.valueOf(1)};
-                            sockFallback = (BluetoothSocket) m.invoke(sock.getRemoteDevice(), params);
-                            sockFallback.connect();
-                            sock = sockFallback;
-                        } catch (Exception e2) {
-                            Log.e(TAG, "Couldn't fallback while establishing Bluetooth connection.", e2);
-                            throw new IOException(e2.getMessage());
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                Log.e(TAG, "Socket create() failed", e);
-            }
-        }
-
-
-    }
 }

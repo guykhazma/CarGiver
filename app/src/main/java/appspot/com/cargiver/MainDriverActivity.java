@@ -159,6 +159,11 @@ public class MainDriverActivity extends AppCompatActivity
                 }
             } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
                 Log.w(TAG, "Bluetooth Connection Lost");
+                synchronized (BluetoothOBDService.class) {
+                    BluetoothOBDService.dev = null;
+                    BluetoothOBDService.connected = false;
+                    BluetoothOBDService.sock = null;
+                }
                 // Switch to inactive bluetooth
                 fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
                 fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#DD2C00")));
@@ -169,7 +174,7 @@ public class MainDriverActivity extends AppCompatActivity
                 // Switch to inactive bluetooth
                 fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
                 fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
-                Toast toast = Toast.makeText(getApplicationContext(), "Connected to", Toast.LENGTH_SHORT);
+                Toast toast = Toast.makeText(getApplicationContext(), "Connected successfully", Toast.LENGTH_SHORT);
                 toast.show();
             }
         }
