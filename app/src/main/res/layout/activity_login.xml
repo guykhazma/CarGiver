@@ -22,7 +22,7 @@
         android:fontFamily="casual"
         android:text="CarGiver"
         android:textAppearance="?android:attr/textAppearanceMedium"
-        android:textColor="	#d7ecfd"
+        android:textColor="#d7ecfd"
         android:textSize="70dp" />
 
     <Button
