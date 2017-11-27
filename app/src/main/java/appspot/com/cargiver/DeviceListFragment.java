@@ -12,7 +12,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.util.Log;
@@ -119,6 +122,17 @@ public class DeviceListFragment extends Fragment {
             pairedDevicesArrayAdapter.add(noDevices);
         }
 
+        // set connection label
+        TextView connectedTo = (TextView) view.findViewById(R.id.connected_to);
+        if (BluetoothOBDService.status == BluetoothOBDService.STATE_CONNECTED) {
+            connectedTo.setText("Connected to " + BluetoothOBDService.dev.getName());
+            connectedTo.setBackgroundColor(Color.parseColor("#4CAF50"));
+        }
+        else {
+            connectedTo.setText("Not connected");
+            connectedTo.setBackgroundColor(Color.parseColor("#DD2C00"));
+        }
+
         // Inflate the layout for this fragment
         return view;
     }
@@ -175,10 +189,7 @@ public class DeviceListFragment extends Fragment {
         if (pairedDevices.size() > 0) {
             getView().findViewById(R.id.title_paired_devices).setVisibility(View.VISIBLE);
             for (BluetoothDevice device : pairedDevices) {
-                if (device.getName().equals(BluetoothOBDService.dev.getName()))
-                    pairedDevicesArrayAdapter.add(device.getName() + " - Connected\n" + device.getAddress());
-                else
-                    pairedDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+                pairedDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
             }
         } else {
             String noDevices = getResources().getText(R.string.none_paired).toString();
@@ -211,14 +222,14 @@ public class DeviceListFragment extends Fragment {
                     Log.d(TAG, "connect to: " + info + " " + address);
                     BluetoothDevice device = mBtAdapter.getRemoteDevice(address);
                     // Start the thread to connect with the given device
-                    BluetoothOBDService.connect(device, true);
+                    BluetoothOBDService.connect(device, true, mHandler);
                 }
                 else if (BluetoothOBDService.dev.getAddress() != address) {
                     // Connect
                     Log.d(TAG, "connect to: " + info + " " + address);
                     BluetoothDevice device = mBtAdapter.getRemoteDevice(address);
                     // Start the thread to connect with the given device
-                    BluetoothOBDService.connect(device, true);
+                    BluetoothOBDService.connect(device, true, mHandler);
                 }
                 else {
                     Toast toast = Toast.makeText(getActivity().getApplicationContext(), "Already connected to " + BluetoothOBDService.dev.getName(), Toast.LENGTH_SHORT);
@@ -306,5 +317,32 @@ public class DeviceListFragment extends Fragment {
             devices.add("No Bluetooth devices found");
         return devices;
     }
+
+
+    /**
+     * The Handler that gets information back from the BluetoothChatService
+     */
+    private final Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case BluetoothOBDService.MESSAGE_STATE_CHANGE:
+                    TextView connectedTo = (TextView) getView().findViewById(R.id.connected_to);
+                    switch (BluetoothOBDService.status) {
+                        case BluetoothOBDService.STATE_CONNECTED:
+                            connectedTo.setText("Connected to " + BluetoothOBDService.dev.getName());
+                            connectedTo.setBackgroundColor(Color.parseColor("#4CAF50"));
+                            break;
+                        case BluetoothOBDService.STATE_CONNECTING:
+                            connectedTo.setText("Connecting...");
+                            break;
+                        case BluetoothOBDService.STATE_DISCONNECTED:
+                            connectedTo.setText("Not connected");
+                            connectedTo.setBackgroundColor(Color.parseColor("#DD2C00"));
+                            break;
+                    }
+            }
+        }
+    };
 
 }

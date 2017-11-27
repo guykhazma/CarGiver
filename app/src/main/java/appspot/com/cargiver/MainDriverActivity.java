@@ -14,9 +14,11 @@ import android.content.IntentFilter;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -114,6 +116,11 @@ public class MainDriverActivity extends AppCompatActivity
             fab.setImageDrawable(getResources().getDrawable(R.drawable.stat_sys_data_bluetooth_disabled, null));
             fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#9E9E9E")));
         }
+        // display as connected if already connected
+        if (BluetoothOBDService.status == BluetoothOBDService.STATE_CONNECTED) {
+            fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
+            fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+        }
 
         /*-------------------- Main Fragment initialization --------------------------------------------*/
         // if we are just starting
@@ -161,7 +168,7 @@ public class MainDriverActivity extends AppCompatActivity
                 Log.w(TAG, "Bluetooth Connection Lost");
                 synchronized (BluetoothOBDService.class) {
                     BluetoothOBDService.dev = null;
-                    BluetoothOBDService.connected = false;
+                    BluetoothOBDService.status = BluetoothOBDService.STATE_DISCONNECTED;
                     BluetoothOBDService.sock = null;
                 }
                 // Switch to inactive bluetooth
