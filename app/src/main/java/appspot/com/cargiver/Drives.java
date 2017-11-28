@@ -1,8 +1,11 @@
 package appspot.com.cargiver;
 
+import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Created by GK on 11/24/2017.
@@ -12,7 +15,10 @@ import java.util.Date;
 
 public class Drives {
 
-    List<Measurement> meas; // measurements associated with this drive
+    // date format
+    static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    Map<String, Measurement> meas;
     Boolean ongoing;
     String driverID;
     String supervisorID;
@@ -21,14 +27,16 @@ public class Drives {
         // Default constructor required for calls to DataSnapshot.getValue(Drives.class)
     }
 
-    public Date getStartTime() {
-        return meas.get(0).timeStamp;
+    // data is ordered so latest is first
+    public String getStartTime() {
+        return dateFormat.format(meas.get(meas.keySet().toArray()[meas.keySet().size()-1]).timeStamp);
+
     }
 
-    public Date getEndTime() {
+    public String getEndTime() {
         if (ongoing == true) {
-            return null;
+            return "Drive is active";
         }
-        return meas.get(meas.size() - 1).timeStamp;
+        return dateFormat.format(meas.get(meas.keySet().toArray()[0]).timeStamp);
     }
 }

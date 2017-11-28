@@ -1,6 +1,7 @@
 package appspot.com.cargiver;
 
 import android.location.Location;
+import android.support.annotation.Keep;
 
 import com.google.android.gms.maps.model.LatLng;
 
@@ -13,18 +14,20 @@ import java.util.Date;
 // Represent measurement during drive
 
 public class Measurement {
-    //TODO: check what is the required type for time stamp and location
     Date timeStamp; // the time stamp of the measurement
     int speed; // current vehicle speed
-    LatLng loc;
+    double latitude;
+    double longitude;
 
+    @Keep
     public Measurement() {
         // Default constructor required for calls to DataSnapshot.getValue(Drives.class)
     }
 
     public Measurement(int speed, double latitude, double longitude) {
         this.speed = speed;
-        this.loc = new LatLng(latitude,longitude);
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.timeStamp = Calendar.getInstance().getTime();
     }
 }

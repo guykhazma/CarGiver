@@ -5,28 +5,39 @@
     android:orientation="vertical"
     >
 
-    <TextView
-        android:id="@+id/txt_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:text="TextView" />
-
     <com.google.android.gms.maps.MapView
-        android:id="@+id/map"
+        android:id="@+id/mapView"
         android:layout_width="match_parent"
         android:layout_height="250dp" />
 
+    <TextView
+        android:id="@+id/time_finished"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left"
+        android:paddingLeft="10dp"
+        android:text="TextView" />
     <TextView
         android:id="@+id/time_started"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="left"
+        android:paddingLeft="10dp"
         android:text="TextView" />
+
     <TextView
-        android:id="@+id/time_finished"
+        android:id="@+id/driver_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="right"
+        android:layout_gravity="left"
+        android:paddingLeft="10dp"
         android:text="TextView" />
+    <TextView
+        android:id="@+id/supervisor_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left"
+        android:paddingLeft="10dp"
+        android:text="TextView" />
+
 </LinearLayout>
