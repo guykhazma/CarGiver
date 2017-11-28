@@ -31,7 +31,7 @@ public class StartActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         setVisible(true);
-        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+        //FirebaseDatabase.getInstance().setPersistenceEnabled(true);
 
         /*---------------------Login Listener-------------------------------------*/
         FirebaseAuth.AuthStateListener authListener = new FirebaseAuth.AuthStateListener() {
