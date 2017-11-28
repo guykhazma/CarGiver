@@ -111,9 +111,9 @@ public class MainSuperActivity extends AppCompatActivity
         if (id == R.id.nav_main_supervisor) {
             // Redirect to navigation main
         } else if (id == R.id.nav_drives_supervisor) {
-            // Redirect to manage supervisors fragment
-        } else if (id == R.id.nav_manage_drivers_supervisor) {
             // Redirect to manage drives fragment
+        } else if (id == R.id.nav_manage_drivers_supervisor) {
+            // Redirect to manage drivers fragment
         } else if (id == R.id.nav_sign_out_driver) {
             AuthUI.getInstance()
                     .signOut(this)

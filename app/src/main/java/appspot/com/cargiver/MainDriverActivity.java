@@ -30,6 +30,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -63,7 +64,6 @@ public class MainDriverActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         // make sure user is logged if not redirect to start activity to handle this
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) {
@@ -270,6 +270,13 @@ public class MainDriverActivity extends AppCompatActivity
             // pop back fragments till reaching menu
             getFragmentManager().popBackStack(0,FragmentManager.POP_BACK_STACK_INCLUSIVE);
             // Redirect to manage supervisors fragment
+            Fragment manageFragment = new ManageSupervisorsFragment();
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+            transaction.replace(R.id.fragment_container_driver, manageFragment,"Manage Supervisors");
+            // add to stack to allow return to menu on back press
+            transaction.addToBackStack(null);
+            transaction.commit();
+
 
         } else if (id == R.id.nav_drives_driver) {
             // pop back fragments till reaching menu
