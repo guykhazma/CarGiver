@@ -66,7 +66,6 @@ public class DeviceListFragment extends Fragment {
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.device_list_fragment, container, false);
-        // Initialize the button to perform device discovery
         Button scanButton = (Button) view.findViewById(R.id.button_scan);
         scanButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -76,6 +75,7 @@ public class DeviceListFragment extends Fragment {
 
         // Initialize array adapters. One for already paired devices and one for new
         newDevicesArrayAdapter= new ArrayAdapter<String>(getActivity(), R.layout.device_name);
+        //device_name - this is every entry in the list
         pairedDevicesArrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.device_name);
 
         // Find and set up the ListView for paired devices

@@ -6,6 +6,7 @@ import android.support.design.widget.NavigationView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 /**
  * Created by GK on 11/17/2017.
@@ -22,8 +23,29 @@ public class MainDriverFragment extends Fragment {
         NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_driver);
         navigationView.getMenu().getItem(0).setChecked(true);
 
-        getActivity().setTitle("Main");
+        getActivity().setTitle("Driver");
+
+        Button btnStartDrive = view.findViewById(R.id.driving_page);
+        btnStartDrive.setOnClickListener( new View.OnClickListener() {
+            @Override
+            public void onClick (View v) {
+                //if we want to end the route
+                Button tmp = v.findViewById(R.id.driving_page);
+
+                if (tmp.getText().equals("Stop Driving")){
+                    Fragment ShowRouteRes = new RouteResultFragment();
+                    getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
+                }
+                tmp.setText("Stop Driving");
+            }
+        });
+
+
 
         return view;
+    }
+
+    protected void StartDrive(View v) {
+        //guyk todo insert the function that scan for devices
     }
 }

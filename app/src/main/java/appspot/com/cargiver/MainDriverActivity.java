@@ -135,9 +135,10 @@ public class MainDriverActivity extends AppCompatActivity
         }
     }
 
-    /**
-     * Broadcast receiver reacts to bluetooth events
-     */
+
+        /**
+         * Broadcast receiver reacts to bluetooth events
+         */
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
