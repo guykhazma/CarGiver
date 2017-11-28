@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.anastr.speedviewlib.Speedometer;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -59,6 +60,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
     TextView txtEnd;
     TextView driverName;
     TextView supervisorName;
+    Speedometer speedometer;
 
     // progress dialog
     private ProgressDialog mProgressDlg;
@@ -82,6 +84,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         txtEnd = (TextView) view.findViewById(R.id.time_finished);
         driverName = (TextView) view.findViewById(R.id.driver_name);
         supervisorName = (TextView) view.findViewById(R.id.supervisor_name);
+        speedometer = (Speedometer)  view.findViewById(R.id.speedView);
 
         // show loading
         hideContent();
@@ -219,6 +222,9 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                 else {
                     title = "Current Speed:" + entry.getValue().speed;
                     snippet = "Time Taken: " + Drives.dateFormat.format(entry.getValue().timeStamp);
+                }
+                if (entryNumber == 0) {
+                    speedometer.speedTo(entry.getValue().speed, 1000);
                 }
                 // add to map
                 newPoint = new LatLng(entry.getValue().latitude, entry.getValue().longitude);
