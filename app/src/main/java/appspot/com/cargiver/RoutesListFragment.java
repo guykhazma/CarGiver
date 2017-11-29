@@ -88,11 +88,13 @@ public class RoutesListFragment extends Fragment {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position,long id) {
                         RouteListAdapter btnAdapter = (RouteListAdapter)parent.getAdapter();
-                        String did = btnAdapter.RoutesList.get(position).driverID;
+//                        String did = btnAdapter.RoutesList.get(position).driveID;
                         Fragment ShowRouteRes = new RouteResultFragment();
                         // set parameters to fragment
                         Bundle bundle = new Bundle();
-                        bundle.putString("driveID", did);
+                        //todo cahnge the driveid
+//                        bundle.putString("driveID", did);
+                        bundle.putString("driveID", "-KzyH3elX37eUbJZNd6l");
                         ShowRouteRes.setArguments(bundle);
                         getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
 
