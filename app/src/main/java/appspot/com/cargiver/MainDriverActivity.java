@@ -34,6 +34,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -52,7 +53,6 @@ public class MainDriverActivity extends AppCompatActivity
     /*--------------------------Bluetooth-----------------------------------------------*/
     private final static int REQUEST_ENABLE_BT = 1; // for bluetooth request response code
     private static boolean bluetooth_enabled = false;
-    private static boolean has_bluetooth = true;
     private static BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     private ArrayList<BluetoothDevice> mNewDevicesArrayList; // Newly discovered devices
     private ProgressDialog mProgressDlg; // progress bar for search
@@ -97,7 +97,6 @@ public class MainDriverActivity extends AppCompatActivity
 
         /*------------------init DB----------------------*/
         dbRef = FirebaseDatabase.getInstance().getReference();
-
         /*------------------------- Bluetooth Init-------------------------------*/
         // Register for broadcasts
         IntentFilter filter = new IntentFilter();
@@ -311,7 +310,7 @@ public class MainDriverActivity extends AppCompatActivity
     // Bluetooth FAB on click
     public void bluetoothFBOnClick(View view){
         // check for bluetooth support
-        if (!has_bluetooth) {
+        if (mBluetoothAdapter == null) {
             Snackbar.make(view, "Oops...It seems your phone doesn't have Bluetooth", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
         }

@@ -37,6 +37,10 @@ public class MainDriverFragment extends Fragment {
 
                 if (tmp.getText().equals("Stop Driving")){
                     Fragment ShowRouteRes = new RouteResultFragment();
+                    // set parameters to fragment
+                    Bundle bundle = new Bundle();
+                    bundle.putString("driveID", "-KzyH3elX37eUbJZNd6l");
+                    ShowRouteRes.setArguments(bundle);
                     getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
                 }
                 tmp.setText("Stop Driving");
