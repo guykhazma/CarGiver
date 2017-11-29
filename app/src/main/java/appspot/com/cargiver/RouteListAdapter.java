@@ -39,14 +39,17 @@ public class RouteListAdapter extends ArrayAdapter {
     private final Activity context;
     //to store the list of routes
     private final String[] RoutesNameArray;
-    public final List<Drives> RoutesList;
+    private final List<Drives> RoutesList;
+    public final List<String> RoutesIdList;
 
-    public RouteListAdapter(Activity context, String[] nameArrayParam, List<Drives> DrivesList){
+
+    public RouteListAdapter(Activity context, String[] nameArrayParam, List<Drives> DrivesList, List<String> DrivesIdList){
 
         super(context,R.layout.route_name , nameArrayParam);
         this.context=context;
         this.RoutesNameArray = nameArrayParam;
         this.RoutesList = DrivesList;
+        this.RoutesIdList = DrivesIdList;
     }
 
 

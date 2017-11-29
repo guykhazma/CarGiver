@@ -57,14 +57,23 @@ public class RoutesListFragment extends Fragment {
         //TheRoutesDB.child("drives");
         //todo michaetlah - see if we need drives list for another use
         final List<Drives> DrivesList = new ArrayList<Drives>(); //will keep the drives data
+        final List<String> DrivesIdList = new ArrayList<String>(); //will keep the drives id
+
 //        final String[] nameArray; //keep the drivers ids
         RouteslistView = (ListView) view.findViewById(R.id.routes_list_view);
 
         TheRoutesDB.child("drives").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
+                int NumOfRoutes = 0;
                 for (DataSnapshot Child: dataSnapshot.getChildren()) {
-                    DrivesList.add(Child.getValue(Drives.class));
+                    if (NumOfRoutes >= 20){break;}
+//                    if(Child.getValue(Drives.class).supervisorID==MyId){
+                    //todo michatlah - getKey is the driverid
+                        DrivesList.add(Child.getValue(Drives.class));
+                        DrivesIdList.add(Child.getKey());
+                        NumOfRoutes++;
+//                    }
                 }
 
                 nameArray = new String[DrivesList.size()];
@@ -81,20 +90,19 @@ public class RoutesListFragment extends Fragment {
                  });
 
                 }
-                RouteListAdapter MyAmazingAdapter = new RouteListAdapter(getActivity(), nameArray, DrivesList);
+                RouteListAdapter MyAmazingAdapter = new RouteListAdapter(getActivity(), nameArray, DrivesList, DrivesIdList);
                 RouteslistView.setAdapter(MyAmazingAdapter);
 
                 RouteslistView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position,long id) {
                         RouteListAdapter btnAdapter = (RouteListAdapter)parent.getAdapter();
-//                        String did = btnAdapter.RoutesList.get(position).driveID;
+                        String did = btnAdapter.RoutesIdList.get(position);
                         Fragment ShowRouteRes = new RouteResultFragment();
                         // set parameters to fragment
                         Bundle bundle = new Bundle();
-                        //todo cahnge the driveid
-//                        bundle.putString("driveID", did);
-                        bundle.putString("driveID", "-KzyH3elX37eUbJZNd6l");
+                        bundle.putString("driveID", did);
+//                        bundle.putString("driveID", "-KzyH3elX37eUbJZNd6l");
                         ShowRouteRes.setArguments(bundle);
                         getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
 
