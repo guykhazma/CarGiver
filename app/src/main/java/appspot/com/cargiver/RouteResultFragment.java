@@ -163,7 +163,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             // set camera position to track latest
             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newPoint, 18));
             // set gauge
-            speedometer.speedTo(currMeasurment.rpm, 1000);
+            speedometer.speedTo((currMeasurment.rpm/9000)*100, 1000);
             if (currMeasurment.rpm < 3000){
                 rating.setText("Great");
             }
@@ -237,7 +237,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                     snippet = "Time Taken: " + Drives.dateFormat.format(entry.getValue().timeStamp);
                 }
                 if (entryNumber == 0) {
-                    speedometer.speedTo(entry.getValue().rpm, 1000);
+                    speedometer.speedTo((entry.getValue().rpm/9000)*100, 1000);
                     if (entry.getValue().rpm < 3000){
                         rating.setText("Great");
                     }
