@@ -197,7 +197,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             txtStart.setText("Start Time: " +  drive.getStartTime());
             if (drive.ongoing) {
                 txtEnd.setText("Drive Is Active");
-                txtEnd.setTextColor(Color.GREEN);
+                txtEnd.setTextColor(Color.parseColor("#4CAF50"));
             }
             else {
                 txtEnd.setText("End Time: " + drive.getEndTime());
