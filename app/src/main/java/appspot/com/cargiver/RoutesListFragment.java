@@ -39,6 +39,9 @@ public class RoutesListFragment extends Fragment {
     public ListView RouteslistView;
     public DatabaseReference TheRoutesDB;
     public RoutesListFragment(){};
+    public int index = 0;
+    String[] nameArray;
+    int SecondIndex;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -63,18 +66,42 @@ public class RoutesListFragment extends Fragment {
                 for (DataSnapshot Child: dataSnapshot.getChildren()) {
                     DrivesList.add(Child.getValue(Drives.class));
                 }
-                String[] nameArray = new String[DrivesList.size()];
-                for(int i=0; i<DrivesList.size(); i++){
-                    nameArray[i] = DrivesList.get(i).currentDriverID;
+
+                nameArray = new String[DrivesList.size()];
+                SecondIndex = 0;
+                for(index=0; index<DrivesList.size(); index++){
+                    TheRoutesDB.child("users").child(DrivesList.get(index).driverID).child("username").addListenerForSingleValueEvent(new ValueEventListener(){
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot){
+                        nameArray[SecondIndex] = dataSnapshot.getValue(String.class);
+                        SecondIndex++;
+                    }
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {}
+                 });
+
                 }
                 RouteListAdapter MyAmazingAdapter = new RouteListAdapter(getActivity(), nameArray, DrivesList);
                 RouteslistView.setAdapter(MyAmazingAdapter);
+
+                RouteslistView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position,long id) {
+                        RouteListAdapter btnAdapter = (RouteListAdapter)parent.getAdapter();
+                        String did = btnAdapter.RoutesList.get(position).driverID;
+                        Fragment ShowRouteRes = new RouteResultFragment();
+                        // set parameters to fragment
+                        Bundle bundle = new Bundle();
+                        bundle.putString("driveID", did);
+                        ShowRouteRes.setArguments(bundle);
+                        getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
+
+                    }
+                });
             }
 
             @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
+            public void onCancelled(DatabaseError databaseError) {}
         } );
 
         return view;

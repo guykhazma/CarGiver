@@ -39,7 +39,7 @@ public class RouteListAdapter extends ArrayAdapter {
     private final Activity context;
     //to store the list of routes
     private final String[] RoutesNameArray;
-    private final List<Drives> RoutesList;
+    public final List<Drives> RoutesList;
 
     public RouteListAdapter(Activity context, String[] nameArrayParam, List<Drives> DrivesList){
 
@@ -59,9 +59,8 @@ public class RouteListAdapter extends ArrayAdapter {
         TextView RouteDateField = (TextView) rowView.findViewById(R.id.route_date);
 
         //this code sets the values of the objects to values from the arrays
-        //todo michaeltah - take the info from db by position
-        RouteDriverField.setText("tmp");
-        RouteDateField.setText("tmp");
+        RouteDriverField.setText(RoutesNameArray[position]);
+        RouteDateField.setText(RoutesList.get(position).getStartTime());
 
         return rowView;
 
