@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.anastr.speedviewlib.Speedometer;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -59,6 +60,8 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
     TextView txtEnd;
     TextView driverName;
     TextView supervisorName;
+    TextView rating;
+    Speedometer speedometer;
 
     // progress dialog
     private ProgressDialog mProgressDlg;
@@ -82,6 +85,8 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         txtEnd = (TextView) view.findViewById(R.id.time_finished);
         driverName = (TextView) view.findViewById(R.id.driver_name);
         supervisorName = (TextView) view.findViewById(R.id.supervisor_name);
+        speedometer = (Speedometer)  view.findViewById(R.id.speedView);
+        rating = (TextView) view.findViewById(R.id.rating);
 
         // show loading
         hideContent();
@@ -157,6 +162,17 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             mapBuilder.include(newPoint);
             // set camera position to track latest
             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newPoint, 18));
+            // set gauge
+            speedometer.speedTo((currMeasurment.rpm/9000)*100, 1000);
+            if (currMeasurment.rpm < 3000){
+                rating.setText("Great");
+            }
+            else if (currMeasurment.rpm > 3000 && currMeasurment.rpm < 5000) {
+                rating.setText("Good");
+            }
+            else {
+                rating.setText("Bad");
+            }
         }
 
         @Override
@@ -219,6 +235,18 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                 else {
                     title = "Current Speed:" + entry.getValue().speed;
                     snippet = "Time Taken: " + Drives.dateFormat.format(entry.getValue().timeStamp);
+                }
+                if (entryNumber == 0) {
+                    speedometer.speedTo((entry.getValue().rpm/9000)*100, 1000);
+                    if (entry.getValue().rpm < 3000){
+                        rating.setText("Great");
+                    }
+                    else if (entry.getValue().rpm > 3000 && entry.getValue().rpm < 5000) {
+                        rating.setText("Good");
+                    }
+                    else {
+                        rating.setText("Bad");
+                    }
                 }
                 // add to map
                 newPoint = new LatLng(entry.getValue().latitude, entry.getValue().longitude);

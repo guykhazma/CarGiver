@@ -1,43 +1,112 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    >
+    tools:layout_editor_absoluteY="81dp">
 
     <com.google.android.gms.maps.MapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
-        android:layout_height="250dp" />
+        android:layout_height="200dp"
+        android:layout_columnSpan="2"
+        android:layout_gravity="center"
+        android:layout_marginBottom="8dp"
+        android:layout_row="0"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
 
-    <TextView
-        android:id="@+id/time_finished"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="left"
-        android:paddingLeft="10dp"
-        android:text="TextView" />
-    <TextView
-        android:id="@+id/time_started"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="left"
-        android:paddingLeft="10dp"
-        android:text="TextView" />
+    <com.github.anastr.speedviewlib.SpeedView
+        android:id="@+id/speedView"
+        android:layout_width="267dp"
+        android:layout_height="320dp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="200dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/mapView"
+        app:layout_constraintVertical_bias="0.0"
+        app:sv_endDegree="360"
+        app:sv_indicator="NeedleIndicator"
+        app:sv_lowSpeedPercent="33"
+        app:sv_maxSpeed="100"
+        app:sv_mediumSpeedPercent="66"
+        app:sv_minSpeed="0"
+        app:sv_speedTextColor="@android:color/transparent"
+        app:sv_speedTextPosition="BOTTOM_CENTER"
+        app:sv_startDegree="180"
+        app:sv_unitTextColor="@android:color/transparent"
+        app:sv_unitUnderSpeedText="false"
+        app:sv_withTremble="true" />
 
     <TextView
         android:id="@+id/driver_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="left"
-        android:paddingLeft="10dp"
-        android:text="TextView" />
+        android:layout_gravity="center_horizontal|bottom"
+        android:layout_marginBottom="8dp"
+        android:layout_marginStart="20dp"
+        android:text="TextView"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/time_started"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <TextView
         android:id="@+id/supervisor_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="left"
-        android:paddingLeft="10dp"
-        android:text="TextView" />
+        android:layout_marginBottom="12dp"
+        android:layout_marginStart="20dp"
+        android:text="TextView"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/driver_name"
+        app:layout_constraintStart_toStartOf="parent" />
 
-</LinearLayout>
+    <TextView
+        android:id="@+id/time_finished"
+        android:layout_width="wrap_content"
+        android:layout_height="19dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="30dp"
+        android:text="TextView"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/supervisor_name"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rating"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <TextView
+        android:id="@+id/rating"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="160dp"
+        android:text="Good"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/speedView" />
+
+    <TextView
+        android:id="@+id/time_started"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="56dp"
+        android:layout_marginStart="20dp"
+        android:text="TextView"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</android.support.constraint.ConstraintLayout>
