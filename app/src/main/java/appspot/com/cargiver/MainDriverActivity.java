@@ -282,6 +282,14 @@ public class MainDriverActivity extends AppCompatActivity
             // pop back fragments till reaching menu
             getFragmentManager().popBackStack(0,FragmentManager.POP_BACK_STACK_INCLUSIVE);
             // Redirect to manage drives fragment
+            // open list of routes
+            Fragment RoutesListFragment = new RoutesListFragment();
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+            transaction.replace(R.id.fragment_container_driver, RoutesListFragment, "Drives List");
+            // add to stack to allow return to menu on back press
+            transaction.addToBackStack(null);
+            transaction.commit();
+
         } else if (id == R.id.nav_sign_out_driver) {
             AuthUI.getInstance()
                     .signOut(this)
