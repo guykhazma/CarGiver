@@ -28,4 +28,8 @@ public class User {
         this.email = email;
         this.type = UNKNOWN_TYPE;
     }
+
+    public String getUsername(){
+        return this.username;
+    }
 }
