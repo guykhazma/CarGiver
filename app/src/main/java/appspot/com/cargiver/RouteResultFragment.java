@@ -59,7 +59,6 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
     TextView txtStart;
     TextView txtEnd;
     TextView driverName;
-    TextView supervisorName;
     TextView rating;
     Speedometer speedometer;
 
@@ -84,7 +83,6 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         txtStart = (TextView) view.findViewById(R.id.time_started);
         txtEnd = (TextView) view.findViewById(R.id.time_finished);
         driverName = (TextView) view.findViewById(R.id.driver_name);
-        supervisorName = (TextView) view.findViewById(R.id.supervisor_name);
         speedometer = (Speedometer)  view.findViewById(R.id.speedView);
         rating = (TextView) view.findViewById(R.id.rating);
 
@@ -115,14 +113,12 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         txtStart.setVisibility(View.INVISIBLE);
         txtEnd.setVisibility(View.INVISIBLE);
         driverName.setVisibility(View.INVISIBLE);
-        supervisorName.setVisibility(View.INVISIBLE);
     }
 
     private void showContent() {
         txtStart.setVisibility(View.VISIBLE);
         txtEnd.setVisibility(View.VISIBLE);
         driverName.setVisibility(View.VISIBLE);
-        supervisorName.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -312,21 +308,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             driver = dataSnapshot.getValue(String.class);
             driverName.setText("Driver: " +  driver);
             // get supervisor data
-            dbRef.child("users").child(drive.supervisorID).child("username").addListenerForSingleValueEvent(loadSupervisorData);
-        }
-
-        @Override
-        public void onCancelled(DatabaseError databaseError) {
-            Log.w(TAG, "failed loading drive", databaseError.toException());
-        }
-    };
-
-    // load supervisor data
-    final ValueEventListener loadSupervisorData = new ValueEventListener() {
-        @Override
-        public void onDataChange(DataSnapshot dataSnapshot) {
-            supervisor = dataSnapshot.getValue(String.class);
-            supervisorName.setText("Supervisor: " +  supervisor);
+            // finish
             // show data
             showContent();
             // hide progress bar

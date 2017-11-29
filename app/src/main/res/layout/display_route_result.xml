@@ -53,7 +53,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal|bottom"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="12dp"
         android:layout_marginStart="20dp"
         android:text="TextView"
         android:textStyle="bold"
@@ -61,29 +61,17 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
-        android:id="@+id/supervisor_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp"
-        android:layout_marginStart="20dp"
-        android:text="TextView"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/driver_name"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <TextView
         android:id="@+id/time_finished"
         android:layout_width="wrap_content"
         android:layout_height="19dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="36dp"
         android:layout_marginLeft="20dp"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="8dp"
         android:text="TextView"
         android:textStyle="bold"
-        app:layout_constraintBottom_toTopOf="@+id/supervisor_name"
+        app:layout_constraintBottom_toTopOf="@+id/time_started"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/rating"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintTop_toBottomOf="@+id/rating" />
 
     <TextView
         android:id="@+id/rating"
@@ -102,7 +90,7 @@
         android:id="@+id/time_started"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="56dp"
+        android:layout_marginBottom="44dp"
         android:layout_marginStart="20dp"
         android:text="TextView"
         android:textStyle="bold"
