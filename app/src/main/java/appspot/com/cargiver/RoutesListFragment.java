@@ -1,6 +1,7 @@
 package appspot.com.cargiver;
 
 import android.app.Fragment;
+import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.view.LayoutInflater;
@@ -42,6 +43,8 @@ public class RoutesListFragment extends Fragment {
     public int index = 0;
     String[] nameArray;
     int SecondIndex;
+    // progress dialog
+    private ProgressDialog mProgressDlg;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -49,6 +52,12 @@ public class RoutesListFragment extends Fragment {
         // set menu as selected on startup
         NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_driver);
         navigationView.getMenu().getItem(1).setChecked(true);
+
+        // show loading
+        mProgressDlg = new ProgressDialog(getActivity());
+        mProgressDlg.setMessage("Loading...");
+        mProgressDlg.setCancelable(false);
+        mProgressDlg.show();
 
         //take last 20 routes from db. if less take less...
 
@@ -92,6 +101,8 @@ public class RoutesListFragment extends Fragment {
                 }
                 RouteListAdapter MyAmazingAdapter = new RouteListAdapter(getActivity(), nameArray, DrivesList, DrivesIdList);
                 RouteslistView.setAdapter(MyAmazingAdapter);
+                // hide progress bar
+                mProgressDlg.dismiss();
 
                 RouteslistView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override
