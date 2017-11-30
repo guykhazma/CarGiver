@@ -18,8 +18,8 @@
             android:title="Manage Drivers" />
 
         <item
-            android:id="@+id/nav_supervisor_signout"
-            android:icon="@drawable/ic_menu_manage"
-            android:title="Manage Drivers" />
+            android:id="@+id/nav_sign_out_driver"
+            android:icon="@android:drawable/presence_offline"
+            android:title="Sign Out" />
     </group>
 </menu>

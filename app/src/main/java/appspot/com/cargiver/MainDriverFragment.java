@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 
 /**
  * Created by GK on 11/17/2017.
@@ -26,11 +27,13 @@ public class MainDriverFragment extends Fragment {
         getActivity().setTitle("Driver");
 
         Button btnStartDrive = view.findViewById(R.id.driving_page);
+
         btnStartDrive.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick (View v) {
                 //if we want to end the route
                 Button tmp = v.findViewById(R.id.driving_page);
+                TextView Explain = v.getRootView().findViewById(R.id.start_driving_explain);
 
                 if (tmp.getText().equals("Stop Driving")){
                     Fragment ShowRouteRes = new RouteResultFragment();
@@ -41,6 +44,8 @@ public class MainDriverFragment extends Fragment {
                     getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
                 }
                 tmp.setText("Stop Driving");
+                Explain.setText("When you arrive your destination, please click on Stop Driving");
+
             }
         });
 

@@ -23,29 +23,27 @@
 
     <com.github.anastr.speedviewlib.SpeedView
         android:id="@+id/speedView"
-        android:layout_width="0dp"
-        android:layout_height="110dp"
-        android:layout_column="0"
-        android:layout_columnSpan="2"
+        android:layout_width="267dp"
+        android:layout_height="320dp"
         android:layout_gravity="center"
-        android:layout_marginBottom="256dp"
-        android:layout_row="1"
-        android:paddingLeft="5dp"
-        android:paddingRight="5dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="200dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/mapView"
+        app:layout_constraintVertical_bias="0.0"
         app:sv_endDegree="360"
         app:sv_indicator="NeedleIndicator"
         app:sv_lowSpeedPercent="33"
+        app:sv_maxSpeed="100"
         app:sv_mediumSpeedPercent="66"
+        app:sv_minSpeed="0"
         app:sv_speedTextColor="@android:color/transparent"
         app:sv_speedTextPosition="BOTTOM_CENTER"
         app:sv_startDegree="180"
-        app:sv_tickRotation="false"
         app:sv_unitTextColor="@android:color/transparent"
         app:sv_unitUnderSpeedText="false"
         app:sv_withTremble="true" />
@@ -55,52 +53,60 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal|bottom"
-        android:layout_marginBottom="84dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginStart="20dp"
         android:text="TextView"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/supervisor_name"
-        app:layout_constraintVertical_bias="0.136" />
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/time_started"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/supervisor_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginTop="13dp"
+        android:layout_marginBottom="12dp"
+        android:layout_marginStart="20dp"
         android:text="TextView"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/time_finished" />
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/driver_name"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/time_finished"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginTop="28dp"
+        android:layout_height="19dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="30dp"
         android:text="TextView"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/supervisor_name"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/speedView" />
+        app:layout_constraintTop_toBottomOf="@+id/rating"
+        app:layout_constraintVertical_bias="1.0" />
 
     <TextView
         android:id="@+id/rating"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="160dp"
         android:text="Good"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/speedView" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/speedView" />
 
     <TextView
         android:id="@+id/time_started"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="52dp"
-        android:layout_marginLeft="16dp"
+        android:layout_marginBottom="56dp"
+        android:layout_marginStart="20dp"
         android:text="TextView"
+        android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent" />
+        app:layout_constraintStart_toStartOf="parent" />
 
 </android.support.constraint.ConstraintLayout>

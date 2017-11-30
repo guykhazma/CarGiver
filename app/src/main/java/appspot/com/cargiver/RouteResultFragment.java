@@ -60,6 +60,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
     TextView txtEnd;
     TextView driverName;
     TextView supervisorName;
+    TextView rating;
     Speedometer speedometer;
 
     // progress dialog
@@ -85,6 +86,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         driverName = (TextView) view.findViewById(R.id.driver_name);
         supervisorName = (TextView) view.findViewById(R.id.supervisor_name);
         speedometer = (Speedometer)  view.findViewById(R.id.speedView);
+        rating = (TextView) view.findViewById(R.id.rating);
 
         // show loading
         hideContent();
@@ -160,6 +162,17 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             mapBuilder.include(newPoint);
             // set camera position to track latest
             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newPoint, 18));
+            // set gauge
+            speedometer.speedTo((currMeasurment.rpm/9000)*100, 1000);
+            if (currMeasurment.rpm < 3000){
+                rating.setText("Great");
+            }
+            else if (currMeasurment.rpm > 3000 && currMeasurment.rpm < 5000) {
+                rating.setText("Good");
+            }
+            else {
+                rating.setText("Bad");
+            }
         }
 
         @Override
@@ -224,7 +237,16 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                     snippet = "Time Taken: " + Drives.dateFormat.format(entry.getValue().timeStamp);
                 }
                 if (entryNumber == 0) {
-                    speedometer.speedTo(entry.getValue().speed, 1000);
+                    speedometer.speedTo((entry.getValue().rpm/9000)*100, 1000);
+                    if (entry.getValue().rpm < 3000){
+                        rating.setText("Great");
+                    }
+                    else if (entry.getValue().rpm > 3000 && entry.getValue().rpm < 5000) {
+                        rating.setText("Good");
+                    }
+                    else {
+                        rating.setText("Bad");
+                    }
                 }
                 // add to map
                 newPoint = new LatLng(entry.getValue().latitude, entry.getValue().longitude);

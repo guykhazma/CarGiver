@@ -15,17 +15,19 @@ import java.util.Date;
 
 public class Measurement {
     Date timeStamp; // the time stamp of the measurement
-    int speed; // current vehicle speed
-    double latitude;
-    double longitude;
+    float speed; // current vehicle speed
+    float rpm;
+    float latitude;
+    float longitude;
 
     @Keep
     public Measurement() {
         // Default constructor required for calls to DataSnapshot.getValue(Drives.class)
     }
 
-    public Measurement(int speed, double latitude, double longitude) {
+    public Measurement(int speed, float latitude, float longitude, int rpm) {
         this.speed = speed;
+        this.rpm = rpm;
         this.latitude = latitude;
         this.longitude = longitude;
         this.timeStamp = Calendar.getInstance().getTime();

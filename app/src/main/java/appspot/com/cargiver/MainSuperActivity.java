@@ -1,5 +1,8 @@
 package appspot.com.cargiver;
 
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -111,9 +114,19 @@ public class MainSuperActivity extends AppCompatActivity
         if (id == R.id.nav_main_supervisor) {
             // Redirect to navigation main
         } else if (id == R.id.nav_drives_supervisor) {
-            // Redirect to manage supervisors fragment
-        } else if (id == R.id.nav_manage_drivers_supervisor) {
             // Redirect to manage drives fragment
+        } else if (id == R.id.nav_manage_drivers_supervisor) {
+            // pop back fragments till reaching menu
+            getFragmentManager().popBackStack(0, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            // Redirect to manage drives fragment
+            // open list of routes
+            Fragment ManageDriversFragment = new ManageDriversFragment();
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+            transaction.replace(R.id.fragment_container_super, ManageDriversFragment, "Manage Drivers");
+            // add to stack to allow return to menu on back press
+            transaction.addToBackStack(null);
+            transaction.commit();
+            // Redirect to manage drivers fragment
         } else if (id == R.id.nav_sign_out_driver) {
             AuthUI.getInstance()
                     .signOut(this)
