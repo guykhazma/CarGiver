@@ -15,6 +15,4 @@ public class Driver {
     public Driver() {
         // Default constructor required for calls to DataSnapshot.getValue(Driver.class)
     }
-
-    public Driver()
 }
