@@ -163,7 +163,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             if (currMeasurment.rpm < 3000){
                 rating.setText("Great");
             }
-            else if (currMeasurment.rpm > 3000 && currMeasurment.rpm < 5000) {
+            else if (currMeasurment.rpm >= 3000 && currMeasurment.rpm < 5000) {
                 rating.setText("Good");
             }
             else {
