@@ -237,7 +237,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                     if (entry.getValue().rpm < 3000){
                         rating.setText("Great");
                     }
-                    else if (entry.getValue().rpm > 3000 && entry.getValue().rpm < 5000) {
+                    else if (entry.getValue().rpm >= 3000 && entry.getValue().rpm < 5000) {
                         rating.setText("Good");
                     }
                     else {
