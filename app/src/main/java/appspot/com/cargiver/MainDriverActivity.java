@@ -130,7 +130,7 @@ public class MainDriverActivity extends AppCompatActivity
             // Intent, pass the Intent's extras to the fragment as arguments
             main.setArguments(getIntent().getExtras());
             // load default activity
-            getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver,main,"MAIN").commit();
+            getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver,main).commit();
         }
     }
 
@@ -238,6 +238,7 @@ public class MainDriverActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main_driver, menu);
+        menu.clear();
         return true;
     }
 
@@ -264,11 +265,11 @@ public class MainDriverActivity extends AppCompatActivity
 
         if (id == R.id.nav_main_driver) {
             // pop back fragments till reaching menu
-            getFragmentManager().popBackStack(0,FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            getFragmentManager().popBackStackImmediate(null,FragmentManager.POP_BACK_STACK_INCLUSIVE);
 
         } else if (id == R.id.nav_manage_supervisors_driver) {
             // pop back fragments till reaching menu
-            getFragmentManager().popBackStack(0,FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            getFragmentManager().popBackStackImmediate(null,FragmentManager.POP_BACK_STACK_INCLUSIVE);
             // Redirect to manage supervisors fragment
             Fragment manageFragment = new ManageSupervisorsFragment();
             FragmentTransaction transaction = getFragmentManager().beginTransaction();
@@ -280,7 +281,7 @@ public class MainDriverActivity extends AppCompatActivity
 
         } else if (id == R.id.nav_drives_driver) {
             // pop back fragments till reaching menu
-            getFragmentManager().popBackStack(0,FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            getFragmentManager().popBackStackImmediate(null,FragmentManager.POP_BACK_STACK_INCLUSIVE);
             // Redirect to manage drives fragment
             // open list of routes
             Fragment RoutesListFragment = new RoutesListFragment();
