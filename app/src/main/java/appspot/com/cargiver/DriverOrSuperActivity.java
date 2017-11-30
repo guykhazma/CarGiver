@@ -27,7 +27,7 @@ public class DriverOrSuperActivity extends AppCompatActivity {
     // Redirect to driver main on click
     protected void DriverMain(View v)
     {
-        // update db set to driver type
+        // update db set to driver type, and add to drivers
         dbRef.child("users").child(user.getUid()).child("type").setValue(User.DRIVER);
         startActivity(new Intent(getBaseContext(), MainDriverActivity.class));
         finish();

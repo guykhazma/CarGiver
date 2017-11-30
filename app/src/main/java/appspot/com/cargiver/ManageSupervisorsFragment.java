@@ -57,7 +57,6 @@ public class ManageSupervisorsFragment extends Fragment {
         String uid = currentUser.getUid(); // current user id
         // Get list of authorized supervisor IDs.
         final List<String> supervisorIDs = new ArrayList<String>();
-        //dbRef.child("drivers").child(uid).child("supervisorIDs")
         dbRef.child("drivers").child(uid).child("supervisorsIDs").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
