@@ -1,5 +1,8 @@
 package appspot.com.cargiver;
 
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -54,10 +57,14 @@ public class MainSuperActivity extends AppCompatActivity
         // set menu as selected on startup
         navigationView.getMenu().getItem(0).setChecked(true);
 
-        Menu menu = navigationView.getMenu();
-        Menu submenu = menu.addSubMenu("My Cars");
-        // TODO: replace with real code to load cars
-        submenu.add("Car 1");
+        /*-------------------- Main Fragment initialization --------------------------------------------*/
+        // if we are just starting
+        if (savedInstanceState == null) {
+            // Create Main Fragment
+            MainSuperFragment main = new MainSuperFragment();
+            // load default activity
+            getFragmentManager().beginTransaction().replace(R.id.fragment_container_super,main).commit();
+        }
 
         // Fill current user details
         View navHeaderView= navigationView.getHeaderView(0);
@@ -84,6 +91,7 @@ public class MainSuperActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main_super, menu);
+        menu.clear();
         return true;
     }
 
@@ -109,11 +117,34 @@ public class MainSuperActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_main_supervisor) {
+            // pop back fragments till reaching menu
+            getFragmentManager().popBackStackImmediate(null,FragmentManager.POP_BACK_STACK_INCLUSIVE);
             // Redirect to navigation main
         } else if (id == R.id.nav_drives_supervisor) {
-            // Redirect to manage supervisors fragment
-        } else if (id == R.id.nav_manage_drivers_supervisor) {
             // Redirect to manage drives fragment
+            // pop back fragments till reaching menu
+            /* TODO: need to make it work for supervisor currently uses nav_view_driver
+            getFragmentManager().popBackStackImmediate(null,FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            // Redirect to manage drives fragment
+            // open list of routes
+            Fragment RoutesListFragment = new RoutesListFragment();
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+            transaction.replace(R.id.fragment_container_super, RoutesListFragment, "Drives List");
+            // add to stack to allow return to menu on back press
+            transaction.addToBackStack(null);
+            transaction.commit();*/
+        } else if (id == R.id.nav_manage_drivers_supervisor) {
+            // pop back fragments till reaching menu
+            getFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            // Redirect to manage drives fragment
+            // open list of routes
+            Fragment ManageDriversFragment = new ManageDriversFragment();
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+            transaction.replace(R.id.fragment_container_super, ManageDriversFragment, "Manage Drivers");
+            // add to stack to allow return to menu on back press
+            transaction.addToBackStack(null);
+            transaction.commit();
+            // Redirect to manage drivers fragment
         } else if (id == R.id.nav_sign_out_driver) {
             AuthUI.getInstance()
                     .signOut(this)

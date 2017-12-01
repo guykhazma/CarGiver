@@ -31,6 +31,7 @@ public class StartActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         setVisible(true);
+        //FirebaseDatabase.getInstance().setPersistenceEnabled(true);
 
         /*---------------------Login Listener-------------------------------------*/
         FirebaseAuth.AuthStateListener authListener = new FirebaseAuth.AuthStateListener() {
@@ -39,6 +40,7 @@ public class StartActivity extends AppCompatActivity {
                 final FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
                     // user is already logged make sure it has type in db
+                    // allow presistance for offline access
                     final DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference();
                     dbRef.child("users").child(user.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override

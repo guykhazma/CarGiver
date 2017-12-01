@@ -15,7 +15,7 @@
         <item
             android:id="@+id/nav_manage_supervisors_driver"
             android:icon="@drawable/ic_menu_manage"
-            android:title="Manage Drivers" />
+            android:title="Manage Supervisors" />
 
         <item
             android:id="@+id/nav_sign_out_driver"

@@ -6,12 +6,17 @@ import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -23,9 +28,13 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Created by GK on 11/17/2017.
@@ -38,25 +47,25 @@ public class DeviceListFragment extends Fragment {
      */
     private static final String TAG = "DeviceListFragment";
     /**
-     * Return Intent extra
+     * Bluetooth UUID
      */
-    public static String EXTRA_DEVICE_ADDRESS = "device_address";
+    private static final UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     /**
      * Member fields
      */
     private BluetoothAdapter mBtAdapter;
     /**
-     * Newly discovered devices
+     * Devices
      */
     private ArrayAdapter<String> newDevicesArrayAdapter;
+    private ArrayAdapter<String> pairedDevicesArrayAdapter;
 
     // progress bar for search
     private ProgressDialog mProgressDlg;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.device_list_fragment, container, false);
-        // Initialize the button to perform device discovery
         Button scanButton = (Button) view.findViewById(R.id.button_scan);
         scanButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -66,7 +75,8 @@ public class DeviceListFragment extends Fragment {
 
         // Initialize array adapters. One for already paired devices and one for new
         newDevicesArrayAdapter= new ArrayAdapter<String>(getActivity(), R.layout.device_name);
-        ArrayAdapter<String> pairedDevicesArrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.device_name);
+        //device_name - this is every entry in the list
+        pairedDevicesArrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.device_name);
 
         // Find and set up the ListView for paired devices
         ListView pairedListView = (ListView) view.findViewById(R.id.paired_devices);
@@ -112,6 +122,17 @@ public class DeviceListFragment extends Fragment {
             pairedDevicesArrayAdapter.add(noDevices);
         }
 
+        // set connection label
+        TextView connectedTo = (TextView) view.findViewById(R.id.connected_to);
+        if (BluetoothOBDService.status == BluetoothOBDService.STATE_CONNECTED) {
+            connectedTo.setText("Connected to " + BluetoothOBDService.dev.getName());
+            connectedTo.setBackgroundColor(Color.parseColor("#4CAF50"));
+        }
+        else {
+            connectedTo.setText("Not connected");
+            connectedTo.setBackgroundColor(Color.parseColor("#DD2C00"));
+        }
+
         // Inflate the layout for this fragment
         return view;
     }
@@ -125,8 +146,17 @@ public class DeviceListFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        // do discovery
-        doDiscovery();
+        // Disable the floating button to avoid opening multiple
+        final FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
+        fab.setEnabled(false);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        // Enable the floating button to avoid opening multiple
+        final FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
+        fab.setEnabled(true);
     }
 
     @Override
@@ -150,6 +180,21 @@ public class DeviceListFragment extends Fragment {
         getActivity().setTitle(R.string.scanning);
         // clear recent found devices
         newDevicesArrayAdapter.clear();
+        pairedDevicesArrayAdapter.clear();
+
+        // refill paired devices
+        // Get a set of currently paired devices
+        Set<BluetoothDevice> pairedDevices = mBtAdapter.getBondedDevices();
+        // If there are paired devices, add each one to the ArrayAdapter
+        if (pairedDevices.size() > 0) {
+            getView().findViewById(R.id.title_paired_devices).setVisibility(View.VISIBLE);
+            for (BluetoothDevice device : pairedDevices) {
+                pairedDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+            }
+        } else {
+            String noDevices = getResources().getText(R.string.none_paired).toString();
+            pairedDevicesArrayAdapter.add(noDevices);
+        }
 
         // If we're already discovering, stop it
         if (mBtAdapter.isDiscovering()) {
@@ -171,16 +216,60 @@ public class DeviceListFragment extends Fragment {
             // Get the device MAC address, which is the last 17 chars in the View
             String info = ((TextView) v).getText().toString();
             String address = info.substring(info.length() - 17);
+            if (!BluetoothOBDService.isConnecting) {
+                if (BluetoothOBDService.dev == null) {
+                    // Connect
+                    Log.d(TAG, "connect to: " + info + " " + address);
+                    BluetoothDevice device = mBtAdapter.getRemoteDevice(address);
+                    // Start the thread to connect with the given device
+                    BluetoothOBDService.connect(device, true, mHandler);
+                }
+                else if (BluetoothOBDService.dev.getAddress() != address) {
+                    // Connect
+                    Log.d(TAG, "connect to: " + info + " " + address);
+                    BluetoothDevice device = mBtAdapter.getRemoteDevice(address);
+                    // Start the thread to connect with the given device
+                    BluetoothOBDService.connect(device, true, mHandler);
+                }
+                else {
+                    Toast toast = Toast.makeText(getActivity().getApplicationContext(), "Already connected to " + BluetoothOBDService.dev.getName(), Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+            }
+            else {
+                Toast toast = Toast.makeText(getActivity().getApplicationContext(), "Connection already in action", Toast.LENGTH_SHORT);
+                toast.show();
+            }
 
-            // Create the result Intent and include the MAC address
-            Intent intent = new Intent();
-            intent.putExtra(EXTRA_DEVICE_ADDRESS, address);
 
-            // Set result and finish this Activity
-            //setResult(Activity.RESULT_OK, intent);
-            //finish();
         }
     };
+
+    public static BluetoothSocket connect(BluetoothDevice dev) throws IOException {
+        BluetoothSocket sock = null;
+        BluetoothSocket sockFallback = null;
+
+        Log.d(TAG, "Starting Bluetooth connection..");
+        try {
+            sock = dev.createRfcommSocketToServiceRecord(MY_UUID);
+            sock.connect();
+        } catch (Exception e1) {
+            Log.e(TAG, "There was an error while establishing Bluetooth connection. Falling back..", e1);
+            Class<?> clazz = sock.getRemoteDevice().getClass();
+            Class<?>[] paramTypes = new Class<?>[]{Integer.TYPE};
+            try {
+                Method m = clazz.getMethod("createRfcommSocket", paramTypes);
+                Object[] params = new Object[]{Integer.valueOf(1)};
+                sockFallback = (BluetoothSocket) m.invoke(sock.getRemoteDevice(), params);
+                sockFallback.connect();
+                sock = sockFallback;
+            } catch (Exception e2) {
+                Log.e(TAG, "Couldn't fallback while establishing Bluetooth connection.", e2);
+                throw new IOException(e2.getMessage());
+            }
+        }
+        return sock;
+    }
 
     /**
      * The BroadcastReceiver that listens for discovered devices and changes the title when
@@ -197,7 +286,7 @@ public class DeviceListFragment extends Fragment {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 // If it's already paired, skip it, because it's been listed already
                 if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
-                    newDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+                        newDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
                 }
                 // When discovery is finished, change the Activity title
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
@@ -228,4 +317,32 @@ public class DeviceListFragment extends Fragment {
             devices.add("No Bluetooth devices found");
         return devices;
     }
+
+
+    /**
+     * The Handler that gets information back from the BluetoothChatService
+     */
+    private final Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case BluetoothOBDService.MESSAGE_STATE_CHANGE:
+                    TextView connectedTo = (TextView) getView().findViewById(R.id.connected_to);
+                    switch (BluetoothOBDService.status) {
+                        case BluetoothOBDService.STATE_CONNECTED:
+                            connectedTo.setText("Connected to " + BluetoothOBDService.dev.getName());
+                            connectedTo.setBackgroundColor(Color.parseColor("#4CAF50"));
+                            break;
+                        case BluetoothOBDService.STATE_CONNECTING:
+                            connectedTo.setText("Connecting...");
+                            break;
+                        case BluetoothOBDService.STATE_DISCONNECTED:
+                            connectedTo.setText("Not connected");
+                            connectedTo.setBackgroundColor(Color.parseColor("#DD2C00"));
+                            break;
+                    }
+            }
+        }
+    };
+
 }

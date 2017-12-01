@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
     android:layout_height="match_parent"  tools:context="appspot.com.cargiver.LoginActivity"
     android:background="@drawable/background">
@@ -12,18 +13,12 @@
         android:alpha="0.5"
         android:layout_alignParentTop="true" />
 
-    <TextView
-        android:id="@+id/textView"
+    <ImageView
+        android:id="@+id/imageView3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="85dp"
-        android:fontFamily="casual"
-        android:text="CarGiver"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:textColor="	#d7ecfd"
-        android:textSize="70dp" />
+        android:contentDescription="logo"
+        app:srcCompat="@drawable/cargiverlogo" />
 
     <Button
         android:id="@+id/btn_login"
