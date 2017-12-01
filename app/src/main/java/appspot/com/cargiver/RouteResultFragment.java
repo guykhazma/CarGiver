@@ -224,11 +224,11 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             Arrays.sort(keys);
             for (Object key : keys)
             {
-                if (entryNumber == size - 1) {
+                if (entryNumber == 0) {
                     title = "Start Point";
                     snippet = "Current Speed: " + drive.meas.get(key).speed;
                 }
-                else if (entryNumber == 0 && size > 1 && drive.ongoing == false){
+                else if (entryNumber == size - 1 && size > 1 && drive.ongoing == false){
                     title = "Finish Point";
                     snippet = "Current Speed: " + drive.meas.get(key).speed;
                 }
@@ -236,7 +236,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                     title = "Current Speed:" + drive.meas.get(key).speed;
                     snippet = "Time Taken: " + Drives.dateFormat.format(drive.meas.get(key).timeStamp);
                 }
-                if (entryNumber == 0) {
+                if (entryNumber == size - 1) {
                     speedometer.speedTo((drive.meas.get(key).rpm/9000)*100, 1000);
                     if (drive.meas.get(key).rpm < 3000){
                         rating.setText("Great");
