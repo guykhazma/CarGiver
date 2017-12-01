@@ -7,38 +7,57 @@
     android:layout_height="match_parent"
     android:id="@+id/content_main">
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/start_driving_explain"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="52dp"
+        android:layout_marginEnd="25dp"
+        android:layout_marginStart="25dp"
+        android:layout_marginTop="20dp"
+        android:fontFamily="casual"
+        android:gravity="center"
+        android:text="Click \'Start Driving\' to start the data collection"
+        android:textSize="25dp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/please_drive_safe"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.733" />
+
+    <TextView
+        android:id="@+id/please_drive_safe"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="144dp"
+        android:fontFamily="casual"
+        android:gravity="center"
+        android:text="Please drive safe"
+        android:textSize="25dp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.079" />
 
-        <TextView
-            android:id="@+id/start_driving_explain"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="By clicking \'Start Driving\' you will start the data collection"
-            android:textSize="25dp"
-            android:textStyle="bold"
-            android:fontFamily="casual"
-            android:gravity="center"
-            />
-        <TextView
-            android:id="@+id/please_drive_safe"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="please drive safe"
-            android:textSize="25dp"
-            android:textStyle="bold"
-            android:fontFamily="casual"
-            android:gravity="center"
-            />
-
-        <Button
-            android:id="@+id/driving_page"
-            android:layout_width="match_parent"
-            android:layout_height="180dp"
-            android:gravity="center"
-            android:text="start driving" />
-    </LinearLayout>
+    <ImageButton
+        android:id="@+id/btn_start_drive"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="96dp"
+        android:layout_marginTop="8dp"
+        android:background="@null"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.518"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0"
+        app:srcCompat="@drawable/startdriving" />
 
 </android.support.constraint.ConstraintLayout>
