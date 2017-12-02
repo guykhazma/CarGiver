@@ -97,6 +97,29 @@ public class MainDriverActivity extends AppCompatActivity
 
         /*------------------init DB----------------------*/
         dbRef = FirebaseDatabase.getInstance().getReference();
+        /*
+        DatabaseReference ref = dbRef.child("drives").child("-KzyH3elX37eUbJZNd6l").child("meas").push();
+        ref.setValue(new Measurement(34, (float)32.189330, (float)34.893708, 3400));
+        ref = dbRef.child("drives").child("-KzyH3elX37eUbJZNd6l").child("meas").push();
+        ref.setValue(new Measurement(31, (float)32.188692, (float)34.894108, 2900));
+        ref = dbRef.child("drives").child("-KzyH3elX37eUbJZNd6l").child("meas").push();
+        ref.setValue(new Measurement(15, (float)32.187991, (float)34.895038, 1900));
+        ref = dbRef.child("drives").child("-KzyH3elX37eUbJZNd6l").child("meas").push();
+        ref.setValue(new Measurement(12, (float)32.187187, (float)34.896025, 2500));
+        ref = dbRef.child("drives").child("-KzyH3elX37eUbJZNd6l").child("meas").push();
+        ref.setValue(new Measurement(23, (float)32.186667, (float)34.896210, 3750));
+        ref = dbRef.child("drives").child("-KzyH3elX37eUbJZNd6l").child("meas").push();
+        ref.setValue(new Measurement(13, (float)32.186127, (float)34.895523, 2050));
+        ref = dbRef.child("drives").child("-KzyH3elX37eUbJZNd6l").child("meas").push();
+        ref.setValue(new Measurement(49, (float)32.185466, (float)34.895955, 6200));
+        ref = dbRef.child("drives").child("-KzyH3elX37eUbJZNd6l").child("meas").push();
+        ref.setValue(new Measurement(55, (float)32.184488, (float)34.897200, 4800));
+        ref = dbRef.child("drives").child("-KzyH3elX37eUbJZNd6l").child("meas").push();
+        ref.setValue(new Measurement(42, (float)32.183523, (float)34.898090, 4000));
+        ref = dbRef.child("drives").child("-KzyH3elX37eUbJZNd6l").child("meas").push();
+        ref.setValue(new Measurement(17, (float)32.182706, (float)34.898021, 2300));
+        ref = dbRef.child("drives").child("-KzyH3elX37eUbJZNd6l").child("meas").push();
+        ref.setValue(new Measurement(19, (float)32.182411, (float)34.897841, 2500));*/
         /*------------------------- Bluetooth Init-------------------------------*/
         // Register for broadcasts
         IntentFilter filter = new IntentFilter();
