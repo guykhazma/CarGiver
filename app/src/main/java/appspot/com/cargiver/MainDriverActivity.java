@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -131,6 +132,12 @@ public class MainDriverActivity extends AppCompatActivity
             main.setArguments(getIntent().getExtras());
             // load default activity
             getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver,main).commit();
+
+            // load bluetooth device preferences
+            SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+            String address = sharedPref.getString(user.getUid(), null);
+            if (address != null)
+                BluetoothOBDService.dev = mBluetoothAdapter.getRemoteDevice(address);
         }
     }
 
@@ -201,15 +208,18 @@ public class MainDriverActivity extends AppCompatActivity
             // Make sure the request was successful
             if (resultCode == RESULT_OK) {
                 Log.w(TAG, "Bluetooth Enabled");
-                Fragment scanFragment = new DeviceListFragment();
-                FragmentTransaction transaction = getFragmentManager().beginTransaction();
-                transaction.replace(R.id.fragment_container_driver, scanFragment, "BT_scan");
-                // add to stack to allow return to menu on back press
-                transaction.addToBackStack(null);
-                transaction.commit();
-                // remove menu selection from drawer
-                NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view_driver);
-                navigationView.getMenu().getItem(0).setChecked(false);
+                Fragment scanFragment = (DeviceListFragment)getFragmentManager().findFragmentByTag("BT_scan");
+                if (scanFragment == null) {
+                    scanFragment = new DeviceListFragment();
+                    FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                    transaction.replace(R.id.fragment_container_driver, scanFragment, "BT_scan");
+                    // add to stack to allow return to menu on back press
+                    transaction.addToBackStack(null);
+                    transaction.commit();
+                    // remove menu selection from drawer
+                    NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view_driver);
+                    navigationView.getMenu().getItem(0).setChecked(false);
+                }
             }
             else {
                 Log.w(TAG, "Bluetooth Disabled");
@@ -331,16 +341,19 @@ public class MainDriverActivity extends AppCompatActivity
             }
             // Bluetooth is now enabled, so go to scan page
             else {
-                // open scan page
-                Fragment scanFragment = new DeviceListFragment();
                 FragmentTransaction transaction = getFragmentManager().beginTransaction();
-                transaction.replace(R.id.fragment_container_driver, scanFragment, "BT_scan");
-                // add to stack to allow return to menu on back press
-                transaction.addToBackStack(null);
-                transaction.commit();
-                // remove menu selection from drawer
-                NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view_driver);
-                navigationView.getMenu().getItem(0).setChecked(false);
+                // open scan page if needed
+                Fragment scanFragment = (DeviceListFragment)getFragmentManager().findFragmentByTag("BT_scan");
+                if (scanFragment == null) {
+                    scanFragment = new DeviceListFragment();
+                    transaction.replace(R.id.fragment_container_driver, scanFragment, "BT_scan");
+                    // add to stack to allow return to menu on back press
+                    transaction.addToBackStack(null);
+                    transaction.commit();
+                    // remove menu selection from drawer
+                    NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view_driver);
+                    navigationView.getMenu().getItem(0).setChecked(false);
+                }
             }
         }
     }

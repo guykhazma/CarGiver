@@ -194,7 +194,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
             drive = dataSnapshot.getValue(Drives.class);
-
+            // TODO: need to sort by time if not using indexes
             txtStart.setText("Start Time: " +  drive.getStartTime());
             if (drive.ongoing) {
                 txtEnd.setText("Drive Is Active");
