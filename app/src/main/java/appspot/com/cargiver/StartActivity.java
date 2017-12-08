@@ -19,20 +19,15 @@ import com.google.firebase.database.ValueEventListener;
  * Created by Guy on 11/23/2017.
  */
 
+
 public class StartActivity extends AppCompatActivity {
+
     private static final String TAG = MainDriverActivity.class.getName(); // TAG for logging
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        setVisible(true);
         //FirebaseDatabase.getInstance().setPersistenceEnabled(true);
-
         /*---------------------Login Listener-------------------------------------*/
         FirebaseAuth.AuthStateListener authListener = new FirebaseAuth.AuthStateListener() {
             @Override
