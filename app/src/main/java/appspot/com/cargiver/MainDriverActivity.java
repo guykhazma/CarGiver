@@ -54,10 +54,9 @@ public class MainDriverActivity extends AppCompatActivity
 
     /*--------------------------Bluetooth-----------------------------------------------*/
     private final static int REQUEST_ENABLE_BT = 1; // for bluetooth request response code
-    private static boolean bluetooth_enabled = false;
     private static BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-    private ArrayList<BluetoothDevice> mNewDevicesArrayList; // Newly discovered devices
-    private ProgressDialog mProgressDlg; // progress bar for search
+    public static BluetoothOBDService btService;
+    public static BluetoothDevice bluetoothDevice;
 
     /*------------------ Firebase DB-----------------------*/
     private DatabaseReference dbRef;
@@ -96,6 +95,8 @@ public class MainDriverActivity extends AppCompatActivity
         ImageView img = (ImageView) navHeaderView.findViewById(R.id.imageView);
         Picasso.with(getBaseContext()).load(user.getPhotoUrl()).into(img);
 
+        
+
         /*------------------init DB----------------------*/
         dbRef = FirebaseDatabase.getInstance().getReference();
         /*------------------------- Bluetooth Init-------------------------------*/
@@ -117,7 +118,7 @@ public class MainDriverActivity extends AppCompatActivity
             fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#9E9E9E")));
         }
         // display as connected if already connected
-        if (BluetoothOBDService.status == BluetoothOBDService.STATE_CONNECTED) {
+        if (btService.getState() == BluetoothOBDService.STATE_CONNECTED) {
             fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
             fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
         }
@@ -132,12 +133,11 @@ public class MainDriverActivity extends AppCompatActivity
             main.setArguments(getIntent().getExtras());
             // load default activity
             getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver,main).commit();
-
             // load bluetooth device preferences
             SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
             String address = sharedPref.getString(user.getUid(), null);
             if (address != null)
-                BluetoothOBDService.dev = mBluetoothAdapter.getRemoteDevice(address);
+                MainDriverActivity.bluetoothDevice = mBluetoothAdapter.getRemoteDevice(address);
         }
     }
 
@@ -173,23 +173,18 @@ public class MainDriverActivity extends AppCompatActivity
                 }
             } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
                 Log.w(TAG, "Bluetooth Connection Lost");
-                synchronized (BluetoothOBDService.class) {
-                    BluetoothOBDService.dev = null;
-                    BluetoothOBDService.status = BluetoothOBDService.STATE_DISCONNECTED;
-                    BluetoothOBDService.sock = null;
-                }
                 // Switch to inactive bluetooth
                 fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
                 fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#DD2C00")));
-                Toast toast = Toast.makeText(getApplicationContext(), "Bluetooth Connection Lost", Toast.LENGTH_SHORT);
-                toast.show();
             } else if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action))  {
-                Log.w(TAG, "Bluetooth Connection Lost");
+                Log.w(TAG, "Bluetooth Connection Started");
                 // Switch to inactive bluetooth
                 fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
                 fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
-                Toast toast = Toast.makeText(getApplicationContext(), "Connected successfully", Toast.LENGTH_SHORT);
-                toast.show();
+                if (MainDriverActivity.bluetoothDevice != null) {
+                    Toast toast = Toast.makeText(getApplicationContext(), "Connected successfully to " + MainDriverActivity.bluetoothDevice.getName() , Toast.LENGTH_SHORT);
+                    toast.show();
+                }
             }
         }
     };

@@ -142,7 +142,7 @@ public class DeviceListFragment extends Fragment {
         // set selected device label label
         selectedDevice = (TextView) view.findViewById(R.id.selected_device);
         // if no device was selected
-        if (BluetoothOBDService.dev == null) {
+        if (MainDriverActivity.bluetoothDevice == null) {
             selectedDevice.setText("Please select your OBD device");
             pairedListView.setVisibility(View.VISIBLE);
             newDevicesListView.setVisibility(View.VISIBLE);
@@ -151,7 +151,7 @@ public class DeviceListFragment extends Fragment {
             obdImage.setVisibility(View.GONE);
         }
         else {
-            selectedDevice.setText("Selected OBD Device Name:\n" + BluetoothOBDService.dev.getName());
+            selectedDevice.setText("Selected OBD Device Name:\n" + MainDriverActivity.bluetoothDevice.getName());
             pairedListView.setVisibility(View.GONE);
             newDevicesListView.setVisibility(View.GONE);
             txtPaired.setVisibility(View.GONE);
@@ -232,10 +232,10 @@ public class DeviceListFragment extends Fragment {
             // Set device for bluetooth OBD service
             String info = ((TextView) v).getText().toString();
             String address = info.substring(info.length() - 17);
-            BluetoothOBDService.dev =  mBtAdapter.getRemoteDevice(address);
+            MainDriverActivity.bluetoothDevice =  mBtAdapter.getRemoteDevice(address);
 
             // set connection label
-            selectedDevice.setText("Selected OBD Device Name:\n" + BluetoothOBDService.dev.getName());
+            selectedDevice.setText("Selected OBD Device Name:\n" + MainDriverActivity.bluetoothDevice.getName());
 
             // save preference
             SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);

@@ -2,6 +2,10 @@ package appspot.com.cargiver;
 
 import android.app.Fragment;
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothDevice;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.design.widget.NavigationView;
@@ -11,6 +15,9 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.firebase.auth.FirebaseAuth;
 
 /**
  * Created by GK on 11/17/2017.
@@ -36,7 +43,7 @@ public class MainDriverFragment extends Fragment {
         TextView Explain = view.findViewById(R.id.start_driving_explain);
 
         // make sure to display the right option if data collection already started
-        if (startDrivePressed == true) {
+        if (MainDriverActivity.btService != null && MainDriverActivity.btService.getState() == BluetoothOBDService.STATE_CONNECTED) {
             btnStartDrive.setImageResource(R.drawable.havearrived);
             Explain.setText("When you arrive at your destination, please click on \'I have arrived\'");
         }
@@ -52,6 +59,9 @@ public class MainDriverFragment extends Fragment {
                 ImageButton btnStartDrive = v.findViewById(R.id.btn_start_drive);
                 TextView Explain = getView().findViewById(R.id.start_driving_explain);
                 if (startDrivePressed){
+                    // stop service
+                    Intent intnt = new Intent(getActivity(),BluetoothOBDService.class);
+                    getActivity().stopService(intnt);
                     Fragment ShowRouteRes = new RouteResultFragment();
                     // set parameters to fragment
                     Bundle bundle = new Bundle();
@@ -60,12 +70,23 @@ public class MainDriverFragment extends Fragment {
                     getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
                 }
                 else {
+                    if (MainDriverActivity.bluetoothDevice== null) {
+                        Toast toast = Toast.makeText(getActivity().getApplicationContext(), "Please select Bluetooth device", Toast.LENGTH_SHORT);
+                        toast.show();
+                        return;
+                    }
                     mProgressDlg = new ProgressDialog(getActivity());
                     mProgressDlg.setMessage("Starting Data Collection Engine...");
                     mProgressDlg.setCancelable(false);
                     mProgressDlg.show();
                     btnStartDrive.setImageResource(R.drawable.havearrived);
                     Explain.setText("When you arrive at your destination, please click on \'I have arrived\'");
+                    // start service
+                    Intent intnt = new Intent(getActivity(),BluetoothOBDService.class);
+                    intnt.putExtra("address", MainDriverActivity.bluetoothDevice.getAddress());
+                    intnt.putExtra("userID", FirebaseAuth.getInstance().getCurrentUser().getUid());
+                    getActivity().startService(intnt);
+                    android.os.Debug.waitForDebugger();
                     Handler handler = new Handler();
                     handler.postDelayed(new Runnable() {
                         public void run() {
