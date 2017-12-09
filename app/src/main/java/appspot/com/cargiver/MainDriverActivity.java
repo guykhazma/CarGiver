@@ -95,7 +95,7 @@ public class MainDriverActivity extends AppCompatActivity
         ImageView img = (ImageView) navHeaderView.findViewById(R.id.imageView);
         Picasso.with(getBaseContext()).load(user.getPhotoUrl()).into(img);
 
-        
+
 
         /*------------------init DB----------------------*/
         dbRef = FirebaseDatabase.getInstance().getReference();
@@ -118,7 +118,7 @@ public class MainDriverActivity extends AppCompatActivity
             fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#9E9E9E")));
         }
         // display as connected if already connected
-        if (btService.getState() == BluetoothOBDService.STATE_CONNECTED) {
+        if (btService != null && btService.getState() == BluetoothOBDService.STATE_CONNECTED) {
             fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
             fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
         }
