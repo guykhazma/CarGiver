@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -8,32 +10,47 @@
     <Button
         android:id="@+id/button_scan"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="34dp"
+        android:background="@color/fui_bgTwitter"
         android:text="@string/button_scan"
-        />
+        android:textColor="@android:color/white" />
+
+    <ImageView
+        android:id="@+id/img_OBD"
+        android:layout_width="match_parent"
+        android:layout_height="280dp"
+        android:layout_marginBottom="40dp"
+        android:layout_marginTop="40dp"
+        android:contentDescription="OBD"
+        app:srcCompat="@drawable/obd" />
 
     <TextView
-        android:id="@+id/connected_to"
+        android:id="@+id/selected_device"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/fui_errorColor"
+        android:layout_height="51dp"
+        android:gravity="center"
         android:paddingLeft="5dp"
-        android:text="Not Connected"
-        android:textColor="#fff" />
+        android:paddingRight="5dp"
+        android:text="Please Select device"
+        android:textColor="@android:color/black" />
+
     <TextView
         android:id="@+id/title_paired_devices"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#666"
         android:paddingLeft="5dp"
+        android:paddingRight="5dp"
         android:text="@string/title_paired_devices"
-        android:textColor="#fff"
-        />
+        android:textColor="#fff" />
 
     <ListView
         android:id="@+id/paired_devices"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:fastScrollEnabled="true"
+        android:choiceMode="singleChoice"
+        android:listSelector="@android:color/darker_gray"
         android:layout_weight="1"
         />
 
@@ -43,14 +60,17 @@
         android:layout_height="wrap_content"
         android:background="#666"
         android:paddingLeft="5dp"
+        android:paddingRight="5dp"
         android:text="@string/title_other_devices"
-        android:textColor="#fff"
-        />
+        android:textColor="#fff" />
 
     <ListView
         android:id="@+id/new_devices"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:choiceMode="singleChoice"
+        android:listSelector="@android:color/darker_gray"
         android:layout_weight="2"
-        />
+        >
+    </ListView>
 </LinearLayout>

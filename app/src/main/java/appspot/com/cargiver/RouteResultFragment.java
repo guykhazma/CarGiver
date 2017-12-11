@@ -36,6 +36,7 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -163,7 +164,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             if (currMeasurment.rpm < 3000){
                 rating.setText("Great");
             }
-            else if (currMeasurment.rpm >= 3000 && currMeasurment.rpm < 5000) {
+            else if (currMeasurment.rpm >= 3000 && currMeasurment.rpm < 6000) {
                 rating.setText("Good");
             }
             else {
@@ -193,7 +194,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
             drive = dataSnapshot.getValue(Drives.class);
-
+            // TODO: need to sort by time if not using indexes
             txtStart.setText("Start Time: " +  drive.getStartTime());
             if (drive.ongoing) {
                 txtEnd.setText("Drive Is Active");
@@ -218,26 +219,29 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             // go over all of the measurements
             int entryNumber = 0;
             int size = drive.meas.entrySet().size();
-            for (Map.Entry<String, Measurement> entry : drive.meas.entrySet())
+            // sort keys to traverse in insert order
+            Object[] keys = drive.meas.keySet().toArray();
+            Arrays.sort(keys);
+            for (Object key : keys)
             {
-                if (entryNumber == size - 1) {
+                if (entryNumber == 0) {
                     title = "Start Point";
-                    snippet = "Current Speed: " + entry.getValue().speed;
+                    snippet = "Current Speed: " + drive.meas.get(key).speed;
                 }
-                else if (entryNumber == 0 && size > 1 && drive.ongoing == false){
+                else if (entryNumber == size - 1 && size > 1 && drive.ongoing == false){
                     title = "Finish Point";
-                    snippet = "Current Speed: " + entry.getValue().speed;
+                    snippet = "Current Speed: " + drive.meas.get(key).speed;
                 }
                 else {
-                    title = "Current Speed:" + entry.getValue().speed;
-                    snippet = "Time Taken: " + Drives.dateFormat.format(entry.getValue().timeStamp);
+                    title = "Current Speed:" + drive.meas.get(key).speed;
+                    snippet = "Time Taken: " + Drives.dateFormat.format(drive.meas.get(key).timeStamp);
                 }
-                if (entryNumber == 0) {
-                    speedometer.speedTo((entry.getValue().rpm/9000)*100, 1000);
-                    if (entry.getValue().rpm < 3000){
+                if (entryNumber == size - 1) {
+                    speedometer.speedTo((drive.meas.get(key).rpm/9000)*100, 1000);
+                    if (drive.meas.get(key).rpm < 3000){
                         rating.setText("Great");
                     }
-                    else if (entry.getValue().rpm >= 3000 && entry.getValue().rpm < 5000) {
+                    else if (drive.meas.get(key).rpm >= 3000 && drive.meas.get(key).rpm < 6000) {
                         rating.setText("Good");
                     }
                     else {
@@ -245,7 +249,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                     }
                 }
                 // add to map
-                newPoint = new LatLng(entry.getValue().latitude, entry.getValue().longitude);
+                newPoint = new LatLng(drive.meas.get(key).latitude, drive.meas.get(key).longitude);
                 googleMap.addMarker(new MarkerOptions().position(newPoint).title(title).snippet(snippet));
                 // add to polyline
                 points.add(newPoint);

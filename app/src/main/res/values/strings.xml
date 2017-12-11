@@ -7,6 +7,8 @@
 
     <string name="action_settings">Settings</string>
 
+    <string name="OBDservice">CarGiver is working</string>
+
     <!-- DeviceListFragmentvity -->
     <string name="scanning">Scanning for devices...</string>
     <string name="select_device">select a device to connect</string>
@@ -14,7 +16,7 @@
     <string name="none_found">No devices found</string>
     <string name="title_paired_devices">Paired Devices</string>
     <string name="title_other_devices">Other Available Devices</string>
-    <string name="button_scan">Scan for devices</string>
+    <string name="button_scan">Press to Scan for devices</string>
     <string name="EnterMail">enter supervisor email</string>
 
     <string name="title_activity_login">LoginActivity</string>
