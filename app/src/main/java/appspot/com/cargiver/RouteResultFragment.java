@@ -289,7 +289,8 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                 CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
                 googleMap.animateCamera(cu);
                 // update text
-
+                txtEnd.setText("Drive Has Finished");
+                txtEnd.setTextColor(Color.parseColor("#9E9E9E"));
             }
         }
 
