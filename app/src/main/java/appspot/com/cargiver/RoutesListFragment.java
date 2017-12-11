@@ -42,9 +42,10 @@ public class RoutesListFragment extends Fragment {
     public RoutesListFragment(){};
     public int index = 0;
     String[] nameArray;
-    int SecondIndex;
     // progress dialog
     private ProgressDialog mProgressDlg;
+    String MyUserName; //this is the driver's username
+    String uid; //this is the driver's Uid
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -59,46 +60,48 @@ public class RoutesListFragment extends Fragment {
         mProgressDlg.setCancelable(false);
         mProgressDlg.show();
 
+        RouteslistView = (ListView) view.findViewById(R.id.routes_list_view);
+
         //take last 20 routes from db. if less take less...
 
         //michaeltah - take information from db
         TheRoutesDB = FirebaseDatabase.getInstance().getReference();
         //TheRoutesDB.child("drives");
-        //todo michaetlah - see if we need drives list for another use
         final List<Drives> DrivesList = new ArrayList<Drives>(); //will keep the drives data
         final List<String> DrivesIdList = new ArrayList<String>(); //will keep the drives id
 
-//        final String[] nameArray; //keep the drivers ids
-        RouteslistView = (ListView) view.findViewById(R.id.routes_list_view);
+        //1. get my user id
+        final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        uid = currentUser.getUid(); // current user id
+        //2. get my username
+        TheRoutesDB.child("users").child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                MyUserName = dataSnapshot.getValue(User.class).getUsername();
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {}
+        } );
 
+        //3. get my drives list
         TheRoutesDB.child("drives").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 int NumOfRoutes = 0;
                 for (DataSnapshot Child: dataSnapshot.getChildren()) {
                     if (NumOfRoutes >= 20){break;}
-//                    if(Child.getValue(Drives.class).supervisorID==MyId){
-                    //todo michatlah - getKey is the driverid
-                        DrivesList.add(Child.getValue(Drives.class));
-                        DrivesIdList.add(Child.getKey());
-                        NumOfRoutes++;
-//                    }
+                        Drives CurrDrive = Child.getValue(Drives.class);
+                        if(CurrDrive.getDriverID().equals(uid)) {
+                            DrivesList.add(CurrDrive);
+                            DrivesIdList.add(Child.getKey());
+                            NumOfRoutes++;
+                        }
                 }
-
                 nameArray = new String[DrivesList.size()];
-                SecondIndex = 0;
-                for(index=0; index<DrivesList.size(); index++){
-                    TheRoutesDB.child("users").child(DrivesList.get(index).driverID).child("username").addListenerForSingleValueEvent(new ValueEventListener(){
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot){
-                        nameArray[SecondIndex] = dataSnapshot.getValue(String.class);
-                        SecondIndex++;
-                    }
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {}
-                 });
-
+                for(int i=0; i<DrivesList.size(); i++){
+                    nameArray[i]= MyUserName;
                 }
+
                 RouteListAdapter MyAmazingAdapter = new RouteListAdapter(getActivity(), nameArray, DrivesList, DrivesIdList);
                 RouteslistView.setAdapter(MyAmazingAdapter);
                 // hide progress bar

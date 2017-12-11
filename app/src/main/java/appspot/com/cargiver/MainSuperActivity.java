@@ -121,18 +121,16 @@ public class MainSuperActivity extends AppCompatActivity
             getFragmentManager().popBackStackImmediate(null,FragmentManager.POP_BACK_STACK_INCLUSIVE);
             // Redirect to navigation main
         } else if (id == R.id.nav_drives_supervisor) {
-            // Redirect to manage drives fragment
             // pop back fragments till reaching menu
-            /* TODO: need to make it work for supervisor currently uses nav_view_driver
             getFragmentManager().popBackStackImmediate(null,FragmentManager.POP_BACK_STACK_INCLUSIVE);
             // Redirect to manage drives fragment
             // open list of routes
-            Fragment RoutesListFragment = new RoutesListFragment();
+            Fragment RoutesListFragmentSuper = new RoutesListFragmentSuper();
             FragmentTransaction transaction = getFragmentManager().beginTransaction();
-            transaction.replace(R.id.fragment_container_super, RoutesListFragment, "Drives List");
+            transaction.replace(R.id.fragment_container_super, RoutesListFragmentSuper, "Drives List");
             // add to stack to allow return to menu on back press
             transaction.addToBackStack(null);
-            transaction.commit();*/
+            transaction.commit();
         } else if (id == R.id.nav_manage_drivers_supervisor) {
             // pop back fragments till reaching menu
             getFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);

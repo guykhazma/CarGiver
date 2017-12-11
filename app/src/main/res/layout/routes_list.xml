@@ -12,15 +12,19 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
+        <!--
         <TextView
             android:id="@+id/textView3"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Please Select Route"
             android:textSize="30dp"
+            android:gravity="center"
             android:textStyle="bold"
             android:fontFamily="casual"
+            android:background="#C5E1A5"
             />
+        -->
 
         <ListView
             android:id="@+id/routes_list_view"

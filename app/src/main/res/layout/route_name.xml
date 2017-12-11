@@ -17,6 +17,8 @@
             android:layout_height="wrap_content"
             android:padding="5dp"
             android:text="driver: "
+            android:gravity="left"
+            android:background="#C5E1A5"
             android:textSize="18sp" />
 
         <TextView
@@ -25,6 +27,8 @@
             android:layout_height="wrap_content"
             android:padding="5dp"
             android:text="Date: "
+            android:gravity="left"
+            android:background="#C5E1A5"
             android:textSize="18sp" />
 
     </LinearLayout>

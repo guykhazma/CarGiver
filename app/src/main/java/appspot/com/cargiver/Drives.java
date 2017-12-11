@@ -33,6 +33,12 @@ public class Drives {
         return dateFormat.format(meas.get(meas.keySet().toArray()[meas.keySet().size()-1]).timeStamp);
 
     }
+    public String getDriverID() {
+        return this.driverID;
+    }
+    public String getSupervisorID() {
+        return this.supervisorID;
+    }
 
     public String getEndTime() {
         if (ongoing == true) {
