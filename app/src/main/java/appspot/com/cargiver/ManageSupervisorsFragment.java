@@ -35,11 +35,7 @@ import java.util.*;
 
 public class ManageSupervisorsFragment extends Fragment {
     private EditText editTxt;
-    private Button btn;
-    //private ListView list;
-    private ArrayAdapter<String> adapter;
     private ArrayAdapter<String> listViewAdapter;
-    private ArrayList<String> names;
     public ManageSupervisorsFragment() {
         // Required empty public constructor
     }
@@ -47,52 +43,66 @@ public class ManageSupervisorsFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        names=new ArrayList<String>();
-        //String[] names = { "Apple","it","Jackfruit", "Mango", "Olive", "Pear", "Sugar-apple" };
-
+        super.onCreateView(inflater, container, savedInstanceState);
+        final List<String> supervisorIDs = new ArrayList<String>();
+        final List<String> supervisorMails = new ArrayList<String>();
         // Get reference
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         DatabaseReference dbRef = database.getReference();
         final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         String uid = currentUser.getUid(); // current user id
-        // Get list of authorized supervisor IDs.
-        final List<String> supervisorIDs = new ArrayList<String>();
-        dbRef.child("drivers").child(uid).child("supervisorsIDs").addValueEventListener(new ValueEventListener() {
+        //define listview
+        // Inflate the layout for this fragment
+        final View view = inflater.inflate(R.layout.driver_manage_supervisors_fragment, container, false);
+        ListView listView=(ListView)view.findViewById(R.id.listItem);
+        listViewAdapter=new ArrayAdapter<String>(
+                getActivity(),R.layout.manage_supervisor_listitem,R.id.textSupervisor,
+                supervisorMails
+        );
+        listView.setAdapter(listViewAdapter);
+            // Get list of authorized supervisor_item IDs.
+            dbRef.child("drivers").child(uid).child("supervisorsIDs").addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    Iterable<DataSnapshot> children = dataSnapshot.getChildren();
+                    for (DataSnapshot child : children) {
+                        supervisorIDs.add(child.getKey());
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                }
+            });
+        // Convert IDs to emails
+        dbRef.child("users").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                Iterable<DataSnapshot> children = dataSnapshot.getChildren();
-                for (DataSnapshot child : children) {
-                    supervisorIDs.add(child.getValue(String.class));
+                for (DataSnapshot child: dataSnapshot.getChildren()) {
+                    // Check if this user correlates to a supervisor of current user
+                    if(supervisorIDs.contains(child.getKey())){
+                        supervisorMails.add(child.getValue(User.class).getEmail());
+                        listViewAdapter.notifyDataSetChanged();
+                    }
                 }
             }
 
             @Override
-            public void onCancelled(DatabaseError databaseError) {}
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
         });
-        // Inflate the layout for this fragment
-        final View view = inflater.inflate(R.layout.driver_manage_supervisors_fragment, container, false);
-        final Button button = (Button)view.findViewById(R.id.addBtn);
         // set as active in drawer
         // set menu as selected on startup
         NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_driver);
         navigationView.getMenu().getItem(2).setChecked(true);
-
         getActivity().setTitle("Manage Supervisors");
-
-        ListView listView=(ListView)view.findViewById(R.id.listItem);
-        listViewAdapter=new ArrayAdapter<String>(
-            getActivity(),android.R.layout.simple_list_item_1,
-            supervisorIDs
-        );
-        listView.setAdapter(listViewAdapter);
+        /*
+        //code for adding supervisor. no need for now
         //handle click on buttom
         button.setOnClickListener(
                 new View.OnClickListener() {
                     public void onClick(View v) {
-                                //Intent myIntent = new Intent(view.getContext(), agones.class);
-                                //startActivityForResult(myIntent, 0);
-
-                        names.add("clicked");
                         //new code
                         AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
                         builder.setTitle("Add a Supervisor");
@@ -110,6 +120,8 @@ public class ManageSupervisorsFragment extends Fragment {
                             public void onClick(DialogInterface dialog, int which) {
                                 dialog.dismiss();
                                 String m_Text = input.getText().toString();
+                                supervisorMails.add(m_Text);
+                                listViewAdapter.notifyDataSetChanged();
                             }
                         });
                         builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
@@ -122,33 +134,8 @@ public class ManageSupervisorsFragment extends Fragment {
                         builder.show(); }
                 });
 
-                        //end new code
-                        /*
-                        //set the list
-                        listViewAdapter.notifyDataSetChanged();
-                        AlertDialog alertDialog = new AlertDialog.Builder(v.getContext()).create(); //Read Update
-                        // Set up the input
-                        final EditText input = (EditText) view.findViewById(R.id.input);
-                        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
-                        alertDialog.setView(view);
-                        alertDialog.setTitle("hi");
-                        alertDialog.setMessage("this is my app");
-
-                        alertDialog.setButton("Continue..", new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        // here you can add functions
-                                    }
-                                });
-
-                        alertDialog.show();  //<-- See This!
-                    }
-
-                        });*/
-
+         */
         return view;
     }
-    public void AddSupervisor(View v)
-    {
-      //pop dialog to enter email of supervisor and if exists put this supervisor
-    }
+
 }
