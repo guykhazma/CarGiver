@@ -62,8 +62,12 @@ public class RouteListAdapter extends ArrayAdapter {
         TextView RouteDateField = (TextView) rowView.findViewById(R.id.route_date);
 
         //this code sets the values of the objects to values from the arrays
-        RouteDriverField.setText(RoutesNameArray[position]);
-        RouteDateField.setText(RoutesList.get(position).getStartTime());
+        StringBuffer DriverField = new StringBuffer("Driver: ");
+        DriverField.append(RoutesNameArray[position]);
+        StringBuffer DateField = new StringBuffer("Date: ");
+        DateField.append(RoutesList.get(position).getStartTime());
+        RouteDriverField.setText(DriverField);
+        RouteDateField.setText(DateField);
 
         return rowView;
 

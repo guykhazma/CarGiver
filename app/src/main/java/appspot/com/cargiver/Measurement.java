@@ -19,17 +19,19 @@ public class Measurement {
     float rpm;
     float latitude;
     float longitude;
+    float GForce;
 
     @Keep
     public Measurement() {
         // Default constructor required for calls to DataSnapshot.getValue(Drives.class)
     }
 
-    public Measurement(int speed, float latitude, float longitude, int rpm) {
+    public Measurement(int speed, float latitude, float longitude, int rpm, float GForce) {
         this.speed = speed;
         this.rpm = rpm;
         this.latitude = latitude;
         this.longitude = longitude;
         this.timeStamp = Calendar.getInstance().getTime();
+        this.GForce= GForce;
     }
 }

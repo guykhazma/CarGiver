@@ -26,17 +26,16 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyA7A6qyxoEiNeRZscVYcGRoz7H4wkzS8Rc"/>
 
-        <!--
+
        <service android:name=".BluetoothOBDService"
-           android:description="Bluetooth service for OBD connections on background"
            android:exported="false"
            android:label="Bluetooth OBD Service"
            android:process=":BluetoothOBD" >
-       </service>-->
+       </service>
 
        <activity
            android:name=".StartActivity"
-           android:theme="@style/AppCompat.noDisplay"
+           android:theme="@style/Splash"
            android:screenOrientation="portrait">
            <intent-filter>
                <action android:name="android.intent.action.MAIN" />

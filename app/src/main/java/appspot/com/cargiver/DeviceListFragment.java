@@ -12,10 +12,12 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.ContactsContract;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.util.Log;
@@ -26,9 +28,12 @@ import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -60,9 +65,15 @@ public class DeviceListFragment extends Fragment {
      */
     private ArrayAdapter<String> newDevicesArrayAdapter;
     private ArrayAdapter<String> pairedDevicesArrayAdapter;
+    private ListView pairedListView;
+    private ListView newDevicesListView;
+    private TextView txtPaired;
+    private TextView txtNew;
+    private ImageView obdImage;
 
     // progress bar for search
     private ProgressDialog mProgressDlg;
+    private TextView selectedDevice;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.device_list_fragment, container, false);
@@ -79,14 +90,20 @@ public class DeviceListFragment extends Fragment {
         pairedDevicesArrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.device_name);
 
         // Find and set up the ListView for paired devices
-        ListView pairedListView = (ListView) view.findViewById(R.id.paired_devices);
+        pairedListView = (ListView) view.findViewById(R.id.paired_devices);
+        pairedListView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         pairedListView.setAdapter(pairedDevicesArrayAdapter);
         pairedListView.setOnItemClickListener(mDeviceClickListener);
 
         // Find and set up the ListView for newly discovered devices
-        ListView newDevicesListView = (ListView) view.findViewById(R.id.new_devices);
+        newDevicesListView = (ListView) view.findViewById(R.id.new_devices);
         newDevicesListView.setAdapter(newDevicesArrayAdapter);
         newDevicesListView.setOnItemClickListener(mDeviceClickListener);
+
+        // load text views and image
+        txtPaired = (TextView) view.findViewById(R.id.title_paired_devices);
+        txtNew = (TextView) view.findViewById(R.id.title_new_devices);
+        obdImage = (ImageView) view.findViewById(R.id.img_OBD);
 
         // Register for broadcasts
         IntentFilter filter = new IntentFilter();
@@ -122,17 +139,26 @@ public class DeviceListFragment extends Fragment {
             pairedDevicesArrayAdapter.add(noDevices);
         }
 
-        // set connection label
-        TextView connectedTo = (TextView) view.findViewById(R.id.connected_to);
-        if (BluetoothOBDService.status == BluetoothOBDService.STATE_CONNECTED) {
-            connectedTo.setText("Connected to " + BluetoothOBDService.dev.getName());
-            connectedTo.setBackgroundColor(Color.parseColor("#4CAF50"));
+        // set selected device label label
+        selectedDevice = (TextView) view.findViewById(R.id.selected_device);
+        // if no device was selected
+        if (MainDriverActivity.bluetoothDevice == null) {
+            selectedDevice.setText("Please select your OBD device");
+            pairedListView.setVisibility(View.VISIBLE);
+            newDevicesListView.setVisibility(View.VISIBLE);
+            txtPaired.setVisibility(View.VISIBLE);
+            txtNew.setVisibility(View.VISIBLE);
+            obdImage.setVisibility(View.GONE);
         }
         else {
-            connectedTo.setText("Not connected");
-            connectedTo.setBackgroundColor(Color.parseColor("#DD2C00"));
-        }
+            selectedDevice.setText("Selected OBD Device Name:\n" + MainDriverActivity.bluetoothDevice.getName());
+            pairedListView.setVisibility(View.GONE);
+            newDevicesListView.setVisibility(View.GONE);
+            txtPaired.setVisibility(View.GONE);
+            txtNew.setVisibility(View.GONE);
+            obdImage.setVisibility(View.VISIBLE);
 
+        }
         // Inflate the layout for this fragment
         return view;
     }
@@ -140,23 +166,7 @@ public class DeviceListFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        getActivity().setTitle("Bluetooth Scan");
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        // Disable the floating button to avoid opening multiple
-        final FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
-        fab.setEnabled(false);
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        // Enable the floating button to avoid opening multiple
-        final FloatingActionButton fab = (FloatingActionButton) getActivity().findViewById(R.id.fab);
-        fab.setEnabled(true);
+        getActivity().setTitle("Bluetooth Manager");
     }
 
     @Override
@@ -178,6 +188,12 @@ public class DeviceListFragment extends Fragment {
         Log.d(TAG, "doDiscovery()");
         mProgressDlg.show();
         getActivity().setTitle(R.string.scanning);
+        pairedListView.setVisibility(View.VISIBLE);
+        newDevicesListView.setVisibility(View.VISIBLE);
+        txtPaired.setVisibility(View.VISIBLE);
+        txtNew.setVisibility(View.VISIBLE);
+        obdImage.setVisibility(View.GONE);
+
         // clear recent found devices
         newDevicesArrayAdapter.clear();
         pairedDevicesArrayAdapter.clear();
@@ -213,63 +229,21 @@ public class DeviceListFragment extends Fragment {
             // Cancel discovery because it's costly and we're about to connect
             mBtAdapter.cancelDiscovery();
 
-            // Get the device MAC address, which is the last 17 chars in the View
+            // Set device for bluetooth OBD service
             String info = ((TextView) v).getText().toString();
             String address = info.substring(info.length() - 17);
-            if (!BluetoothOBDService.isConnecting) {
-                if (BluetoothOBDService.dev == null) {
-                    // Connect
-                    Log.d(TAG, "connect to: " + info + " " + address);
-                    BluetoothDevice device = mBtAdapter.getRemoteDevice(address);
-                    // Start the thread to connect with the given device
-                    BluetoothOBDService.connect(device, true, mHandler);
-                }
-                else if (BluetoothOBDService.dev.getAddress() != address) {
-                    // Connect
-                    Log.d(TAG, "connect to: " + info + " " + address);
-                    BluetoothDevice device = mBtAdapter.getRemoteDevice(address);
-                    // Start the thread to connect with the given device
-                    BluetoothOBDService.connect(device, true, mHandler);
-                }
-                else {
-                    Toast toast = Toast.makeText(getActivity().getApplicationContext(), "Already connected to " + BluetoothOBDService.dev.getName(), Toast.LENGTH_SHORT);
-                    toast.show();
-                }
-            }
-            else {
-                Toast toast = Toast.makeText(getActivity().getApplicationContext(), "Connection already in action", Toast.LENGTH_SHORT);
-                toast.show();
-            }
+            MainDriverActivity.bluetoothDevice =  mBtAdapter.getRemoteDevice(address);
 
+            // set connection label
+            selectedDevice.setText("Selected OBD Device Name:\n" + MainDriverActivity.bluetoothDevice.getName());
 
+            // save preference
+            SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putString(FirebaseAuth.getInstance().getCurrentUser().getUid(), address);
+            editor.commit();
         }
     };
-
-    public static BluetoothSocket connect(BluetoothDevice dev) throws IOException {
-        BluetoothSocket sock = null;
-        BluetoothSocket sockFallback = null;
-
-        Log.d(TAG, "Starting Bluetooth connection..");
-        try {
-            sock = dev.createRfcommSocketToServiceRecord(MY_UUID);
-            sock.connect();
-        } catch (Exception e1) {
-            Log.e(TAG, "There was an error while establishing Bluetooth connection. Falling back..", e1);
-            Class<?> clazz = sock.getRemoteDevice().getClass();
-            Class<?>[] paramTypes = new Class<?>[]{Integer.TYPE};
-            try {
-                Method m = clazz.getMethod("createRfcommSocket", paramTypes);
-                Object[] params = new Object[]{Integer.valueOf(1)};
-                sockFallback = (BluetoothSocket) m.invoke(sock.getRemoteDevice(), params);
-                sockFallback.connect();
-                sock = sockFallback;
-            } catch (Exception e2) {
-                Log.e(TAG, "Couldn't fallback while establishing Bluetooth connection.", e2);
-                throw new IOException(e2.getMessage());
-            }
-        }
-        return sock;
-    }
 
     /**
      * The BroadcastReceiver that listens for discovered devices and changes the title when
@@ -301,27 +275,10 @@ public class DeviceListFragment extends Fragment {
         }
     };
 
-    /**
-     * Extracts string list from the device list we got from main_driver activity
-     * @param btArray
-     * @return
-     */
-    private ArrayList<String> getDeviceNames(ArrayList<BluetoothDevice> btArray) {
-        ArrayList<String> devices = new ArrayList<String>();
-        if (btArray.size() > 0) {
-            for (BluetoothDevice bt : btArray) {
-                devices.add(bt.getName() + "\n" + bt.getAddress());
-            }
-        }
-        else
-            devices.add("No Bluetooth devices found");
-        return devices;
-    }
-
 
     /**
      * The Handler that gets information back from the BluetoothChatService
-     */
+
     private final Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -343,6 +300,6 @@ public class DeviceListFragment extends Fragment {
                     }
             }
         }
-    };
+    };*/
 
 }

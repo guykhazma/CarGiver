@@ -15,6 +15,7 @@ import java.util.Map;
 
 public class Drives {
 
+    //todo stavsh add comnstructor
     // date format
     static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
@@ -31,6 +32,12 @@ public class Drives {
     public String getStartTime() {
         return dateFormat.format(meas.get(meas.keySet().toArray()[meas.keySet().size()-1]).timeStamp);
 
+    }
+    public String getDriverID() {
+        return this.driverID;
+    }
+    public String getSupervisorID() {
+        return this.supervisorID;
     }
 
     public String getEndTime() {
