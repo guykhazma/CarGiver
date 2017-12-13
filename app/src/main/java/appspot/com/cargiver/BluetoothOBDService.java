@@ -341,7 +341,71 @@ public class BluetoothOBDService extends Service {
             }
         }
 
-        public void run() {
+        public float GradeThisMeas(float speed, float rpm){
+            float Grade = 0;
+            if (rpm > 4000){
+                //we start from 80 which is already bad. if rpm is over 5k, we grade 100.
+                Grade = rpm/50;
+            }else if (speed>110){
+                //we start from 83 which is already bad. if speed is over 130, we grade 100.
+                Grade = speed*3/4;
+            }else{
+                //the speed and rpm are dependent so we take only speed
+                //the motivation is that speed up to 80 will get great score,
+                //speed from 80-95 will get good score
+                //95+ will get bad score
+                if (speed<=80) {
+                    Grade = speed / 3;
+                }
+                if(speed>80 && speed <=95){
+                    Grade = speed *2/3;
+                }
+                if(speed>95 && speed<110){
+                    Grade = speed *3/4;
+                }
+            }
+            if (Grade>100){
+                return 100;
+            }
+            return Grade;
+        }
+
+        public float FinalGradeThisDrive(int NumOfMeas, float AverageSpeed, int NumOfPunish) {
+            float Grade;
+            if (AverageSpeed<=80) {
+                Grade = AverageSpeed / 3;
+            }
+            else{
+                Grade = AverageSpeed *2/3;
+            }
+            float PunishRate = NumOfPunish/NumOfMeas;
+            Grade = Grade*(1+PunishRate);
+            if (Grade>100){
+                Grade=100;
+            }
+            return Grade;
+        }
+
+        public float OneGradingAlg(int NumOfMeas, float AverageSpeed, int NumOfPunish, float CurrSpeed, float CurrRpm) {
+            float Grade;
+            if (CurrSpeed>110 || CurrRpm>4000){
+                NumOfPunish++;
+            }
+            if (AverageSpeed<=80) {
+                Grade = AverageSpeed / 3;
+            }
+            else{
+                Grade = AverageSpeed *2/3;
+            }
+            float PunishRate = NumOfPunish/NumOfMeas;
+            Grade = Grade*(1+PunishRate);
+            if (Grade>100){
+                Grade=100;
+            }
+            return Grade;
+        }
+
+            public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
             // initiate speed and RPM commands
             RPMCommand rpmCMD= new RPMCommand();
@@ -356,6 +420,18 @@ public class BluetoothOBDService extends Service {
                     rpmCMD.getFormattedResult();
                     speedCMD.getFormattedResult();
                     Thread.sleep(2000);
+                    //num_of_meas ++;
+                    //average_speed = (average_speed*(num_of_meas-1)+current_speed)/average_speed
+                    //Grade = GradeThisMeas(current_speed, current_rpm);
+                    //if (Grade>85){
+                    // num_of_punish ++;
+                    // }
+
+                    //FinalGradeThisDrive(int NumOfMeas, float AverageSpeed, int NumOfPunish)
+                    //GradeThisMeas(float speed, float rpm)
+                    // if(currMeasurment.GForce>4){
+                    //SendPushNotification() //TODO needs to be coded
+                    //}
 
                 } catch (Exception e) {
                     Log.e(TAG, "disconnected", e);

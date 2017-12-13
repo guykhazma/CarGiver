@@ -23,6 +23,7 @@ public class Drives {
     Boolean ongoing;
     String driverID;
     String supervisorID;
+    float Grade;
 
     public Drives() {
         // Default constructor required for calls to DataSnapshot.getValue(Drives.class)
@@ -34,11 +35,14 @@ public class Drives {
 
     }
     public String getDriverID() {
+
         return this.driverID;
     }
+
     public String getSupervisorID() {
         return this.supervisorID;
     }
+
 
     public String getEndTime() {
         if (ongoing == true) {

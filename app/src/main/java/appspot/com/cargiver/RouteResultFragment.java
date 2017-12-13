@@ -133,37 +133,6 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         dbRef.child("drives").child(driveID).addListenerForSingleValueEvent(loadData);
     }
 
-    //this is the grading algorithm:
-    //thr main idea, is to "punish" for bad values, and to scale the other normal behaviour
-    public float GradeThisDrive(float speed, float rpm){
-        float Grade = 0;
-        if (rpm > 4000){
-            //we start from 80 which is already bad. if rpm is over 5k, we grade 100.
-            Grade = rpm/50;
-        }else if (speed>110){
-            //we start from 83 which is already bad. if speed is over 130, we grade 100.
-            Grade = speed*3/4;
-        }else{
-            //the speed and rpm are dependent so we take only speed
-            //the motivation is that speed up to 80 will get great score,
-            //speed from 80-95 will get good score
-            //95+ will get bad score
-            if (speed<=80) {
-                Grade = speed / 3;
-            }
-            if(speed>80 && speed <=95){
-                Grade = speed *2/3;
-            }
-            if(speed>95 && speed<110){
-                Grade = speed *3/4;
-            }
-        }
-        if (Grade>100){
-            return 100;
-        }
-        return Grade;
-    }
-
     @Override
     public void onResume(){
         super.onResume();
@@ -191,23 +160,30 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             // set camera position to track latest
             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newPoint, 18));
             //if G-force is greater then 4, we send push notification to the supervisor:
-            if(currMeasurment.GForce>4){
-                //SendPushNotification() //TODO needs to be coded
-            }
-            // set gauge
-            int DriveGrade = (int)GradeThisDrive(currMeasurment.speed, currMeasurment.rpm);
-            //speedometer.speedTo((currMeasurment.rpm/9000)*100, 1000);
-            speedometer.speedTo(DriveGrade, 1000);
 
-            if (DriveGrade < 33){
-                rating.setText("Great");
-            }
-            else if (DriveGrade >= 33 && DriveGrade < 66) {
-                rating.setText("Good");
-            }
-            else {
-                rating.setText("Bad");
-            }
+            dataSnapshot.getRef().getParent().getParent().child("Grade").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    // set gauge
+                    float DriveGrade = dataSnapshot.getValue(float.class);
+                    //speedometer.speedTo((currMeasurment.rpm/9000)*100, 1000);
+                    speedometer.speedTo(DriveGrade, 1000);
+
+                    if (DriveGrade < 33){
+                        rating.setText("Great");
+                    }
+                    else if (DriveGrade >= 33 && DriveGrade < 66) {
+                        rating.setText("Good");
+                    }
+                    else {
+                        rating.setText("Bad");
+                    }
+
+                }
+                public void onCancelled(DatabaseError databaseError) {
+                }
+            });
+
         }
 
         @Override
@@ -275,10 +251,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                     snippet = "Time Taken: " + Drives.dateFormat.format(drive.meas.get(key).timeStamp);
                 }
                 if (entryNumber == size - 1) {
-                    //TODO michealtah - check if we want to "punish" on bad values during the drive
-                    //TODO give this function the average of speed and rpm:
-                    //should be int DriveGrade = (int)GradeThisDrive(AverageSpeed, AverageRPM);
-                    int DriveGrade = (int)GradeThisDrive(drive.meas.get(key).speed, drive.meas.get(key).rpm);
+                    float DriveGrade = dataSnapshot.child("Grade").getValue(float.class);
                     speedometer.speedTo(DriveGrade, 1000);
                     if (DriveGrade < 33){
                         rating.setText("Great");

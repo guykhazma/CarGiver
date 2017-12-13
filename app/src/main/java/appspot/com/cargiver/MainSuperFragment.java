@@ -50,8 +50,6 @@ public class MainSuperFragment extends Fragment {
         Button btnRoutesList = view.findViewById(R.id.super_routes_drive);
         Button btnManageDrivers = view.findViewById(R.id.super_manage_drivers);
 
-        //code
-
         //if we have ongoing drive then set the text for btnOngoingDrive:
         //michaeltah - take information from db
         final List<String> MyUsers = new ArrayList<String>(); //will keep the users i can see
@@ -151,8 +149,6 @@ public class MainSuperFragment extends Fragment {
                 // Redirect to manage drivers fragment
             }
         });
-
-        //end of code
 
         return view;
     }
