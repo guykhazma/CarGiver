@@ -19,14 +19,22 @@ public class Drives {
     // date format
     static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    Map<String, Measurement> meas;
+    ArrayList<Measurement> meas;
     Boolean ongoing;
     String driverID;
     float grade;
+
 
 
     public Drives() {
         // Default constructor required for calls to DataSnapshot.getValue(Drives.class)
     }
 
+    public Date startTime() {
+        return meas.get(0).timeStamp;
+    }
+
+    public Date endTime() {
+        return meas.get(meas.size() - 1).timeStamp;
+    }
 }

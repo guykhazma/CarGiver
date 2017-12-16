@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.util.Calendar;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -148,7 +149,6 @@ public class BluetoothOBDService extends Service {
         this.stopSelf();
         // Send a failure message back to the Activity
         Handler mainHandler = new Handler(getMainLooper());
-
         mainHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -162,17 +162,19 @@ public class BluetoothOBDService extends Service {
      */
     private void connectionLost() {
         // Send a failure message back to the Activity
-        if (!stopped) {
-            Handler mainHandler = new Handler(getMainLooper());
+        synchronized (BluetoothOBDService.class) {
+            if (!stopped) {
+                Handler mainHandler = new Handler(getMainLooper());
 
-            mainHandler.post(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(getApplicationContext(), "Connection with OBD is lost", Toast.LENGTH_SHORT).show();
-                }
-            });
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(), "Connection with OBD is lost", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+            this.stopSelf();
         }
-        this.stopSelf();
     }
 
     /**
@@ -354,7 +356,6 @@ public class BluetoothOBDService extends Service {
         private final OutputStream mmOutStream;
         private FusedLocationProviderClient mFusedLocationClient;
         private  Timer timer;
-        private int count;
 
         public ConnectedThread(BluetoothSocket socket, String socketType) {
             //android.os.Debug.waitForDebugger();  // this line is key
@@ -395,7 +396,7 @@ public class BluetoothOBDService extends Service {
                 newDrive.grade = 0;
                 dbref.child("drives").child(driveKey).setValue(newDrive);
                 // add intial measuremnt
-                final DatabaseReference measRef = dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("meas").push();
+                final DatabaseReference measRef = dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("meas").child("0");
                 if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
                     Toast.makeText(getApplicationContext(), "Location Services is disabled - drive canceled", Toast.LENGTH_SHORT).show();
                     //connectionLost();
@@ -428,10 +429,10 @@ public class BluetoothOBDService extends Service {
 
                 this.timer = new Timer();
                 this.timer.scheduleAtFixedRate(new TimerTask() {
+                    int count = 1;
                     @Override
                     public void run() {
                         try {
-
 
                             rpmCMD.run(mmInStream, mmOutStream);
                             speedCMD.run(mmInStream, mmOutStream);
@@ -452,9 +453,10 @@ public class BluetoothOBDService extends Service {
                                     }
                                     int rpm = rpmCMD.getRPM();
                                     int speed = speedCMD.getMetricSpeed();
-                                    DatabaseReference measRef = dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("meas").push();
+                                    DatabaseReference measRef = dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("meas").child(String.valueOf(count));
+                                    count++;
                                     measRef.setValue(new Measurement(speed, lat, longitude, rpm));
-                                    // set drive grade - //TODOL michael set grade for drive time
+                                    // set drive grade - //TODO michael set grade for drive time
                                     dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("grade").setValue(GradeThisMeas(speed,rpm));
                                 }
                             });

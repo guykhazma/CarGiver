@@ -223,33 +223,29 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             List<LatLng> points =  new ArrayList<>();
             // go over all of the measurements
             int entryNumber = 0;
-            int size = drive.meas.entrySet().size();
-            // sort keys to traverse in insert order
-            Object[] keys = drive.meas.keySet().toArray();
-            Arrays.sort(keys);
-            txtStart.setText("Start Time: " +  Drives.dateFormat.format(drive.meas.get(keys[0]).timeStamp));
+            txtStart.setText("Start Time: " +  Drives.dateFormat.format(drive.startTime()));
             if (drive.ongoing) {
                 txtEnd.setText("Drive Is Active");
                 txtEnd.setTextColor(Color.parseColor("#4CAF50"));
             }
             else {
-                txtEnd.setText("End Time: " + Drives.dateFormat.format(drive.meas.get(keys[keys.length - 1]).timeStamp));
+                txtEnd.setText("End Time: " + Drives.dateFormat.format(drive.endTime()));
             }
-            for (Object key : keys)
+            for (int i=0; i < drive.meas.size(); i++)
             {
-                if (entryNumber == 0) {
+                if (i == 0) {
                     title = "Start Point";
-                    snippet = "Current Speed: " + drive.meas.get(key).speed;
+                    snippet = "Current Speed: " +  drive.meas.get(i).speed;
                 }
-                else if (entryNumber == size - 1 && size > 1 && drive.ongoing == false){
+                else if (i == drive.meas.size() - 1 && drive.meas.size() > 1 && drive.ongoing == false){
                     title = "Finish Point";
-                    snippet = "Current Speed: " + drive.meas.get(key).speed;
+                    snippet = "Current Speed: " + drive.meas.get(i).speed;
                 }
                 else {
-                    title = "Current Speed:" + drive.meas.get(key).speed;
-                    snippet = "Time Taken: " + Drives.dateFormat.format(drive.meas.get(key).timeStamp);
+                    title = "Current Speed:" +  drive.meas.get(i).speed;
+                    snippet = "Time Taken: " + Drives.dateFormat.format(drive.meas.get(i).timeStamp);
                 }
-                if (entryNumber == size - 1) {
+                if (entryNumber ==  drive.meas.size() - 1) {
                     float DriveGrade = dataSnapshot.child("grade").getValue(float.class);
                     speedometer.speedTo(DriveGrade, 1000);
                     if (DriveGrade < 33){
@@ -263,7 +259,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                     }
                 }
                 // add to map
-                newPoint = new LatLng(drive.meas.get(key).latitude, drive.meas.get(key).longitude);
+                newPoint = new LatLng(drive.meas.get(i).latitude, drive.meas.get(i).longitude);
                 googleMap.addMarker(new MarkerOptions().position(newPoint).title(title).snippet(snippet));
                 // add to polyline
                 points.add(newPoint);
