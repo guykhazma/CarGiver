@@ -161,7 +161,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newPoint, 18));
             //if G-force is greater then 4, we send push notification to the supervisor:
 
-            dataSnapshot.getRef().getParent().getParent().child("Grade").addListenerForSingleValueEvent(new ValueEventListener() {
+            dataSnapshot.getRef().getParent().getParent().child("grade").addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     // set gauge
@@ -208,15 +208,6 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
             drive = dataSnapshot.getValue(Drives.class);
-            // TODO: need to sort by time if not using indexes
-            txtStart.setText("Start Time: " +  drive.getStartTime());
-            if (drive.ongoing) {
-                txtEnd.setText("Drive Is Active");
-                txtEnd.setTextColor(Color.parseColor("#4CAF50"));
-            }
-            else {
-                txtEnd.setText("End Time: " + drive.getEndTime());
-            }
             // get driver data and it will call supervisor data
             dbRef.child("users").child(drive.driverID).child("username").addListenerForSingleValueEvent(loadDriverData);
             // load points to map
@@ -236,6 +227,14 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             // sort keys to traverse in insert order
             Object[] keys = drive.meas.keySet().toArray();
             Arrays.sort(keys);
+            txtStart.setText("Start Time: " +  Drives.dateFormat.format(drive.meas.get(keys[0]).timeStamp));
+            if (drive.ongoing) {
+                txtEnd.setText("Drive Is Active");
+                txtEnd.setTextColor(Color.parseColor("#4CAF50"));
+            }
+            else {
+                txtEnd.setText("End Time: " + Drives.dateFormat.format(drive.meas.get(keys[keys.length - 1]).timeStamp));
+            }
             for (Object key : keys)
             {
                 if (entryNumber == 0) {
@@ -251,7 +250,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                     snippet = "Time Taken: " + Drives.dateFormat.format(drive.meas.get(key).timeStamp);
                 }
                 if (entryNumber == size - 1) {
-                    float DriveGrade = dataSnapshot.child("Grade").getValue(float.class);
+                    float DriveGrade = dataSnapshot.child("grade").getValue(float.class);
                     speedometer.speedTo(DriveGrade, 1000);
                     if (DriveGrade < 33){
                         rating.setText("Great");

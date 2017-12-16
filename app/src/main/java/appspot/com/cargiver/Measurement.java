@@ -17,15 +17,15 @@ public class Measurement {
     Date timeStamp; // the time stamp of the measurement
     int speed; // current vehicle speed
     int rpm;
-    float latitude;
-    float longitude;
+    double latitude;
+    double longitude;
 
     @Keep
     public Measurement() {
         // Default constructor required for calls to DataSnapshot.getValue(Drives.class)
     }
 
-    public Measurement(int speed, float latitude, float longitude, int rpm) {
+    public Measurement(int speed, double latitude, double longitude, int rpm) {
         this.speed = speed;
         this.rpm = rpm;
         this.latitude = latitude;

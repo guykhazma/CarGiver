@@ -148,6 +148,7 @@ public class MainDriverFragment extends Fragment {
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
             MainDriverActivity.btService = null;
+            // TODO make sure UI updates when failed service
         }
     };
 }

@@ -12,12 +12,15 @@ import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -29,6 +32,10 @@ import com.github.pires.obd.commands.protocol.SelectProtocolCommand;
 import com.github.pires.obd.commands.protocol.TimeoutCommand;
 import com.github.pires.obd.enums.ObdProtocols;
 import com.github.pires.obd.commands.protocol.EchoOffCommand;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
@@ -345,7 +352,9 @@ public class BluetoothOBDService extends Service {
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
+        private FusedLocationProviderClient mFusedLocationClient;
         private  Timer timer;
+        private int count;
 
         public ConnectedThread(BluetoothSocket socket, String socketType) {
             //android.os.Debug.waitForDebugger();  // this line is key
@@ -372,7 +381,12 @@ public class BluetoothOBDService extends Service {
                 new LineFeedOffCommand().run(mmInStream, mmOutStream);
                 new TimeoutCommand(125).run(mmInStream, mmOutStream);
                 new SelectProtocolCommand(ObdProtocols.AUTO).run(mmInStream, mmOutStream);
-
+                // location init
+                if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+                    Toast.makeText(getApplicationContext(), "Location Services is disabled - drive canceled", Toast.LENGTH_SHORT).show();
+                    //connectionLost();
+                }
+                mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplicationContext());
                 // create drive in db
                 driveKey = dbref.child("drives").push().getKey();
                 Drives newDrive = new Drives();
@@ -381,8 +395,23 @@ public class BluetoothOBDService extends Service {
                 newDrive.grade = 0;
                 dbref.child("drives").child(driveKey).setValue(newDrive);
                 // add intial measuremnt
-                DatabaseReference measRef = dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("meas").push();
-                measRef.setValue(new Measurement(0, (float)32.189330, (float)34.893708, 0));
+                final DatabaseReference measRef = dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("meas").push();
+                if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+                    Toast.makeText(getApplicationContext(), "Location Services is disabled - drive canceled", Toast.LENGTH_SHORT).show();
+                    //connectionLost();
+                }
+                mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                    @Override
+                    public void onSuccess(Location location) {
+                        double lat = 80;
+                        double longitude = 80;
+                        if (location != null) {
+                            lat = location.getLatitude();
+                            longitude = location.getLongitude();
+                        }
+                        measRef.setValue(new Measurement(0, lat, longitude, 0));
+                    }});
+
 
             }
             catch (Exception e) {
@@ -395,20 +424,40 @@ public class BluetoothOBDService extends Service {
                 // initiate speed and RPM commands and make mesauremnt each 5 seconds
                 final RPMCommand rpmCMD = new RPMCommand();
                 final SpeedCommand speedCMD = new SpeedCommand();
+                // init location service
+
                 this.timer = new Timer();
                 this.timer.scheduleAtFixedRate(new TimerTask() {
                     @Override
                     public void run() {
                         try {
+
+
                             rpmCMD.run(mmInStream, mmOutStream);
                             speedCMD.run(mmInStream, mmOutStream);
                             // push to dB
-                            int rpm = rpmCMD.getRPM();
-                            int speed = speedCMD.getMetricSpeed();
-                            DatabaseReference measRef = dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("meas").push();
-                            measRef.setValue(new Measurement(speed, (float) 32.189330, (float) 34.893708, rpm));
-                            // set drive grade - //TODOL michael set grade for drive time
-                            dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("grade").setValue(GradeThisMeas(speed,rpm));
+                            if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+                                Toast.makeText(getApplicationContext(), "Location Services is disabled - drive canceled", Toast.LENGTH_SHORT).show();
+                                //connectionLost();
+                            }
+                            mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                                @Override
+                                public void onSuccess(Location location) {
+                                    // Got last known location. In some rare situations this can be null.
+                                    double lat = 80;
+                                    double longitude = 80;
+                                    if (location != null) {
+                                        lat = location.getLatitude();
+                                        longitude = location.getLongitude();
+                                    }
+                                    int rpm = rpmCMD.getRPM();
+                                    int speed = speedCMD.getMetricSpeed();
+                                    DatabaseReference measRef = dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("meas").push();
+                                    measRef.setValue(new Measurement(speed, lat, longitude, rpm));
+                                    // set drive grade - //TODOL michael set grade for drive time
+                                    dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("grade").setValue(GradeThisMeas(speed,rpm));
+                                }
+                            });
 
                         } catch (Exception ex) {
                             Log.e(TAG, "disconnected", ex);
