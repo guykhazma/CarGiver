@@ -301,7 +301,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         public void onDataChange(DataSnapshot dataSnapshot) {
             boolean ongoing = dataSnapshot.getValue(Boolean.class);
             if (ongoing == false) {
-                Toast toast = Toast.makeText(getActivity().getApplicationContext(), "Drive Has Finished", Toast.LENGTH_LONG);
+                Toast toast = Toast.makeText(getActivity().getApplicationContext(), "Drive Has Finished", Toast.LENGTH_SHORT);
                 toast.show();
                 // set zoom to contain all path points
                 LatLngBounds bounds = mapBuilder.build();

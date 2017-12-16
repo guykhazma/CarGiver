@@ -3,11 +3,17 @@ package appspot.com.cargiver;
 import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothDevice;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,9 +31,11 @@ import com.google.firebase.auth.FirebaseAuth;
 
 public class MainDriverFragment extends Fragment {
 
-    boolean startDrivePressed;
     // progress dialog
     private ProgressDialog mProgressDlg;
+    boolean startDrivePressed;
+    ImageButton btnStartDrive;
+    TextView Explain;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -39,13 +47,19 @@ public class MainDriverFragment extends Fragment {
         NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_driver);
         navigationView.getMenu().getItem(0).setChecked(true);
 
-        ImageButton btnStartDrive = view.findViewById(R.id.btn_start_drive);
-        TextView Explain = view.findViewById(R.id.start_driving_explain);
+        btnStartDrive = view.findViewById(R.id.btn_start_drive);
+        Explain = view.findViewById(R.id.start_driving_explain);
+
+        // bind to service
+        // Bind to LocalService if exists
+        Intent intent = new Intent(getActivity(), BluetoothOBDService.class);
+        getActivity().bindService(intent, mConnection, 0);
 
         // make sure to display the right option if data collection already started
         if (MainDriverActivity.btService != null && MainDriverActivity.btService.getState() == BluetoothOBDService.STATE_CONNECTED) {
             btnStartDrive.setImageResource(R.drawable.havearrived);
             Explain.setText("When you arrive at your destination, please click on \'I have arrived\'");
+            startDrivePressed = true;
         }
 
         getActivity().setTitle("Driver");
@@ -56,11 +70,12 @@ public class MainDriverFragment extends Fragment {
             @Override
             public void onClick (View v) {
                 //if we want to end the route
-                ImageButton btnStartDrive = v.findViewById(R.id.btn_start_drive);
-                TextView Explain = getView().findViewById(R.id.start_driving_explain);
+                btnStartDrive = v.findViewById(R.id.btn_start_drive);
+                Explain = getView().findViewById(R.id.start_driving_explain);
                 if (startDrivePressed){
                     // stop service
                     Intent intnt = new Intent(getActivity(),BluetoothOBDService.class);
+                    getActivity().unbindService(mConnection);
                     getActivity().stopService(intnt);
                     Fragment ShowRouteRes = new RouteResultFragment();
                     // set parameters to fragment
@@ -79,32 +94,57 @@ public class MainDriverFragment extends Fragment {
                     mProgressDlg.setMessage("Starting Data Collection Engine...");
                     mProgressDlg.setCancelable(false);
                     mProgressDlg.show();
-                    btnStartDrive.setImageResource(R.drawable.havearrived);
-                    Explain.setText("When you arrive at your destination, please click on \'I have arrived\'");
                     // start service
                     Intent intnt = new Intent(getActivity(),BluetoothOBDService.class);
                     intnt.putExtra("address", MainDriverActivity.bluetoothDevice.getAddress());
                     intnt.putExtra("userID", FirebaseAuth.getInstance().getCurrentUser().getUid());
                     getActivity().startService(intnt);
-                    android.os.Debug.waitForDebugger();
-                    Handler handler = new Handler();
-                    handler.postDelayed(new Runnable() {
-                        public void run() {
-                            mProgressDlg.dismiss();
-                        }
-                    }, 2000);
+                    //android.os.Debug.waitForDebugger();
                 }
                 // register press
                 startDrivePressed = !startDrivePressed;
             }
         });
-
-
-
         return view;
     }
 
-    protected void StartDrive(View v) {
-        //guyk todo insert the function that scan for devices
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        getActivity().unbindService(mConnection);
     }
+
+    // Will be called by activity on drive start
+    public void changedToActiveDrive() {
+        btnStartDrive.setImageResource(R.drawable.havearrived);
+        Explain.setText("When you arrive at your destination, please click on \'I have arrived\'");
+        // dismiss progress bar if we came from pressing the button
+        if (mProgressDlg != null) {
+            mProgressDlg.dismiss();
+        }
+    }
+
+    /** Defines callbacks for service binding, passed to bindService() */
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            BluetoothOBDService.BluetoothOBDBinder binder = (BluetoothOBDService.BluetoothOBDBinder) service;
+            MainDriverActivity.btService = (BluetoothOBDService) binder.getService();
+            Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                public void run() {
+                    // update drive fragment
+                    changedToActiveDrive();
+                }
+            }, 2000);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            MainDriverActivity.btService = null;
+        }
+    };
 }

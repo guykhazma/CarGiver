@@ -4,6 +4,7 @@ package appspot.com.cargiver;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -17,6 +18,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -36,15 +38,13 @@ import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.UUID;
 
+
+
 public class BluetoothOBDService extends Service {
-    private static final String TAG = "BluetoothChatService";
-    // This is the object that receives interactions from clients.  See
-    // RemoteService for a more complete example.
-    private final IBinder mBinder = new BluetoothOBDBinder();
+    private static final String TAG = "BluetoothOBDService";
     // Unique UUID for this application
     private static final UUID MY_UUID_SECURE = UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
     private static final UUID MY_UUID_INSECURE = UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
-
 
     // Member fields
     private NotificationManager mNM;
@@ -52,6 +52,8 @@ public class BluetoothOBDService extends Service {
     private ConnectedThread mConnectedThread;
     private int mState;
     private int NOTIFICATION = R.string.OBDservice;
+    // Binder given to clients
+    private final IBinder mBinder = new BluetoothOBDBinder();
 
     private String address;
     private String uid;
@@ -61,8 +63,13 @@ public class BluetoothOBDService extends Service {
     public static final int STATE_CONNECTING = 2; // now initiating an outgoing connection
     public static final int STATE_CONNECTED = 3;  // now connected to a remote device
 
+    @Override
+    public IBinder onBind(Intent intent) {
+        return mBinder;
+    }
+
     public class BluetoothOBDBinder extends Binder {
-        BluetoothOBDService getService() {
+        public BluetoothOBDService getService() {
             return BluetoothOBDService.this;
         }
     }
@@ -74,11 +81,6 @@ public class BluetoothOBDService extends Service {
         // Display a notification about us starting.  We put an icon in the status bar.
         mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         showNotification();
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        return mBinder;
     }
 
     @Override
@@ -118,15 +120,32 @@ public class BluetoothOBDService extends Service {
      * Indicate that the connection attempt failed and notify the UI Activity.
      */
     private void connectionFailed() {
+        this.stopSelf();
         // Send a failure message back to the Activity
+        Handler mainHandler = new Handler(getMainLooper());
 
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(), "Failed to Connect to OBD", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     /**
      * Indicate that the connection was lost and notify the UI Activity.
      */
     private void connectionLost() {
+        this.stopSelf();
         // Send a failure message back to the Activity
+        Handler mainHandler = new Handler(getMainLooper());
+
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(), "Connection with OBD is lost", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     /**
@@ -142,11 +161,11 @@ public class BluetoothOBDService extends Service {
 
         // Set the info for the views that show in the notification panel.
         Notification notification = new Notification.Builder(this)
-                .setSmallIcon(R.drawable.cargiverlogo)  // the status icon
+                .setSmallIcon(R.drawable.widget)  // the status icon
                 .setTicker(text)  // the status text
                 .setWhen(System.currentTimeMillis())  // the time stamp
                 .setContentTitle(getText(R.string.OBDservice))  // the label of the entry
-                .setContentText(text)  // the contents of the entry
+                .setContentText("Tap to open app")  // the contents of the entry
                 .setContentIntent(contentIntent)  // The intent to send when the entry is clicked
                 .build();
 
@@ -217,9 +236,6 @@ public class BluetoothOBDService extends Service {
         this.stop();
         // Cancel the persistent notification.
         mNM.cancel(NOTIFICATION);
-
-        // Tell the user we stopped.
-        //Toast.makeText(this, R.string.local_service_stopped, Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -288,7 +304,6 @@ public class BluetoothOBDService extends Service {
             synchronized (BluetoothOBDService.this) {
                 mConnectThread = null;
             }
-
             // Start the connected thread
             connected(mmSocket, mmDevice, mSocketType);
         }
@@ -340,71 +355,6 @@ public class BluetoothOBDService extends Service {
                 Log.e(TAG, "failed to initiate OBD general commands", e);
             }
         }
-
-        public float GradeThisMeas(float speed, float rpm){
-            float Grade = 0;
-            if (rpm > 4000){
-                //we start from 80 which is already bad. if rpm is over 5k, we grade 100.
-                Grade = rpm/50;
-            }else if (speed>110){
-                //we start from 83 which is already bad. if speed is over 130, we grade 100.
-                Grade = speed*3/4;
-            }else{
-                //the speed and rpm are dependent so we take only speed
-                //the motivation is that speed up to 80 will get great score,
-                //speed from 80-95 will get good score
-                //95+ will get bad score
-                if (speed<=80) {
-                    Grade = speed / 3;
-                }
-                if(speed>80 && speed <=95){
-                    Grade = speed *2/3;
-                }
-                if(speed>95 && speed<110){
-                    Grade = speed *3/4;
-                }
-            }
-            if (Grade>100){
-                return 100;
-            }
-            return Grade;
-        }
-
-        public float FinalGradeThisDrive(int NumOfMeas, float AverageSpeed, int NumOfPunish) {
-            float Grade;
-            if (AverageSpeed<=80) {
-                Grade = AverageSpeed / 3;
-            }
-            else{
-                Grade = AverageSpeed *2/3;
-            }
-            float PunishRate = NumOfPunish/NumOfMeas;
-            Grade = Grade*(1+PunishRate);
-            if (Grade>100){
-                Grade=100;
-            }
-            return Grade;
-        }
-
-        public float OneGradingAlg(int NumOfMeas, float AverageSpeed, int NumOfPunish, float CurrSpeed, float CurrRpm) {
-            float Grade;
-            if (CurrSpeed>110 || CurrRpm>4000){
-                NumOfPunish++;
-            }
-            if (AverageSpeed<=80) {
-                Grade = AverageSpeed / 3;
-            }
-            else{
-                Grade = AverageSpeed *2/3;
-            }
-            float PunishRate = NumOfPunish/NumOfMeas;
-            Grade = Grade*(1+PunishRate);
-            if (Grade>100){
-                Grade=100;
-            }
-            return Grade;
-        }
-
             public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
             // initiate speed and RPM commands
@@ -448,5 +398,69 @@ public class BluetoothOBDService extends Service {
                 Log.e(TAG, "close() of connect socket failed", e);
             }
         }
+    }
+
+    public float GradeThisMeas(float speed, float rpm){
+        float Grade = 0;
+        if (rpm > 4000){
+            //we start from 80 which is already bad. if rpm is over 5k, we grade 100.
+            Grade = rpm/50;
+        }else if (speed>110){
+            //we start from 83 which is already bad. if speed is over 130, we grade 100.
+            Grade = speed*3/4;
+        }else{
+            //the speed and rpm are dependent so we take only speed
+            //the motivation is that speed up to 80 will get great score,
+            //speed from 80-95 will get good score
+            //95+ will get bad score
+            if (speed<=80) {
+                Grade = speed / 3;
+            }
+            if(speed>80 && speed <=95){
+                Grade = speed *2/3;
+            }
+            if(speed>95 && speed<110){
+                Grade = speed *3/4;
+            }
+        }
+        if (Grade>100){
+            return 100;
+        }
+        return Grade;
+    }
+
+    public float FinalGradeThisDrive(int NumOfMeas, float AverageSpeed, int NumOfPunish) {
+        float Grade;
+        if (AverageSpeed<=80) {
+            Grade = AverageSpeed / 3;
+        }
+        else{
+            Grade = AverageSpeed *2/3;
+        }
+        float PunishRate = NumOfPunish/NumOfMeas;
+        Grade = Grade*(1+PunishRate);
+        if (Grade>100){
+            Grade=100;
+        }
+        return Grade;
+    }
+
+    public float OneGradingAlg(int NumOfMeas, float AverageSpeed, int NumOfPunish, float CurrSpeed, float CurrRpm) {
+        float Grade;
+        if (CurrSpeed>110 || CurrRpm>4000){
+            NumOfPunish++;
+        }
+        if (AverageSpeed<=80) {
+            Grade = AverageSpeed / 3;
+        }
+        else{
+            Grade = AverageSpeed *2/3;
+        }
+        float PunishRate = NumOfPunish/NumOfMeas;
+        Grade = Grade*(1+PunishRate);
+        if (Grade>100){
+            Grade=100;
+        }
+        return Grade;
     }
 }
