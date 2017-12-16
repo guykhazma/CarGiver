@@ -255,8 +255,8 @@ public class BluetoothOBDService extends Service {
         // stop all threads
         this.stop();
         // set final grade
-        // TODO: michael set last grade
-        dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("grade").setValue(0);
+        //the final grade is the relevant one, we have only one alg for it
+        //dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("grade").setValue(0);
         // set drive as finished
         dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("ongoing").setValue(false);
         // reset all variables
@@ -429,7 +429,9 @@ public class BluetoothOBDService extends Service {
 
                 this.timer = new Timer();
                 this.timer.scheduleAtFixedRate(new TimerTask() {
-                    int count = 1;
+                    int count = 1; //num of measurements
+                    int NumOfPunish = 0; //num of punishments
+                    float AverageSpeed = 0; //the average speed
                     @Override
                     public void run() {
                         try {
@@ -456,8 +458,12 @@ public class BluetoothOBDService extends Service {
                                     DatabaseReference measRef = dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("meas").child(String.valueOf(count));
                                     count++;
                                     measRef.setValue(new Measurement(speed, lat, longitude, rpm));
-                                    // set drive grade - //TODO michael set grade for drive time
-                                    dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("grade").setValue(GradeThisMeas(speed,rpm));
+
+                                    //this is the grading algorithm:
+                                    NumOfPunish += SetPunishForBadResult(speed, rpm);
+                                    AverageSpeed = (AverageSpeed*(count-1) + speed)/count;
+                                    float Grade = OneGradingAlg(count, AverageSpeed, NumOfPunish, speed, rpm);
+                                    dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("grade").setValue(Grade);
                                 }
                             });
 
@@ -527,11 +533,18 @@ public class BluetoothOBDService extends Service {
         return Grade;
     }
 
+    public static int SetPunishForBadResult(float CurrSpeed, float CurrRpm) {
+        if (CurrSpeed>110 || CurrRpm>4000){ //high speed/rpm
+            return 1;
+        }
+        if(CurrSpeed<30 && CurrRpm>3500){ //"drifting" - high acceleration
+            return 1;
+        }
+        return 0;
+    }
+
     public static float OneGradingAlg(int NumOfMeas, float AverageSpeed, int NumOfPunish, float CurrSpeed, float CurrRpm) {
         float Grade;
-        if (CurrSpeed>110 || CurrRpm>4000){
-            NumOfPunish++;
-        }
         if (AverageSpeed<=80) {
             Grade = AverageSpeed / 3;
         }

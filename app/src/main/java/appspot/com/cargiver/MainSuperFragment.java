@@ -4,6 +4,7 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.view.LayoutInflater;
@@ -60,7 +61,7 @@ public class MainSuperFragment extends Fragment {
         uid = currentUser.getUid(); // current user id
 
         //2. get my drivers
-        TheRoutesDB.child("supervisors").child(uid).child("authorizedDriversIDs").addListenerForSingleValueEvent(new ValueEventListener() {
+        TheRoutesDB.child("supervisors").child(uid).child("authorizedDriverIDs").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 // show loading
@@ -70,7 +71,7 @@ public class MainSuperFragment extends Fragment {
                 mProgressDlg.show();
 
                 for (DataSnapshot Child : dataSnapshot.getChildren()) {
-                    MyUsers.add(Child.getValue(String.class)); //all my drivers
+                    MyUsers.add(Child.getKey()); //all my drivers
                 }
                 //3. get all the drives that this supervisor can see
                 TheRoutesDB.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -83,7 +84,8 @@ public class MainSuperFragment extends Fragment {
                                 if (CurrDrive.ongoing == true) { //we choose this drive
                                     DriveID = Child.getKey(); //this is the drive ID
                                     ChosenDrive = true;
-                                    btnOngoingDrive.setText("Watch ongoing drive");
+                                    btnOngoingDrive.setText("  Watch ongoing drive  ");
+                                    btnOngoingDrive.setBackgroundColor(Color.GREEN);
                                 }
                             }
                         }
