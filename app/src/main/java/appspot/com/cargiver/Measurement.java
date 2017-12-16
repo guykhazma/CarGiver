@@ -15,8 +15,8 @@ import java.util.Date;
 
 public class Measurement {
     Date timeStamp; // the time stamp of the measurement
-    float speed; // current vehicle speed
-    float rpm;
+    int speed; // current vehicle speed
+    int rpm;
     float latitude;
     float longitude;
 
@@ -32,4 +32,5 @@ public class Measurement {
         this.longitude = longitude;
         this.timeStamp = Calendar.getInstance().getTime();
     }
+
 }

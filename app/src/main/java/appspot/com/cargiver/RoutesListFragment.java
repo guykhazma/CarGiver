@@ -91,7 +91,7 @@ public class RoutesListFragment extends Fragment {
                 for (DataSnapshot Child: dataSnapshot.getChildren()) {
                     if (NumOfRoutes >= 20){break;}
                         Drives CurrDrive = Child.getValue(Drives.class);
-                        if(CurrDrive.getDriverID().equals(uid)) {
+                        if(CurrDrive.driverID.equals(uid)) {
                             DrivesList.add(CurrDrive);
                             DrivesIdList.add(Child.getKey());
                             NumOfRoutes++;

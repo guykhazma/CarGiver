@@ -182,9 +182,9 @@ public class MainDriverActivity extends AppCompatActivity
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
                     public void run() {
-                        Log.w(TAG, "Bluetooth Connection Lost");
                         // Switch to inactive bluetooth
                         if (btService == null || btService.getState() == BluetoothOBDService.STATE_NONE) {
+                            Log.w(TAG, "Bluetooth Connection Lost");
                             fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth, null));
                             fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#DD2C00")));
                         }
@@ -196,9 +196,9 @@ public class MainDriverActivity extends AppCompatActivity
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
                     public void run() {
-                        Log.w(TAG, "Bluetooth Connection Started");
                         // Switch to active bluetooth
                         if (btService != null && btService.getState() == BluetoothOBDService.STATE_CONNECTED) {
+                            Log.w(TAG, "Bluetooth Connection Started");
                             fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
                             fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
                             Toast toast = Toast.makeText(getApplicationContext(), "Connected successfully to " + MainDriverActivity.bluetoothDevice.getName() , Toast.LENGTH_SHORT);

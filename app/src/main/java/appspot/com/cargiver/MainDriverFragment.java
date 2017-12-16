@@ -75,12 +75,15 @@ public class MainDriverFragment extends Fragment {
                 if (startDrivePressed){
                     // stop service
                     Intent intnt = new Intent(getActivity(),BluetoothOBDService.class);
+                    synchronized (BluetoothOBDService.class) {
+                        BluetoothOBDService.stopped = true;
+                    };
                     getActivity().unbindService(mConnection);
                     getActivity().stopService(intnt);
                     Fragment ShowRouteRes = new RouteResultFragment();
                     // set parameters to fragment
                     Bundle bundle = new Bundle();
-                    bundle.putString("driveID", "-KzyH3elX37eUbJZNd6l");
+                    bundle.putString("driveID", BluetoothOBDService.getDriveKey());
                     ShowRouteRes.setArguments(bundle);
                     getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
                 }

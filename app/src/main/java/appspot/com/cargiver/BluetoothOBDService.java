@@ -31,11 +31,16 @@ import com.github.pires.obd.enums.ObdProtocols;
 import com.github.pires.obd.commands.protocol.EchoOffCommand;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 
@@ -57,6 +62,10 @@ public class BluetoothOBDService extends Service {
 
     private String address;
     private String uid;
+    private static String driveKey;
+    public static boolean stopped; // indicates whether failure caused the problem
+
+    private DatabaseReference dbref;
 
     // Constants that indicate the current connection state
     public static final int STATE_NONE = 0;       // we're doing nothing
@@ -81,16 +90,18 @@ public class BluetoothOBDService extends Service {
         // Display a notification about us starting.  We put an icon in the status bar.
         mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         showNotification();
+        BluetoothOBDService.driveKey = null;
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // initiate connection
-        // Cancel any thread attempting to make a connection
-        //android.os.Debug.waitForDebugger();  // this line is key
+
         uid = intent.getStringExtra("userID");
         address = intent.getStringExtra("address");
-        //android.os.Debug.waitForDebugger();  // this line is key
+        dbref = FirebaseDatabase.getInstance().getReference();
+
+        // initiate connection
+        // Cancel any thread attempting to make a connection
         if (mConnectThread != null) {
             mConnectThread.cancel();
             mConnectThread = null;
@@ -117,6 +128,13 @@ public class BluetoothOBDService extends Service {
     }
 
     /**
+     * Return the current connection state.
+     */
+    public static synchronized String getDriveKey() {
+        return driveKey;
+    }
+
+    /**
      * Indicate that the connection attempt failed and notify the UI Activity.
      */
     private void connectionFailed() {
@@ -136,16 +154,18 @@ public class BluetoothOBDService extends Service {
      * Indicate that the connection was lost and notify the UI Activity.
      */
     private void connectionLost() {
-        this.stopSelf();
         // Send a failure message back to the Activity
-        Handler mainHandler = new Handler(getMainLooper());
+        if (!stopped) {
+            Handler mainHandler = new Handler(getMainLooper());
 
-        mainHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(getApplicationContext(), "Connection with OBD is lost", Toast.LENGTH_SHORT).show();
-            }
-        });
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "Connection with OBD is lost", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+        this.stopSelf();
     }
 
     /**
@@ -220,20 +240,20 @@ public class BluetoothOBDService extends Service {
         // Start the thread to manage the connection and perform transmissions
         mConnectedThread = new ConnectedThread(socket, socketType);
         mConnectedThread.start();
-
-        // Send the name of the connected device back to the UI Activity
-        /*Message msg = mHandler.obtainMessage(Constants.MESSAGE_DEVICE_NAME);
-        Bundle bundle = new Bundle();
-        bundle.putString(Constants.DEVICE_NAME, device.getName());
-        msg.setData(bundle);
-        mHandler.sendMessage(msg);
-        // Update UI title
-        updateUserInterfaceTitle();*/
     }
 
     public void onDestroy() {
         // stop all threads
         this.stop();
+        // set final grade
+        // TODO: michael set last grade
+        dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("grade").setValue(0);
+        // set drive as finished
+        dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("ongoing").setValue(false);
+        // reset all variables
+        stopped = false;
+        driveKey = null;
+
         // Cancel the persistent notification.
         mNM.cancel(NOTIFICATION);
     }
@@ -325,6 +345,7 @@ public class BluetoothOBDService extends Service {
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
+        private  Timer timer;
 
         public ConnectedThread(BluetoothSocket socket, String socketType) {
             //android.os.Debug.waitForDebugger();  // this line is key
@@ -332,6 +353,7 @@ public class BluetoothOBDService extends Service {
             mmSocket = socket;
             InputStream tmpIn = null;
             OutputStream tmpOut = null;
+
 
             // Get the BluetoothSocket input and output streams
             try {
@@ -350,49 +372,57 @@ public class BluetoothOBDService extends Service {
                 new LineFeedOffCommand().run(mmInStream, mmOutStream);
                 new TimeoutCommand(125).run(mmInStream, mmOutStream);
                 new SelectProtocolCommand(ObdProtocols.AUTO).run(mmInStream, mmOutStream);
+
+                // create drive in db
+                driveKey = dbref.child("drives").push().getKey();
+                Drives newDrive = new Drives();
+                newDrive.ongoing = true;
+                newDrive.driverID = uid;
+                newDrive.grade = 0;
+                dbref.child("drives").child(driveKey).setValue(newDrive);
+                // add intial measuremnt
+                DatabaseReference measRef = dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("meas").push();
+                measRef.setValue(new Measurement(0, (float)32.189330, (float)34.893708, 0));
+
             }
             catch (Exception e) {
                 Log.e(TAG, "failed to initiate OBD general commands", e);
             }
         }
+
             public void run() {
-            Log.i(TAG, "BEGIN mConnectedThread");
-            // initiate speed and RPM commands
-            RPMCommand rpmCMD= new RPMCommand();
-            SpeedCommand speedCMD = new SpeedCommand();
-            // Keep listening to the InputStream while connected
-            while (mState == STATE_CONNECTED) {
+                Log.i(TAG, "BEGIN mConnectedThread");
+                // initiate speed and RPM commands and make mesauremnt each 5 seconds
+                final RPMCommand rpmCMD = new RPMCommand();
+                final SpeedCommand speedCMD = new SpeedCommand();
+                this.timer = new Timer();
+                this.timer.scheduleAtFixedRate(new TimerTask() {
+                    @Override
+                    public void run() {
+                        try {
+                            rpmCMD.run(mmInStream, mmOutStream);
+                            speedCMD.run(mmInStream, mmOutStream);
+                            // push to dB
+                            int rpm = rpmCMD.getRPM();
+                            int speed = speedCMD.getMetricSpeed();
+                            DatabaseReference measRef = dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("meas").push();
+                            measRef.setValue(new Measurement(speed, (float) 32.189330, (float) 34.893708, rpm));
+                            // set drive grade - //TODOL michael set grade for drive time
+                            dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("grade").setValue(GradeThisMeas(speed,rpm));
 
-                try {
-                    rpmCMD.run(mmInStream,mmOutStream);
-                    speedCMD.run(mmInStream,mmOutStream);
-                    // push to dB
-                    rpmCMD.getFormattedResult();
-                    speedCMD.getFormattedResult();
-                    Thread.sleep(2000);
-                    //num_of_meas ++;
-                    //average_speed = (average_speed*(num_of_meas-1)+current_speed)/average_speed
-                    //Grade = GradeThisMeas(current_speed, current_rpm);
-                    //if (Grade>85){
-                    // num_of_punish ++;
-                    // }
-
-                    //FinalGradeThisDrive(int NumOfMeas, float AverageSpeed, int NumOfPunish)
-                    //GradeThisMeas(float speed, float rpm)
-                    // if(currMeasurment.GForce>4){
-                    //SendPushNotification() //TODO needs to be coded
-                    //}
-
-                } catch (Exception e) {
-                    Log.e(TAG, "disconnected", e);
-                    connectionLost();
-                    break;
-                }
-            }
+                        } catch (Exception ex) {
+                            Log.e(TAG, "disconnected", ex);
+                            this.cancel(); // cancel timer
+                            stopped = false;
+                            connectionLost();
+                        }
+                    }
+                }, 2000, 2000);
         }
 
         public void cancel() {
             try {
+                timer.cancel();
                 mmSocket.close();
             } catch (IOException e) {
                 Log.e(TAG, "close() of connect socket failed", e);
@@ -400,7 +430,8 @@ public class BluetoothOBDService extends Service {
         }
     }
 
-    public float GradeThisMeas(float speed, float rpm){
+    // Grade functions
+    public static float GradeThisMeas(float speed, float rpm){
         float Grade = 0;
         if (rpm > 4000){
             //we start from 80 which is already bad. if rpm is over 5k, we grade 100.
@@ -429,7 +460,7 @@ public class BluetoothOBDService extends Service {
         return Grade;
     }
 
-    public float FinalGradeThisDrive(int NumOfMeas, float AverageSpeed, int NumOfPunish) {
+    public static float FinalGradeThisDrive(int NumOfMeas, float AverageSpeed, int NumOfPunish) {
         float Grade;
         if (AverageSpeed<=80) {
             Grade = AverageSpeed / 3;
@@ -445,7 +476,7 @@ public class BluetoothOBDService extends Service {
         return Grade;
     }
 
-    public float OneGradingAlg(int NumOfMeas, float AverageSpeed, int NumOfPunish, float CurrSpeed, float CurrRpm) {
+    public static float OneGradingAlg(int NumOfMeas, float AverageSpeed, int NumOfPunish, float CurrSpeed, float CurrRpm) {
         float Grade;
         if (CurrSpeed>110 || CurrRpm>4000){
             NumOfPunish++;

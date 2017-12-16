@@ -65,7 +65,7 @@ public class RouteListAdapter extends ArrayAdapter {
         StringBuffer DriverField = new StringBuffer("Driver: ");
         DriverField.append(RoutesNameArray[position]);
         StringBuffer DateField = new StringBuffer("Date: ");
-        DateField.append(RoutesList.get(position).getStartTime());
+        DateField.append(RoutesList.get(position).driverID);
         RouteDriverField.setText(DriverField);
         RouteDateField.setText(DateField);
 

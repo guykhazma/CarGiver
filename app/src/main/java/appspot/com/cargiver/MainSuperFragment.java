@@ -79,7 +79,7 @@ public class MainSuperFragment extends Fragment {
                         DataSnapshot Drives = dataSnapshot.child("drives");
                         for (DataSnapshot Child : Drives.getChildren()) {
                             Drives CurrDrive = Child.getValue(Drives.class);
-                            if (CurrDrive.getSupervisorID().equals(uid)) { //if i'm the supervisor
+                            if (MyUsers.contains(CurrDrive.driverID)) { //if i'm the supervisor
                                 if (CurrDrive.ongoing == true) { //we choose this drive
                                     DriveID = Child.getKey(); //this is the drive ID
                                     ChosenDrive = true;
