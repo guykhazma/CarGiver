@@ -2,6 +2,7 @@ package appspot.com.cargiver;
 
 import android.app.Fragment;
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.ComponentName;
 import android.content.Context;
@@ -76,18 +77,26 @@ public class MainDriverFragment extends Fragment {
                     // stop service
                     Intent intnt = new Intent(getActivity(),BluetoothOBDService.class);
                     synchronized (BluetoothOBDService.class) {
-                        BluetoothOBDService.stopped = true;
+                        MainDriverActivity.btService.stopped = true;
                     };
                     getActivity().unbindService(mConnection);
                     getActivity().stopService(intnt);
                     Fragment ShowRouteRes = new RouteResultFragment();
                     // set parameters to fragment
                     Bundle bundle = new Bundle();
-                    bundle.putString("driveID", BluetoothOBDService.getDriveKey());
+                    bundle.putString("driveID", MainDriverActivity.btService.getDriveKey());
                     ShowRouteRes.setArguments(bundle);
                     getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
                 }
                 else {
+                    BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+                    // make sure bluetooth is on
+                    if (!mBluetoothAdapter.isEnabled()) {
+                        Toast toast = Toast.makeText(getActivity().getApplicationContext(), "Please Enable Bluetooth", Toast.LENGTH_SHORT);
+                        toast.show();
+                        return;
+                    }
+                    // make sure bluetooth device was selected
                     if (MainDriverActivity.bluetoothDevice== null) {
                         Toast toast = Toast.makeText(getActivity().getApplicationContext(), "Please select Bluetooth device", Toast.LENGTH_SHORT);
                         toast.show();
@@ -101,6 +110,8 @@ public class MainDriverFragment extends Fragment {
                     Intent intnt = new Intent(getActivity(),BluetoothOBDService.class);
                     intnt.putExtra("address", MainDriverActivity.bluetoothDevice.getAddress());
                     intnt.putExtra("userID", FirebaseAuth.getInstance().getCurrentUser().getUid());
+                    Intent intent = new Intent(getActivity(), BluetoothOBDService.class);
+                    getActivity().bindService(intent, mConnection, 0);
                     getActivity().startService(intnt);
                     //android.os.Debug.waitForDebugger();
                 }
@@ -138,10 +149,20 @@ public class MainDriverFragment extends Fragment {
             MainDriverActivity.btService = (BluetoothOBDService) binder.getService();
             Handler handler = new Handler();
             handler.postDelayed(new Runnable() {
+
                 public void run() {
-                    // update drive fragment
-                    if (MainDriverActivity.btService.getState() == BluetoothOBDService.STATE_CONNECTED)
-                        changedToActiveDrive();
+                        // wait till connected
+                        while (MainDriverActivity.btService!= null && MainDriverActivity.btService.getState() != BluetoothOBDService.STATE_CONNECTED) {
+
+                        }
+                        // if we had connected
+                        if (MainDriverActivity.btService != null && MainDriverActivity.btService.getState() == BluetoothOBDService.STATE_CONNECTED)
+                            changedToActiveDrive();
+                        else {
+                            mProgressDlg.dismiss();
+                            startDrivePressed = false;
+                        }
+
                 }
             }, 3000);
         }
@@ -150,6 +171,7 @@ public class MainDriverFragment extends Fragment {
         public void onServiceDisconnected(ComponentName arg0) {
             MainDriverActivity.btService = null;
             mProgressDlg.dismiss();
+            getActivity().unbindService(this);
             startDrivePressed = false;
         }
     };

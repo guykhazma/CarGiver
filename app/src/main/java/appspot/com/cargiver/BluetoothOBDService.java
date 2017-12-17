@@ -70,8 +70,8 @@ public class BluetoothOBDService extends Service {
 
     private String address;
     private String uid;
-    private static String driveKey;
-    public static boolean stopped; // indicates whether failure caused the problem
+    private String driveKey;
+    public  boolean stopped; // indicates whether failure caused the problem
 
     private DatabaseReference dbref;
 
@@ -98,7 +98,7 @@ public class BluetoothOBDService extends Service {
         // Display a notification about us starting.  We put an icon in the status bar.
         mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         showNotification();
-        BluetoothOBDService.driveKey = null;
+        driveKey = null;
     }
 
     @Override
@@ -138,7 +138,7 @@ public class BluetoothOBDService extends Service {
     /**
      * Return the current connection state.
      */
-    public static synchronized String getDriveKey() {
+    public synchronized String getDriveKey() {
         return driveKey;
     }
 
@@ -255,8 +255,8 @@ public class BluetoothOBDService extends Service {
         // stop all threads
         this.stop();
         // set drive as finished
-        if (mState == BluetoothOBDService.STATE_CONNECTED) {
-            dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("ongoing").setValue(false);
+        if (driveKey != null) {
+            dbref.child("drives").child(driveKey).child("ongoing").setValue(false);
         }
         // reset all variables
         stopped = false;
@@ -383,7 +383,7 @@ public class BluetoothOBDService extends Service {
                 // location init
                 if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
                     Toast.makeText(getApplicationContext(), "Location Services is disabled - drive canceled", Toast.LENGTH_SHORT).show();
-                    //connectionLost();
+                    connectionLost();
                 }
                 mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplicationContext());
                 // create drive in db
@@ -394,7 +394,7 @@ public class BluetoothOBDService extends Service {
                 newDrive.grade = 0;
                 dbref.child("drives").child(driveKey).setValue(newDrive);
                 // add intial measuremnt
-                final DatabaseReference measRef = dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("meas").child("0");
+                final DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child("0");
                 if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
                     Toast.makeText(getApplicationContext(), "Location Services is disabled - drive canceled", Toast.LENGTH_SHORT).show();
                     //connectionLost();
@@ -456,14 +456,14 @@ public class BluetoothOBDService extends Service {
                                     if (speed > 0) {
                                         int rpm = rpmCMD.getRPM();
 
-                                        DatabaseReference measRef = dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("meas").child(String.valueOf(count));
+                                        DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child(String.valueOf(count));
                                         count++;
                                         measRef.setValue(new Measurement(speed, lat, longitude, rpm));
                                         //this is the grading algorithm:
                                         NumOfPunish += SetPunishForBadResult(speed, rpm);
                                         AverageSpeed = (AverageSpeed*(count-1) + speed)/count;
                                         float Grade = OneGradingAlg(count, AverageSpeed, NumOfPunish, speed, rpm);
-                                        dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("grade").setValue(Grade);
+                                        dbref.child("drives").child(driveKey).child("grade").setValue(Grade);
                                     }
                                 }
                             });
