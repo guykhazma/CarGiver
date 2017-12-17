@@ -254,9 +254,6 @@ public class BluetoothOBDService extends Service {
     public void onDestroy() {
         // stop all threads
         this.stop();
-        // set final grade
-        //the final grade is the relevant one, we have only one alg for it
-        //dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("grade").setValue(0);
         // set drive as finished
         dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("ongoing").setValue(false);
         // reset all variables
@@ -485,52 +482,6 @@ public class BluetoothOBDService extends Service {
                 Log.e(TAG, "close() of connect socket failed", e);
             }
         }
-    }
-
-    // Grade functions
-    public static float GradeThisMeas(float speed, float rpm){
-        float Grade = 0;
-        if (rpm > 4000){
-            //we start from 80 which is already bad. if rpm is over 5k, we grade 100.
-            Grade = rpm/50;
-        }else if (speed>110){
-            //we start from 83 which is already bad. if speed is over 130, we grade 100.
-            Grade = speed*3/4;
-        }else{
-            //the speed and rpm are dependent so we take only speed
-            //the motivation is that speed up to 80 will get great score,
-            //speed from 80-95 will get good score
-            //95+ will get bad score
-            if (speed<=80) {
-                Grade = speed / 3;
-            }
-            if(speed>80 && speed <=95){
-                Grade = speed *2/3;
-            }
-            if(speed>95 && speed<110){
-                Grade = speed *3/4;
-            }
-        }
-        if (Grade>100){
-            return 100;
-        }
-        return Grade;
-    }
-
-    public static float FinalGradeThisDrive(int NumOfMeas, float AverageSpeed, int NumOfPunish) {
-        float Grade;
-        if (AverageSpeed<=80) {
-            Grade = AverageSpeed / 3;
-        }
-        else{
-            Grade = AverageSpeed *2/3;
-        }
-        float PunishRate = NumOfPunish/NumOfMeas;
-        Grade = Grade*(1+PunishRate);
-        if (Grade>100){
-            Grade=100;
-        }
-        return Grade;
     }
 
     public static int SetPunishForBadResult(float CurrSpeed, float CurrRpm) {

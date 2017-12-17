@@ -14,7 +14,7 @@ import java.util.Date;
 // Represent measurement during drive
 
 public class Measurement {
-    Date timeStamp; // the time stamp of the measurement
+    long timeStamp; // the time stamp of the measurement
     int speed; // current vehicle speed
     int rpm;
     double latitude;
@@ -30,7 +30,11 @@ public class Measurement {
         this.rpm = rpm;
         this.latitude = latitude;
         this.longitude = longitude;
-        this.timeStamp = Calendar.getInstance().getTime();
+        this.timeStamp = Calendar.getInstance().getTime().getTime();
+    }
+
+    public Date date() {
+        return new Date(timeStamp);
     }
 
 }

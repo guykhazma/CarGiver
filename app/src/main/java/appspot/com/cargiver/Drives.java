@@ -31,10 +31,10 @@ public class Drives {
     }
 
     public Date startTime() {
-        return meas.get(0).timeStamp;
+        return new Date(meas.get(0).timeStamp);
     }
 
     public Date endTime() {
-        return meas.get(meas.size() - 1).timeStamp;
+        return new Date(meas.get(meas.size() - 1).timeStamp);
     }
 }

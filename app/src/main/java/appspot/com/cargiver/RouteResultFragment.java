@@ -166,7 +166,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     // set gauge
                     float DriveGrade = dataSnapshot.getValue(float.class);
-                    //speedometer.speedTo((currMeasurment.rpm/9000)*100, 1000);
+
                     speedometer.speedTo(DriveGrade, 1000);
 
                     if (DriveGrade < 33){
@@ -243,7 +243,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                 }
                 else {
                     title = "Current Speed:" +  drive.meas.get(i).speed;
-                    snippet = "Time Taken: " + Drives.dateFormat.format(drive.meas.get(i).timeStamp);
+                    snippet = "Time Taken: " + Drives.dateFormat.format(drive.meas.get(i).date());
                 }
                 if (entryNumber ==  drive.meas.size() - 1) {
                     float DriveGrade = dataSnapshot.child("grade").getValue(float.class);
