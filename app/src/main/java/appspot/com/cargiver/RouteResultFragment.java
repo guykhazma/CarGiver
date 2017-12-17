@@ -305,8 +305,11 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         public void onDataChange(DataSnapshot dataSnapshot) {
             boolean ongoing = dataSnapshot.getValue(Boolean.class);
             if (ongoing == false) {
-                Toast toast = Toast.makeText(getActivity(), "Drive Has Finished", Toast.LENGTH_SHORT);
-                toast.show();
+                // TODO: check why it fails without this if
+                if (getActivity() != null) {
+                    Toast toast = Toast.makeText(getActivity(), "Drive Has Finished", Toast.LENGTH_SHORT);
+                    toast.show();
+                }
                 // set zoom to contain all path points
                 LatLngBounds bounds = mapBuilder.build();
                 CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
@@ -344,4 +347,13 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             Log.w(TAG, "failed loading drive", databaseError.toException());
         }
     };
+
+    @Override
+    // unregister listeners
+    public void onDestroyView() {
+        super.onDestroyView();
+        dbRef.removeEventListener(loadData);
+        dbRef.removeEventListener(finishListener);
+        dbRef.removeEventListener(updateMap);
+    }
 }
