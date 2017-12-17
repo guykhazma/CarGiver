@@ -13,7 +13,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import java.util.Date;
 import com.github.anastr.speedviewlib.Speedometer;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -24,6 +24,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -70,6 +71,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
     MapView mMapView;
     GoogleMap googleMap;
     Polyline path = null;
+    Marker lastMarker;
     PolylineOptions pathOptions = null;
     LatLngBounds.Builder mapBuilder = null;
 
@@ -148,8 +150,9 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             // adding to map
             String title = "Current Speed:" + currMeasurment.speed;
             String snippet = "Time Taken: " + Drives.dateFormat.format(currMeasurment.timeStamp);
-            // add marker
-            googleMap.addMarker(new MarkerOptions().position(newPoint).title(title).snippet(snippet));
+            // add new marker remove last
+            lastMarker.remove();
+            lastMarker = googleMap.addMarker(new MarkerOptions().position(newPoint).title(title).snippet(snippet));
             // add to route
             List<LatLng> points = path.getPoints();
             points.add(newPoint);
@@ -221,8 +224,8 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             // used to update polyline
             LatLng newPoint;
             List<LatLng> points =  new ArrayList<>();
-            // go over all of the measurements
-            int entryNumber = 0;
+
+            // set texts
             txtStart.setText("Start Time: " +  Drives.dateFormat.format(drive.startTime()));
             if (drive.ongoing) {
                 txtEnd.setText("Drive Is Active");
@@ -231,56 +234,62 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             else {
                 txtEnd.setText("End Time: " + Drives.dateFormat.format(drive.endTime()));
             }
+
+            // add start marker
+            title = "Start Point";
+            snippet = "Time: " +  Drives.dateFormat.format(drive.startTime());
+            newPoint = new LatLng(drive.meas.get(0).latitude, drive.meas.get(0).longitude);
+            googleMap.addMarker(new MarkerOptions().position(newPoint).title(title).snippet(snippet));
+
+            // create route
             for (int i=0; i < drive.meas.size(); i++)
             {
-                if (i == 0) {
-                    title = "Start Point";
-                    snippet = "Current Speed: " +  drive.meas.get(i).speed;
-                }
-                else if (i == drive.meas.size() - 1 && drive.meas.size() > 1 && drive.ongoing == false){
-                    title = "Finish Point";
-                    snippet = "Current Speed: " + drive.meas.get(i).speed;
-                }
-                else {
-                    title = "Current Speed:" +  drive.meas.get(i).speed;
-                    snippet = "Time Taken: " + Drives.dateFormat.format(drive.meas.get(i).date());
-                }
-                if (entryNumber ==  drive.meas.size() - 1) {
-                    float DriveGrade = dataSnapshot.child("grade").getValue(float.class);
-                    speedometer.speedTo(DriveGrade, 1000);
-                    if (DriveGrade < 33){
-                        rating.setText("Great");
-                    }
-                    else if (DriveGrade >= 33 && DriveGrade < 66) {
-                        rating.setText("Good");
-                    }
-                    else {
-                        rating.setText("Bad");
-                    }
-                }
-                // add to map
+                // add to route
                 newPoint = new LatLng(drive.meas.get(i).latitude, drive.meas.get(i).longitude);
-                googleMap.addMarker(new MarkerOptions().position(newPoint).title(title).snippet(snippet));
                 // add to polyline
                 points.add(newPoint);
                 // include in map
-                mapBuilder.include(newPoint);
+                mapBuilder.include(newPoint);;
+            }
 
-                if (drive.ongoing == false) {
-                    // set zoom to contain all path points
-                    LatLngBounds bounds = mapBuilder.build();
-                    CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
-                    googleMap.animateCamera(cu);
-                }
-                // move to last marker
-                else {
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() -1), 18));
-                    // listener to new points
-                    dbRef.child("drives").child(driveID).child("meas").addChildEventListener(updateMap);
-                    // listener for finish event
-                    dbRef.child("drives").child(driveID).child("ongoing").addValueEventListener(finishListener);
-                }
-                entryNumber++;
+            // add finish marker or current marker
+            if (drive.ongoing == false) {
+                title = "Finish Point";
+                snippet = "Time: " + Drives.dateFormat.format(drive.endTime());
+            }
+            else {
+                title = "Current Speed:" + drive.meas.get(drive.meas.size() - 1).speed;
+                snippet = "Time Taken: " + Drives.dateFormat.format(drive.endTime());
+            }
+            newPoint = new LatLng(drive.meas.get(drive.meas.size() - 1).latitude, drive.meas.get(drive.meas.size() - 1).longitude);
+            lastMarker = googleMap.addMarker(new MarkerOptions().position(newPoint).title(title).snippet(snippet));
+
+            // set grade
+            speedometer.speedTo(drive.grade, 1000);
+            if (drive.grade < 33){
+                rating.setText("Great");
+            }
+            else if (drive.grade >= 33 && drive.grade < 66) {
+                rating.setText("Good");
+            }
+            else {
+                rating.setText("Bad");
+            }
+
+            // set zoom to contain all path points
+            if (drive.ongoing == false) {
+
+                LatLngBounds bounds = mapBuilder.build();
+                CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 100);
+                googleMap.animateCamera(cu);
+            }
+            // move to last marker
+            else {
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() -1), 18));
+                // listener to new points
+                dbRef.child("drives").child(driveID).child("meas").orderByChild("timeStamp").startAt(new Date().getTime()).addChildEventListener(updateMap);
+                // listener for finish event
+                dbRef.child("drives").child(driveID).child("ongoing").addValueEventListener(finishListener);
             }
             path.setPoints(points);
         }

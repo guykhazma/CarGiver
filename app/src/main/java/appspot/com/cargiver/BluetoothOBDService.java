@@ -255,7 +255,9 @@ public class BluetoothOBDService extends Service {
         // stop all threads
         this.stop();
         // set drive as finished
-        dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("ongoing").setValue(false);
+        if (mState == BluetoothOBDService.STATE_CONNECTED) {
+            dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("ongoing").setValue(false);
+        }
         // reset all variables
         stopped = false;
         driveKey = null;
@@ -320,7 +322,6 @@ public class BluetoothOBDService extends Service {
                     mmSocket = sockFallback;
                 } catch (Exception e2) {
                     Log.e(TAG, "Couldn't fallback while establishing Bluetooth connection.", e2);
-                    // TODO: check if  mmSocket.close(); is needed
                     connectionFailed();
                     return;
                 }
@@ -401,8 +402,8 @@ public class BluetoothOBDService extends Service {
                 mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
                     @Override
                     public void onSuccess(Location location) {
-                        double lat = 80;
-                        double longitude = 80;
+                        double lat = -1;
+                        double longitude = -1;
                         if (location != null) {
                             lat = location.getLatitude();
                             longitude = location.getLongitude();
@@ -444,23 +445,26 @@ public class BluetoothOBDService extends Service {
                                 @Override
                                 public void onSuccess(Location location) {
                                     // Got last known location. In some rare situations this can be null.
-                                    double lat = 80;
-                                    double longitude = 80;
+                                    double lat = -1;
+                                    double longitude = -1;
                                     if (location != null) {
                                         lat = location.getLatitude();
                                         longitude = location.getLongitude();
                                     }
-                                    int rpm = rpmCMD.getRPM();
                                     int speed = speedCMD.getMetricSpeed();
-                                    DatabaseReference measRef = dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("meas").child(String.valueOf(count));
-                                    count++;
-                                    measRef.setValue(new Measurement(speed, lat, longitude, rpm));
+                                    // add to db only if speed is above 0
+                                    if (speed > 0) {
+                                        int rpm = rpmCMD.getRPM();
 
-                                    //this is the grading algorithm:
-                                    NumOfPunish += SetPunishForBadResult(speed, rpm);
-                                    AverageSpeed = (AverageSpeed*(count-1) + speed)/count;
-                                    float Grade = OneGradingAlg(count, AverageSpeed, NumOfPunish, speed, rpm);
-                                    dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("grade").setValue(Grade);
+                                        DatabaseReference measRef = dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("meas").child(String.valueOf(count));
+                                        count++;
+                                        measRef.setValue(new Measurement(speed, lat, longitude, rpm));
+                                        //this is the grading algorithm:
+                                        NumOfPunish += SetPunishForBadResult(speed, rpm);
+                                        AverageSpeed = (AverageSpeed*(count-1) + speed)/count;
+                                        float Grade = OneGradingAlg(count, AverageSpeed, NumOfPunish, speed, rpm);
+                                        dbref.child("drives").child(BluetoothOBDService.getDriveKey()).child("grade").setValue(Grade);
+                                    }
                                 }
                             });
 

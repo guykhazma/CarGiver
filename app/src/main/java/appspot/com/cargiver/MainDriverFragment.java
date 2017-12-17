@@ -140,15 +140,17 @@ public class MainDriverFragment extends Fragment {
             handler.postDelayed(new Runnable() {
                 public void run() {
                     // update drive fragment
-                    changedToActiveDrive();
+                    if (MainDriverActivity.btService.getState() == BluetoothOBDService.STATE_CONNECTED)
+                        changedToActiveDrive();
                 }
-            }, 2000);
+            }, 3000);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
             MainDriverActivity.btService = null;
-            // TODO make sure UI updates when failed service
+            mProgressDlg.dismiss();
+            startDrivePressed = false;
         }
     };
 }
