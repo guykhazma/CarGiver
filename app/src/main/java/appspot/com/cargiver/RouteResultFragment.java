@@ -13,7 +13,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import java.util.Date;
 import com.github.anastr.speedviewlib.Speedometer;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -24,6 +24,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -70,6 +71,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
     MapView mMapView;
     GoogleMap googleMap;
     Polyline path = null;
+    Marker lastMarker;
     PolylineOptions pathOptions = null;
     LatLngBounds.Builder mapBuilder = null;
 
@@ -133,37 +135,6 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         dbRef.child("drives").child(driveID).addListenerForSingleValueEvent(loadData);
     }
 
-    //this is the grading algorithm:
-    //thr main idea, is to "punish" for bad values, and to scale the other normal behaviour
-    public float GradeThisDrive(float speed, float rpm){
-        float Grade = 0;
-        if (rpm > 4000){
-            //we start from 80 which is already bad. if rpm is over 5k, we grade 100.
-            Grade = rpm/50;
-        }else if (speed>110){
-            //we start from 83 which is already bad. if speed is over 130, we grade 100.
-            Grade = speed*3/4;
-        }else{
-            //the speed and rpm are dependent so we take only speed
-            //the motivation is that speed up to 80 will get great score,
-            //speed from 80-95 will get good score
-            //95+ will get bad score
-            if (speed<=80) {
-                Grade = speed / 3;
-            }
-            if(speed>80 && speed <=95){
-                Grade = speed *2/3;
-            }
-            if(speed>95 && speed<110){
-                Grade = speed *3/4;
-            }
-        }
-        if (Grade>100){
-            return 100;
-        }
-        return Grade;
-    }
-
     @Override
     public void onResume(){
         super.onResume();
@@ -179,8 +150,9 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             // adding to map
             String title = "Current Speed:" + currMeasurment.speed;
             String snippet = "Time Taken: " + Drives.dateFormat.format(currMeasurment.timeStamp);
-            // add marker
-            googleMap.addMarker(new MarkerOptions().position(newPoint).title(title).snippet(snippet));
+            // add new marker remove last
+            lastMarker.remove();
+            lastMarker = googleMap.addMarker(new MarkerOptions().position(newPoint).title(title).snippet(snippet));
             // add to route
             List<LatLng> points = path.getPoints();
             points.add(newPoint);
@@ -191,23 +163,30 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             // set camera position to track latest
             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newPoint, 18));
             //if G-force is greater then 4, we send push notification to the supervisor:
-            if(currMeasurment.GForce>4){
-                //SendPushNotification() //TODO needs to be coded
-            }
-            // set gauge
-            int DriveGrade = (int)GradeThisDrive(currMeasurment.speed, currMeasurment.rpm);
-            //speedometer.speedTo((currMeasurment.rpm/9000)*100, 1000);
-            speedometer.speedTo(DriveGrade, 1000);
 
-            if (DriveGrade < 33){
-                rating.setText("Great");
-            }
-            else if (DriveGrade >= 33 && DriveGrade < 66) {
-                rating.setText("Good");
-            }
-            else {
-                rating.setText("Bad");
-            }
+            dataSnapshot.getRef().getParent().getParent().child("grade").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    // set gauge
+                    float DriveGrade = dataSnapshot.getValue(float.class);
+
+                    speedometer.speedTo(DriveGrade, 1000);
+
+                    if (DriveGrade < 33){
+                        rating.setText("Great");
+                    }
+                    else if (DriveGrade >= 33 && DriveGrade < 66) {
+                        rating.setText("Good");
+                    }
+                    else {
+                        rating.setText("Bad");
+                    }
+
+                }
+                public void onCancelled(DatabaseError databaseError) {
+                }
+            });
+
         }
 
         @Override
@@ -232,15 +211,6 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
             drive = dataSnapshot.getValue(Drives.class);
-            // TODO: need to sort by time if not using indexes
-            txtStart.setText("Start Time: " +  drive.getStartTime());
-            if (drive.ongoing) {
-                txtEnd.setText("Drive Is Active");
-                txtEnd.setTextColor(Color.parseColor("#4CAF50"));
-            }
-            else {
-                txtEnd.setText("End Time: " + drive.getEndTime());
-            }
             // get driver data and it will call supervisor data
             dbRef.child("users").child(drive.driverID).child("username").addListenerForSingleValueEvent(loadDriverData);
             // load points to map
@@ -254,65 +224,72 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             // used to update polyline
             LatLng newPoint;
             List<LatLng> points =  new ArrayList<>();
-            // go over all of the measurements
-            int entryNumber = 0;
-            int size = drive.meas.entrySet().size();
-            // sort keys to traverse in insert order
-            Object[] keys = drive.meas.keySet().toArray();
-            Arrays.sort(keys);
-            for (Object key : keys)
+
+            // set texts
+            txtStart.setText("Start Time: " +  Drives.dateFormat.format(drive.startTime()));
+            if (drive.ongoing) {
+                txtEnd.setText("Drive Is Active");
+                txtEnd.setTextColor(Color.parseColor("#4CAF50"));
+            }
+            else {
+                txtEnd.setText("End Time: " + Drives.dateFormat.format(drive.endTime()));
+            }
+
+            // add start marker
+            title = "Start Point";
+            snippet = "Time: " +  Drives.dateFormat.format(drive.startTime());
+            newPoint = new LatLng(drive.meas.get(0).latitude, drive.meas.get(0).longitude);
+            googleMap.addMarker(new MarkerOptions().position(newPoint).title(title).snippet(snippet));
+
+            // create route
+            for (int i=0; i < drive.meas.size(); i++)
             {
-                if (entryNumber == 0) {
-                    title = "Start Point";
-                    snippet = "Current Speed: " + drive.meas.get(key).speed;
-                }
-                else if (entryNumber == size - 1 && size > 1 && drive.ongoing == false){
-                    title = "Finish Point";
-                    snippet = "Current Speed: " + drive.meas.get(key).speed;
-                }
-                else {
-                    title = "Current Speed:" + drive.meas.get(key).speed;
-                    snippet = "Time Taken: " + Drives.dateFormat.format(drive.meas.get(key).timeStamp);
-                }
-                if (entryNumber == size - 1) {
-                    //TODO michealtah - check if we want to "punish" on bad values during the drive
-                    //TODO give this function the average of speed and rpm:
-                    //should be int DriveGrade = (int)GradeThisDrive(AverageSpeed, AverageRPM);
-                    int DriveGrade = (int)GradeThisDrive(drive.meas.get(key).speed, drive.meas.get(key).rpm);
-                    speedometer.speedTo(DriveGrade, 1000);
-                    if (DriveGrade < 33){
-                        rating.setText("Great");
-                    }
-                    else if (DriveGrade >= 33 && DriveGrade < 66) {
-                        rating.setText("Good");
-                    }
-                    else {
-                        rating.setText("Bad");
-                    }
-                }
-                // add to map
-                newPoint = new LatLng(drive.meas.get(key).latitude, drive.meas.get(key).longitude);
-                googleMap.addMarker(new MarkerOptions().position(newPoint).title(title).snippet(snippet));
+                // add to route
+                newPoint = new LatLng(drive.meas.get(i).latitude, drive.meas.get(i).longitude);
                 // add to polyline
                 points.add(newPoint);
                 // include in map
-                mapBuilder.include(newPoint);
+                mapBuilder.include(newPoint);;
+            }
 
-                if (drive.ongoing == false) {
-                    // set zoom to contain all path points
-                    LatLngBounds bounds = mapBuilder.build();
-                    CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
-                    googleMap.animateCamera(cu);
-                }
-                // move to last marker
-                else {
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() -1), 18));
-                    // listener to new points
-                    dbRef.child("drives").child(driveID).child("meas").addChildEventListener(updateMap);
-                    // listener for finish event
-                    dbRef.child("drives").child(driveID).child("ongoing").addValueEventListener(finishListener);
-                }
-                entryNumber++;
+            // add finish marker or current marker
+            if (drive.ongoing == false) {
+                title = "Finish Point";
+                snippet = "Time: " + Drives.dateFormat.format(drive.endTime());
+            }
+            else {
+                title = "Current Speed:" + drive.meas.get(drive.meas.size() - 1).speed;
+                snippet = "Time Taken: " + Drives.dateFormat.format(drive.endTime());
+            }
+            newPoint = new LatLng(drive.meas.get(drive.meas.size() - 1).latitude, drive.meas.get(drive.meas.size() - 1).longitude);
+            lastMarker = googleMap.addMarker(new MarkerOptions().position(newPoint).title(title).snippet(snippet));
+
+            // set grade
+            speedometer.speedTo(drive.grade, 1000);
+            if (drive.grade < 33){
+                rating.setText("Great");
+            }
+            else if (drive.grade >= 33 && drive.grade < 66) {
+                rating.setText("Good");
+            }
+            else {
+                rating.setText("Bad");
+            }
+
+            // set zoom to contain all path points
+            if (drive.ongoing == false) {
+
+                LatLngBounds bounds = mapBuilder.build();
+                CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 100);
+                googleMap.animateCamera(cu);
+            }
+            // move to last marker
+            else {
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() -1), 18));
+                // listener to new points
+                dbRef.child("drives").child(driveID).child("meas").orderByChild("timeStamp").startAt(new Date().getTime()).addChildEventListener(updateMap);
+                // listener for finish event
+                dbRef.child("drives").child(driveID).child("ongoing").addValueEventListener(finishListener);
             }
             path.setPoints(points);
         }
@@ -328,8 +305,11 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         public void onDataChange(DataSnapshot dataSnapshot) {
             boolean ongoing = dataSnapshot.getValue(Boolean.class);
             if (ongoing == false) {
-                Toast toast = Toast.makeText(getActivity().getApplicationContext(), "Drive Has Finished", Toast.LENGTH_LONG);
-                toast.show();
+                // TODO: check why it fails without this if
+                if (getActivity() != null) {
+                    Toast toast = Toast.makeText(getActivity(), "Drive Has Finished", Toast.LENGTH_SHORT);
+                    toast.show();
+                }
                 // set zoom to contain all path points
                 LatLngBounds bounds = mapBuilder.build();
                 CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
@@ -367,4 +347,13 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             Log.w(TAG, "failed loading drive", databaseError.toException());
         }
     };
+
+    @Override
+    // unregister listeners
+    public void onDestroyView() {
+        super.onDestroyView();
+        dbRef.removeEventListener(loadData);
+        dbRef.removeEventListener(finishListener);
+        dbRef.removeEventListener(updateMap);
+    }
 }

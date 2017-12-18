@@ -66,11 +66,11 @@ public class RoutesListFragmentSuper extends Fragment {
         uid = currentUser.getUid(); // current user id
 
         //2. get my drivers
-        TheRoutesDB.child("supervisors").child(uid).child("authorizedDriversIDs").addListenerForSingleValueEvent(new ValueEventListener() {
+        TheRoutesDB.child("supervisors").child(uid).child("authorizedDriverIDs").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot Child : dataSnapshot.getChildren()) {
-                    MyUsers.add(Child.getValue(String.class));
+                    MyUsers.add(Child.getKey());
                 }
 
                 //3. get all the drives that this supervisor can see
@@ -82,8 +82,8 @@ public class RoutesListFragmentSuper extends Fragment {
                         for (DataSnapshot Child: Drives.getChildren()) {
                             if (NumOfRoutes >= 20){break;}
                             Drives CurrDrive = Child.getValue(Drives.class);
-                            if(CurrDrive.getSupervisorID().equals(uid)){
-                                DrivesList.add(Child.getValue(Drives.class));
+                            if(MyUsers.contains(CurrDrive.driverID)){
+                                DrivesList.add(CurrDrive);
                                 DrivesIdList.add(Child.getKey());
                                 NumOfRoutes++;
                             }

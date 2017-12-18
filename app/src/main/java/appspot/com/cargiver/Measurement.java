@@ -14,24 +14,27 @@ import java.util.Date;
 // Represent measurement during drive
 
 public class Measurement {
-    Date timeStamp; // the time stamp of the measurement
-    float speed; // current vehicle speed
-    float rpm;
-    float latitude;
-    float longitude;
-    float GForce;
+    long timeStamp; // the time stamp of the measurement
+    int speed; // current vehicle speed
+    int rpm;
+    double latitude;
+    double longitude;
 
     @Keep
     public Measurement() {
         // Default constructor required for calls to DataSnapshot.getValue(Drives.class)
     }
 
-    public Measurement(int speed, float latitude, float longitude, int rpm, float GForce) {
+    public Measurement(int speed, double latitude, double longitude, int rpm) {
         this.speed = speed;
         this.rpm = rpm;
         this.latitude = latitude;
         this.longitude = longitude;
-        this.timeStamp = Calendar.getInstance().getTime();
-        this.GForce= GForce;
+        this.timeStamp = Calendar.getInstance().getTime().getTime();
     }
+
+    public Date date() {
+        return new Date(timeStamp);
+    }
+
 }

@@ -29,6 +29,7 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.text.*;
 
 /**
  * Created by MT on 27/11/2017.
@@ -61,13 +62,22 @@ public class RouteListAdapter extends ArrayAdapter {
         TextView RouteDriverField = (TextView) rowView.findViewById(R.id.route_driver);
         TextView RouteDateField = (TextView) rowView.findViewById(R.id.route_date);
 
+        //michaeltah - print the date in human readable way:
+        SimpleDateFormat ft = new SimpleDateFormat ("dd.MM.yyyy hh:mm");
+
         //this code sets the values of the objects to values from the arrays
         StringBuffer DriverField = new StringBuffer("Driver: ");
         DriverField.append(RoutesNameArray[position]);
         StringBuffer DateField = new StringBuffer("Date: ");
-        DateField.append(RoutesList.get(position).getStartTime());
+        if(RoutesList.get(position).ongoing){ //if this drive still ongoing
+            RouteDateField.setText("ongoing drive");
+            RouteDateField.setBackgroundColor(Color.GREEN);
+            RouteDriverField.setBackgroundColor(Color.GREEN);
+        }else{
+            DateField.append(ft.format(RoutesList.get(position).endTime()));
+            RouteDateField.setText(DateField);
+        }
         RouteDriverField.setText(DriverField);
-        RouteDateField.setText(DateField);
 
         return rowView;
 

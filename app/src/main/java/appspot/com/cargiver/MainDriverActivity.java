@@ -7,14 +7,18 @@ import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -34,6 +38,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 
 import com.firebase.ui.auth.AuthUI;
 import com.google.android.gms.maps.model.LatLng;
@@ -56,6 +61,7 @@ public class MainDriverActivity extends AppCompatActivity
     private final static int REQUEST_ENABLE_BT = 1; // for bluetooth request response code
     private static BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
     public static BluetoothOBDService btService;
+    boolean mBound = false;
     public static BluetoothDevice bluetoothDevice;
 
     /*------------------ Firebase DB-----------------------*/
@@ -132,7 +138,7 @@ public class MainDriverActivity extends AppCompatActivity
             // Intent, pass the Intent's extras to the fragment as arguments
             main.setArguments(getIntent().getExtras());
             // load default activity
-            getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver,main).commit();
+            getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver,main,"Main").commit();
             // load bluetooth device preferences
             SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
             String address = sharedPref.getString(user.getUid(), null);
@@ -172,19 +178,34 @@ public class MainDriverActivity extends AppCompatActivity
 
                 }
             } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
-                Log.w(TAG, "Bluetooth Connection Lost");
-                // Switch to inactive bluetooth
-                fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
-                fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#DD2C00")));
+                // delay to allow service to update
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    public void run() {
+                        // Switch to inactive bluetooth
+                        if (btService == null || btService.getState() == BluetoothOBDService.STATE_NONE) {
+                            Log.w(TAG, "Bluetooth Connection Lost");
+                            fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth, null));
+                            fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#DD2C00")));
+                        }
+                    }
+                }, 1500);
+
             } else if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action))  {
-                Log.w(TAG, "Bluetooth Connection Started");
-                // Switch to inactive bluetooth
-                fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
-                fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
-                if (MainDriverActivity.bluetoothDevice != null) {
-                    Toast toast = Toast.makeText(getApplicationContext(), "Connected successfully to " + MainDriverActivity.bluetoothDevice.getName() , Toast.LENGTH_SHORT);
-                    toast.show();
-                }
+                // delay to allow service to update
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    public void run() {
+                        // Switch to active bluetooth
+                        if (btService != null && btService.getState() == BluetoothOBDService.STATE_CONNECTED) {
+                            Log.w(TAG, "Bluetooth Connection Started");
+                            fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
+                            fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+                            Toast toast = Toast.makeText(getApplicationContext(), "Connected successfully to " + MainDriverActivity.bluetoothDevice.getName() , Toast.LENGTH_SHORT);
+                            toast.show();
+                        }
+                    }
+                }, 1500);
             }
         }
     };
@@ -245,6 +266,11 @@ public class MainDriverActivity extends AppCompatActivity
         getMenuInflater().inflate(R.menu.main_driver, menu);
         menu.clear();
         return true;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
     }
 
     @Override
@@ -315,7 +341,6 @@ public class MainDriverActivity extends AppCompatActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
-
         // Unregister broadcast listeners
         this.unregisterReceiver(mReceiver);
     }
