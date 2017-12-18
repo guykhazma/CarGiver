@@ -61,6 +61,7 @@ public class LoginActivity extends AppCompatActivity {
                 // Add user to db if it does not exist
 
                 final DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference();
+                dbRef.child("regToken").child(user.getUid()).setValue(InstanceIdService.regToken); // save user's registration token
                 dbRef.child("users").child(user.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
