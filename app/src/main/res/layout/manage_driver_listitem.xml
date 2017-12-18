@@ -28,12 +28,5 @@
         android:scaleType="centerInside"
         android:id="@+id/imageView4" />
 
-    <Button
-        android:id="@+id/rmv_driver_Button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/imageView4"
-        android:layout_alignParentEnd="true"
-        android:text="remove" />
 
 </RelativeLayout>
