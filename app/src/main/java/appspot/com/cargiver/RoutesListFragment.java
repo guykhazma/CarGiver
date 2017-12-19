@@ -1,7 +1,9 @@
 package appspot.com.cargiver;
 
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.view.LayoutInflater;
@@ -103,8 +105,22 @@ public class RoutesListFragment extends Fragment {
                     nameArray[i]= MyUserName;
                 }
 
-                RouteListAdapter MyAmazingAdapter = new RouteListAdapter(getActivity(), nameArray, DrivesList, DrivesIdList);
-                RouteslistView.setAdapter(MyAmazingAdapter);
+                if(DrivesList.size()==0){ //doesn't have old drives
+                    AlertDialog.Builder NoDrives = new AlertDialog.Builder(getActivity());
+                    NoDrives.setTitle("no previous routes");
+                    NoDrives.setMessage("you will be able to see previous routes after you will record them with this app");
+                    NoDrives.setPositiveButton("GOT IT",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                }
+                            });
+                    NoDrives.create();
+                    NoDrives.show();
+                }else{
+                    RouteListAdapter MyAmazingAdapter = new RouteListAdapter(getActivity(), nameArray, DrivesList, DrivesIdList);
+                    RouteslistView.setAdapter(MyAmazingAdapter);
+                }
+
                 // hide progress bar
                 mProgressDlg.dismiss();
 

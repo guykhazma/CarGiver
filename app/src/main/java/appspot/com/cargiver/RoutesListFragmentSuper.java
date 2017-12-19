@@ -1,7 +1,11 @@
 package appspot.com.cargiver;
 
+import android.app.AlertDialog;
 import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.view.LayoutInflater;
@@ -99,8 +103,22 @@ public class RoutesListFragmentSuper extends Fragment {
                         }
 
                         //5. set the adapter and update the relevant fields
-                        RouteListAdapter MyAmazingAdapter = new RouteListAdapter(getActivity(), nameArray, DrivesList, DrivesIdList);
-                        RouteslistView.setAdapter(MyAmazingAdapter);
+                        if(DrivesList.size()==0) {//if he doesn't have drives he can see
+                            AlertDialog.Builder NoDrives = new AlertDialog.Builder(getActivity());
+                            NoDrives.setTitle("no previous routes");
+                            NoDrives.setMessage("you can see routes by adding new drivers in \"Manage Drivers\"");
+                            NoDrives.setPositiveButton("GOT IT",
+                                    new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+
+                                        }
+                                    });
+                            NoDrives.create();
+                            NoDrives.show();
+                        }else {
+                            RouteListAdapter MyAmazingAdapter = new RouteListAdapter(getActivity(), nameArray, DrivesList, DrivesIdList);
+                            RouteslistView.setAdapter(MyAmazingAdapter);
+                        }
                         // hide progress bar
                         mProgressDlg.dismiss();
 
