@@ -15,15 +15,6 @@
         android:layout_gravity="center_horizontal|top"
         tools:layout_editor_absoluteX="0dp"
         tools:layout_editor_absoluteY="0dp" />
-    <Button
-        android:id="@+id/addBtn"
-        android:layout_width="368dp"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:onClick="addItems"
-        android:text="Add New Driver"
-        tools:layout_editor_absoluteX="8dp"
-        tools:layout_editor_absoluteY="459dp" />
+
 
 </RelativeLayout>

@@ -2,6 +2,7 @@ package appspot.com.cargiver;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.view.LayoutInflater;
@@ -19,6 +20,7 @@ import android.support.design.widget.NavigationView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -55,18 +57,6 @@ public class ManageDriversFragment extends Fragment{
         navigationView.getMenu().getItem(2).setChecked(true);
 
         getActivity().setTitle("Manage Drivers");
-
-        //define listview
-        final List<String> driverMails = new ArrayList<String>();
-        final Button button = (Button) view.findViewById(R.id.addBtn);
-        final Button rmvButton = (Button) elemview.findViewById(R.id.rmv_driver_Button);
-        Drivernames = new ArrayList<String>();
-        listViewAdapter=new ArrayAdapter<String>(
-                getActivity(),R.layout.manage_driver_listitem,R.id.textDriver,
-                driverMails
-        );
-        ListView listView=(ListView)view.findViewById(R.id.listItem);
-        listView.setAdapter(listViewAdapter);
         // Get reference
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         final DatabaseReference dbRef = database.getReference();
@@ -74,6 +64,20 @@ public class ManageDriversFragment extends Fragment{
         final String uid = currentUser.getUid(); // current user id
         // Get list of authorized driver IDs.
         final List<String> driverIDs = new ArrayList<String>();
+
+        //define listview
+        final List<String> driverMails = new ArrayList<String>();
+        //final Button button = (Button) view.findViewById(R.id.addBtn);
+        Drivernames = new ArrayList<String>();
+        //listViewAdapter=new ArrayAdapter<String>(
+        //        getActivity(),R.layout.manage_driver_listitem,R.id.textDriver,
+       //         driverMails
+       // );
+        //my adapter
+        final DriversListAdapter MyAdapter=new DriversListAdapter(getActivity(),driverMails);
+        //default adapter
+        final ListView listView=(ListView)view.findViewById(R.id.listItem);
+        listView.setAdapter(MyAdapter);
         dbRef.child("supervisors").child(uid).child("authorizedDriverIDs").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -94,7 +98,7 @@ public class ManageDriversFragment extends Fragment{
                     // Check if this user correlates to a supervisor of current user
                     if(driverIDs.contains(child.getKey())){
                         driverMails.add(child.getValue(User.class).getEmail());
-                        listViewAdapter.notifyDataSetChanged();
+                        MyAdapter.notifyDataSetChanged();
                     }
                 }
             }
@@ -104,9 +108,55 @@ public class ManageDriversFragment extends Fragment{
 
             }
         });
+        //set on item on list view clicked
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
+                AlertDialog.Builder builder1 = new AlertDialog.Builder(view.getContext());
+                builder1.setMessage("Do you Want to delete this Driver?");
+                builder1.setCancelable(true);
+                builder1.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+                builder1.setPositiveButton(
+                        "Yes",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.dismiss();
+                                dbRef.child("users").addListenerForSingleValueEvent(new ValueEventListener() {
+                                    @Override
+                                    public void onDataChange(DataSnapshot dataSnapshot) {
+                                        String driverID="";
+                                        String driverMail=driverMails.get(position);
+                                        driverMails.remove(position);
+                                        MyAdapter.notifyDataSetChanged();
+                                        for (DataSnapshot child : dataSnapshot.getChildren()) {
+                                            if (child.getValue(User.class).email.equals(driverMail)) {
+                                                driverID=child.getKey();
+                                                dbRef.child("drivers").child(driverID).child("supervisorsIDs").child(uid).removeValue();
+                                                dbRef.child("supervisors").child(uid).child("authorizedDriverIDs").child(driverID).removeValue();
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onCancelled(DatabaseError databaseError) {
+
+                                    }
+                                });
+                            }
+                        });
+                final AlertDialog alert11 = builder1.create();
+                alert11.show();
+            }
+        });
 ////////////////////////////////////////////////////////////////////////////////////
         // Present list of authorized driver names.
-        //handle click on buttom
+        //handle click on buttom code for adding drivers
+        /*
         button.setOnClickListener(
                 new View.OnClickListener() {
                     public void onClick(View v) {
@@ -207,7 +257,7 @@ public class ManageDriversFragment extends Fragment{
 //
 //                        builder2.show(); }
 //                });
-
+*/
         return view;
     }
 }

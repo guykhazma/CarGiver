@@ -19,6 +19,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.iid.FirebaseInstanceId;
 
 import java.util.Arrays;
 import java.util.List;
@@ -61,6 +62,7 @@ public class LoginActivity extends AppCompatActivity {
                 // Add user to db if it does not exist
 
                 final DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference();
+                dbRef.child("regTokens").child(user.getUid()).setValue(FirebaseInstanceId.getInstance().getToken()); // save user's registration token
                 dbRef.child("users").child(user.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
