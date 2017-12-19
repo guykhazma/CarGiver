@@ -42,6 +42,7 @@ public class RoutesListFragmentSuper extends Fragment {
         // set menu as selected on startup
         NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_super);
         navigationView.getMenu().getItem(1).setChecked(true);
+        getActivity().setTitle("Routes List");
 
         // show loading
         mProgressDlg = new ProgressDialog(getActivity());

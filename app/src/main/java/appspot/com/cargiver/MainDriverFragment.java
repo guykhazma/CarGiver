@@ -25,6 +25,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 /**
  * Created by GK on 11/17/2017.
@@ -37,6 +45,8 @@ public class MainDriverFragment extends Fragment {
     boolean startDrivePressed;
     ImageButton btnStartDrive;
     TextView Explain;
+    public DatabaseReference TheRoutesDB;
+    String uid;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -51,6 +61,23 @@ public class MainDriverFragment extends Fragment {
         btnStartDrive = view.findViewById(R.id.btn_start_drive);
         Explain = view.findViewById(R.id.start_driving_explain);
 
+        //michaeltah - set title
+        TheRoutesDB = FirebaseDatabase.getInstance().getReference();
+        final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        uid = currentUser.getUid(); // current user id
+        TheRoutesDB.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                StringBuffer MyUserName = new StringBuffer("Hello ");
+                MyUserName.append(dataSnapshot.child("users").child(uid).getValue(User.class).getUsername());
+                getActivity().setTitle(MyUserName);
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+            }
+        });
+
+        //end of set title
         // bind to service
         // Bind to LocalService if exists
         Intent intent = new Intent(getActivity(), BluetoothOBDService.class);

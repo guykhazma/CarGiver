@@ -121,6 +121,7 @@ public class MainSuperActivity extends AppCompatActivity
             getFragmentManager().popBackStackImmediate(null,FragmentManager.POP_BACK_STACK_INCLUSIVE);
             // Redirect to navigation main
         } else if (id == R.id.nav_drives_supervisor) {
+            this.setTitle("Routes List");
             // pop back fragments till reaching menu
             getFragmentManager().popBackStackImmediate(null,FragmentManager.POP_BACK_STACK_INCLUSIVE);
             // Redirect to manage drives fragment
@@ -131,7 +132,10 @@ public class MainSuperActivity extends AppCompatActivity
             // add to stack to allow return to menu on back press
             transaction.addToBackStack(null);
             transaction.commit();
+            this.setTitle("Routes List");
+
         } else if (id == R.id.nav_manage_drivers_supervisor) {
+            this.setTitle("Manage Drivers");
             // pop back fragments till reaching menu
             getFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
             // Redirect to manage drives fragment
@@ -142,6 +146,8 @@ public class MainSuperActivity extends AppCompatActivity
             // add to stack to allow return to menu on back press
             transaction.addToBackStack(null);
             transaction.commit();
+            this.setTitle("Manage Drivers");
+
             // Redirect to manage drivers fragment
         } else if (id == R.id.nav_sign_out_driver) {
             AuthUI.getInstance()

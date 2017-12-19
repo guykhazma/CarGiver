@@ -305,6 +305,7 @@ public class MainDriverActivity extends AppCompatActivity
             Fragment manageFragment = new ManageSupervisorsFragment();
             FragmentTransaction transaction = getFragmentManager().beginTransaction();
             transaction.replace(R.id.fragment_container_driver, manageFragment,"Manage Supervisors");
+            this.setTitle("Manage Supervisors");
             // add to stack to allow return to menu on back press
             transaction.addToBackStack(null);
             transaction.commit();
@@ -318,6 +319,7 @@ public class MainDriverActivity extends AppCompatActivity
             Fragment RoutesListFragment = new RoutesListFragment();
             FragmentTransaction transaction = getFragmentManager().beginTransaction();
             transaction.replace(R.id.fragment_container_driver, RoutesListFragment, "Drives List");
+            this.setTitle("Routes List");
             // add to stack to allow return to menu on back press
             transaction.addToBackStack(null);
             transaction.commit();

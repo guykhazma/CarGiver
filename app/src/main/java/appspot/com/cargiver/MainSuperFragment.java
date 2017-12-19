@@ -47,6 +47,8 @@ public class MainSuperFragment extends Fragment {
         NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_super);
         navigationView.getMenu().getItem(0).setChecked(true);
 
+        getActivity().setTitle("Supervisor Page");
+
         btnOngoingDrive = view.findViewById(R.id.super_ongoing_drive);
         Button btnRoutesList = view.findViewById(R.id.super_routes_drive);
         Button btnManageDrivers = view.findViewById(R.id.super_manage_drivers);
@@ -59,6 +61,20 @@ public class MainSuperFragment extends Fragment {
         //1. get my user id
         final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         uid = currentUser.getUid(); // current user id
+
+        //michaeltah - set title
+        TheRoutesDB.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                StringBuffer MyUserName = new StringBuffer("Hello ");
+                MyUserName.append(dataSnapshot.child("users").child(uid).getValue(User.class).getUsername());
+                getActivity().setTitle(MyUserName);
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+            }
+        });
+        //end of set title
 
         //2. get my drivers
         TheRoutesDB.child("supervisors").child(uid).child("authorizedDriverIDs").addListenerForSingleValueEvent(new ValueEventListener() {
@@ -85,7 +101,8 @@ public class MainSuperFragment extends Fragment {
                                     DriveID = Child.getKey(); //this is the drive ID
                                     ChosenDrive = true;
                                     btnOngoingDrive.setText("  Watch ongoing drive  ");
-                                    btnOngoingDrive.setBackgroundColor(Color.GREEN);
+                                    btnOngoingDrive.setTextSize(20);
+                                    btnOngoingDrive.setBackground(getResources().getDrawable(R.drawable.greenbuttonshape));
                                 }
                             }
                         }
@@ -129,6 +146,7 @@ public class MainSuperFragment extends Fragment {
                 Fragment RoutesListFragmentSuper = new RoutesListFragmentSuper();
                 FragmentTransaction transaction = getFragmentManager().beginTransaction();
                 transaction.replace(R.id.fragment_container_super, RoutesListFragmentSuper, "Drives List");
+                getActivity().setTitle("Routes List");
                 // add to stack to allow return to menu on back press
                 transaction.addToBackStack(null);
                 transaction.commit();
@@ -145,6 +163,7 @@ public class MainSuperFragment extends Fragment {
                 Fragment ManageDriversFragment = new ManageDriversFragment();
                 FragmentTransaction transaction = getFragmentManager().beginTransaction();
                 transaction.replace(R.id.fragment_container_super, ManageDriversFragment, "Manage Drivers");
+                getActivity().setTitle("Manage Drivers");
                 // add to stack to allow return to menu on back press
                 transaction.addToBackStack(null);
                 transaction.commit();

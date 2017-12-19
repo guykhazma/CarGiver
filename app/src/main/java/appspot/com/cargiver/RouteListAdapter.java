@@ -71,8 +71,7 @@ public class RouteListAdapter extends ArrayAdapter {
         StringBuffer DateField = new StringBuffer("Date: ");
         if(RoutesList.get(position).ongoing){ //if this drive still ongoing
             RouteDateField.setText("ongoing drive");
-            RouteDateField.setBackgroundColor(Color.GREEN);
-            RouteDriverField.setBackgroundColor(Color.GREEN);
+            RouteDateField.setTextColor(Color.GREEN);
         }else{
             DateField.append(ft.format(RoutesList.get(position).endTime()));
             RouteDateField.setText(DateField);
