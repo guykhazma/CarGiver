@@ -16,7 +16,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:name=".App">
 
         <meta-data
             android:name="com.google.android.gms.version"
@@ -26,13 +27,10 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyA7A6qyxoEiNeRZscVYcGRoz7H4wkzS8Rc"/>
 
-        <!--
-       <service android:name=".BluetoothOBDService"
-           android:description="Bluetooth service for OBD connections on background"
-           android:exported="false"
-           android:label="Bluetooth OBD Service"
-           android:process=":BluetoothOBD" >
-       </service>-->
+        <service android:name=".BluetoothOBDService"
+            android:exported="false"
+            android:label="Bluetooth OBD Service">
+        </service>
 
        <activity
            android:name=".StartActivity"
