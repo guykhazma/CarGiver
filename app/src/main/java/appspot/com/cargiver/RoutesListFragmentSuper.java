@@ -106,11 +106,10 @@ public class RoutesListFragmentSuper extends Fragment {
                         if(DrivesList.size()==0) {//if he doesn't have drives he can see
                             AlertDialog.Builder NoDrives = new AlertDialog.Builder(getActivity());
                             NoDrives.setTitle("no previous routes");
-                            NoDrives.setMessage("you can see routes by adding new drivers in \"Manage Drivers\"");
+                            NoDrives.setMessage("you can see who are your drivers in \"Manage Drivers\"");
                             NoDrives.setPositiveButton("GOT IT",
                                     new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int id) {
-
                                         }
                                     });
                             NoDrives.create();
