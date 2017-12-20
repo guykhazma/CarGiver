@@ -107,11 +107,25 @@ public class RoutesListFragmentSuper extends Fragment {
                             AlertDialog.Builder NoDrives = new AlertDialog.Builder(getActivity());
                             NoDrives.setTitle("no previous routes");
                             NoDrives.setMessage("you can see who are your drivers in \"Manage Drivers\"");
-                            NoDrives.setPositiveButton("GOT IT",
+                          NoDrives.setNegativeButton("OK",
                                     new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int id) {
+                                            getFragmentManager().popBackStackImmediate(null,FragmentManager.POP_BACK_STACK_INCLUSIVE);
                                         }
                                     });
+                            NoDrives.setPositiveButton("Manage Drivers",
+                                    new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            Fragment ManageDriversFragment = new ManageDriversFragment();
+                                            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+                                            transaction.replace(R.id.fragment_container_super, ManageDriversFragment, "Manage Drivers");
+                                            // add to stack to allow return to menu on back press
+                                            transaction.addToBackStack(null);
+                                            transaction.commit();
+                                            getActivity().setTitle("Manage Drivers");
+                                        }
+                                    });
+
                             NoDrives.create();
                             NoDrives.show();
                         }else {

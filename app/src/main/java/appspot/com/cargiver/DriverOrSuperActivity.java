@@ -48,7 +48,7 @@ public class DriverOrSuperActivity extends AppCompatActivity {
     protected void DriverHelp(View v) {//michaeltah
         AlertDialog.Builder DriverHlp = new AlertDialog.Builder(this);
         DriverHlp.setTitle("I Am Driver");
-        DriverHlp.setMessage("Driver Activity:\nyou need to connect to obd in every driver you take, and all of your supervisors can see your routes details");
+        DriverHlp.setMessage("Driver Activity:\nyou will connect to the obd before start driving, and all of your supervisors will be able to see your routes details");
         DriverHlp.setPositiveButton("GOT IT",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {

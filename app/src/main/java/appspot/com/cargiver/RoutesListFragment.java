@@ -2,6 +2,7 @@ package appspot.com.cargiver;
 
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -112,6 +113,7 @@ public class RoutesListFragment extends Fragment {
                     NoDrives.setPositiveButton("GOT IT",
                             new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
+                                    getFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                                 }
                             });
                     NoDrives.create();
