@@ -61,20 +61,11 @@ public class MainSuperFragment extends Fragment {
         //1. get my user id
         final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         uid = currentUser.getUid(); // current user id
-
+        //todo michaeltah getbytime
         //michaeltah - set title
-        TheRoutesDB.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                StringBuffer MyUserName = new StringBuffer("Hello ");
-                MyUserName.append(dataSnapshot.child("users").child(uid).getValue(User.class).getUsername());
-                getActivity().setTitle(MyUserName);
-            }
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-            }
-        });
-        //end of set title
+        StringBuffer MyUserName = new StringBuffer("Hello ");
+        MyUserName.append(currentUser.getDisplayName());
+        getActivity().setTitle(MyUserName);
 
         //2. get my drivers
         TheRoutesDB.child("supervisors").child(uid).child("authorizedDriverIDs").addListenerForSingleValueEvent(new ValueEventListener() {

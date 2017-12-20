@@ -4,12 +4,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="appspot.com.cargiver.DriverOrSuperActivity">
+    tools:context="appspot.com.cargiver.DriverOrSuperActivity"
+    android:background="@color/white">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:background="@color/white">
+    >
 
         <TextView
             android:layout_width="match_parent"
@@ -20,66 +23,42 @@
             android:inputType="textPersonName"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:textSize="25dp"
-            android:textStyle="bold" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:orientation="horizontal"
-            android:layout_marginBottom="3dp"
-            android:layout_marginTop="40dp">
-
-            <ImageButton
-                android:id="@+id/super_help"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:onClick="SuperHelp"
-                android:layout_marginTop="80dp"
-                app:srcCompat="@android:drawable/ic_menu_help" />
+            android:textStyle="bold"
+            android:layout_marginTop="40dp"
+            />
 
             <Button
                 android:id="@+id/supervisor_user"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/buttonshape"
+                android:layout_width="wrap_content"
+                android:layout_height="200dp"
+                android:background="@drawable/login_super_btn"
                 android:fontFamily="normal"
                 android:gravity="center"
                 android:onClick="SuperMain"
                 android:text="I Am \nSupervisor"
                 android:textColor="#FFFFFF"
                 android:textSize="40sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:orientation="horizontal"
-            android:layout_height="200dp"
-            android:layout_marginBottom="10dp"
-            android:layout_marginTop="30dp">
-
-            <ImageButton
-                android:id="@+id/driver_help"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="80dp"
-                android:onClick="DriverHelp"
-                app:srcCompat="@android:drawable/ic_menu_help" />
+                android:textStyle="bold"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="5dp"
+                android:layout_marginTop="20dp"
+                />
 
             <Button
                 android:id="@+id/driver_user"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/buttonshape"
+                android:layout_width="300dp"
+                android:layout_height="200dp"
+                android:background="@drawable/login_driver_btn"
                 android:fontFamily="normal"
                 android:gravity="center"
                 android:onClick="DriverMain"
                 android:text="I Am \nDriver"
                 android:textColor="#FFFFFF"
                 android:textSize="40sp"
-                android:textStyle="bold" />
-
-        </LinearLayout>
+                android:textStyle="bold"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="10dp"
+                android:layout_marginTop="30dp"/>
 
     </LinearLayout>
 

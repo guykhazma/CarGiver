@@ -62,22 +62,11 @@ public class MainDriverFragment extends Fragment {
         Explain = view.findViewById(R.id.start_driving_explain);
 
         //michaeltah - set title
-        TheRoutesDB = FirebaseDatabase.getInstance().getReference();
         final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        uid = currentUser.getUid(); // current user id
-        TheRoutesDB.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                StringBuffer MyUserName = new StringBuffer("Hello ");
-                MyUserName.append(dataSnapshot.child("users").child(uid).getValue(User.class).getUsername());
-                getActivity().setTitle(MyUserName);
-            }
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-            }
-        });
+        StringBuffer MyUserName = new StringBuffer("Hello ");
+        MyUserName.append(currentUser.getDisplayName());
+        getActivity().setTitle(MyUserName);
 
-        //end of set title
         // bind to service
         // Bind to LocalService if exists
         Intent intent = new Intent(getActivity(), BluetoothOBDService.class);
@@ -89,8 +78,6 @@ public class MainDriverFragment extends Fragment {
             Explain.setText("When you arrive at your destination, please click on \'I have arrived\'");
             startDrivePressed = true;
         }
-
-        getActivity().setTitle("Driver");
 
         btnStartDrive = view.findViewById(R.id.btn_start_drive);
 
