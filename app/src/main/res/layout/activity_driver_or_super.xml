@@ -29,7 +29,7 @@
 
             <Button
                 android:id="@+id/supervisor_user"
-                android:layout_width="wrap_content"
+                android:layout_width="300dp"
                 android:layout_height="200dp"
                 android:background="@drawable/login_super_btn"
                 android:fontFamily="normal"

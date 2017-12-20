@@ -23,7 +23,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by MT on 27/11/2017.
@@ -33,12 +35,11 @@ public class RoutesListFragmentSuper extends Fragment {
     public ListView RouteslistView;
     public DatabaseReference TheRoutesDB;
     public RoutesListFragmentSuper(){};
-    public int index = 0;
     String[] nameArray;
-    int SecondIndex;
     // progress dialog
     private ProgressDialog mProgressDlg;
     String uid;
+    Map<String, String> DriverUsernames = new HashMap<String, String>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -70,21 +71,30 @@ public class RoutesListFragmentSuper extends Fragment {
         final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         uid = currentUser.getUid(); // current user id
 
-        //2. get my drivers
-        TheRoutesDB.child("supervisors").child(uid).child("authorizedDriverIDs").addListenerForSingleValueEvent(new ValueEventListener() {
+
+        TheRoutesDB.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot Child : dataSnapshot.getChildren()) {
+
+                //2. get my drivers
+                DataSnapshot MyDriversDB = dataSnapshot.child("supervisors").child(uid).child("authorizedDriverIDs");
+                for (DataSnapshot Child : MyDriversDB.getChildren()) {
                     MyUsers.add(Child.getKey());
                 }
 
-                //3. get all the drives that this supervisor can see
-                TheRoutesDB.addListenerForSingleValueEvent(new ValueEventListener() {
+                //3.for each driver get his username:
+                DataSnapshot DBUsers = dataSnapshot.child("users");
+                for (int i=0; i<MyUsers.size(); i++) {
+                    String username = DBUsers.child(MyUsers.get(i)).child("username").getValue(String.class);
+                    DriverUsernames.put(MyUsers.get(i),username);
+                }
+
+                //4. get all the drives that this supervisor can see
+                TheRoutesDB.child("drives").orderByChild("StartTimeStamp").addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         int NumOfRoutes = 0; //we want only 20 routes
-                        DataSnapshot Drives = dataSnapshot.child("drives");
-                        for (DataSnapshot Child: Drives.getChildren()) {
+                        for (DataSnapshot Child: dataSnapshot.getChildren()) {
                             if (NumOfRoutes >= 20){break;}
                             Drives CurrDrive = Child.getValue(Drives.class);
                             if(MyUsers.contains(CurrDrive.driverID)){
@@ -94,20 +104,20 @@ public class RoutesListFragmentSuper extends Fragment {
                             }
                         }
 
-                        DataSnapshot DBUsers = dataSnapshot.child("users");
                         nameArray = new String[DrivesList.size()];
 
-                        //4. get the usernames for the drives
-                        for(index=0; index<DrivesList.size(); index++) {
-                            nameArray[index] = DBUsers.child(DrivesList.get(index).driverID).child("username").getValue(String.class);
+                        //5. set the usernames for the drives
+                        for(int k=0; k<DrivesList.size(); k++) {
+                            String DriverId = DrivesList.get(k).driverID;
+                            nameArray[k] = DriverUsernames.get(DriverId);
                         }
 
-                        //5. set the adapter and update the relevant fields
+                        //6. set the adapter and update the relevant fields
                         if(DrivesList.size()==0) {//if he doesn't have drives he can see
                             AlertDialog.Builder NoDrives = new AlertDialog.Builder(getActivity());
                             NoDrives.setTitle("no previous routes");
                             NoDrives.setMessage("you can see who are your drivers in \"Manage Drivers\"");
-                          NoDrives.setNegativeButton("OK",
+                            NoDrives.setNegativeButton("OK",
                                     new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int id) {
                                             getFragmentManager().popBackStackImmediate(null,FragmentManager.POP_BACK_STACK_INCLUSIVE);
@@ -144,25 +154,21 @@ public class RoutesListFragmentSuper extends Fragment {
                                 // set parameters to fragment
                                 Bundle bundle = new Bundle();
                                 bundle.putString("driveID", did);
-//                        bundle.putString("driveID", "-KzyH3elX37eUbJZNd6l");
                                 ShowRouteRes.setArguments(bundle);
                                 getFragmentManager().beginTransaction().replace(R.id.fragment_container_super, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
 
                             }
                         });
                     }
-
                     @Override
                     public void onCancelled(DatabaseError databaseError) {}
-                } );
-
+                });
 
             }
-            @Override
-            public void onCancelled(DatabaseError databaseError) {}
-        });
 
-
+                @Override
+                public void onCancelled(DatabaseError databaseError) {}
+            } );
 
         return view;
     }

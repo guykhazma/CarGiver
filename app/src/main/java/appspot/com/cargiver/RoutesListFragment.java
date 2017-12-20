@@ -88,7 +88,7 @@ public class RoutesListFragment extends Fragment {
         } );
 
         //3. get my drives list
-        TheRoutesDB.child("drives").addListenerForSingleValueEvent(new ValueEventListener() {
+        TheRoutesDB.child("drives").orderByChild("StartTimeStamp").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 int NumOfRoutes = 0;
