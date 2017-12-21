@@ -63,9 +63,13 @@ public class MainDriverFragment extends Fragment {
 
         //michaeltah - set title
         final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        StringBuffer MyUserName = new StringBuffer("Hello ");
-        MyUserName.append(currentUser.getDisplayName());
-        getActivity().setTitle(MyUserName);
+        if (!currentUser.getDisplayName().equals("")) {
+            StringBuffer MyUserName = new StringBuffer("Hello ");
+            MyUserName.append(currentUser.getDisplayName());
+            getActivity().setTitle(MyUserName);
+        } else {
+            getActivity().setTitle("Main");
+        }
 
         // bind to service
         // Bind to LocalService if exists
