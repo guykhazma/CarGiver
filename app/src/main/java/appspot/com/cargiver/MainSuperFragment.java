@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserInfo;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -63,9 +64,25 @@ public class MainSuperFragment extends Fragment {
         uid = currentUser.getUid(); // current user id
         //todo michaeltah getbytime
         //michaeltah - set title
-        StringBuffer MyUserName = new StringBuffer("Hello ");
-        MyUserName.append(currentUser.getDisplayName());
-        getActivity().setTitle(MyUserName);
+        String usr = null;
+        if (!currentUser.getDisplayName().equals("")) {
+            StringBuffer MyUserName = new StringBuffer("Hello ");
+            MyUserName.append(currentUser.getDisplayName());
+            getActivity().setTitle(MyUserName);
+        }
+        else {
+            // try getting data from provider
+            for (UserInfo userInfo : currentUser.getProviderData()) {
+                if (usr == null && userInfo.getDisplayName() != null) {
+                    usr = userInfo.getDisplayName();
+                }
+            }
+            if (usr != null && !usr.equals("")) {
+                getActivity().setTitle("Hello " + usr);
+            } else {
+                getActivity().setTitle("Main");
+            }
+        }
 
         //2. get my drivers
         TheRoutesDB.child("supervisors").child(uid).child("authorizedDriverIDs").addListenerForSingleValueEvent(new ValueEventListener() {
