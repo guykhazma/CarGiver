@@ -25,6 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.UserInfo;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
@@ -62,13 +63,25 @@ public class MainDriverFragment extends Fragment {
         Explain = view.findViewById(R.id.start_driving_explain);
 
         //michaeltah - set title
+        String usr = null;
         final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (!currentUser.getDisplayName().equals("")) {
             StringBuffer MyUserName = new StringBuffer("Hello ");
             MyUserName.append(currentUser.getDisplayName());
             getActivity().setTitle(MyUserName);
-        } else {
-            getActivity().setTitle("Main");
+        }
+        else {
+            // try getting data from provider
+            for (UserInfo userInfo : currentUser.getProviderData()) {
+                if (usr == null && userInfo.getDisplayName() != null) {
+                    usr = userInfo.getDisplayName();
+                }
+            }
+            if (usr != null && !usr.equals("")) {
+                getActivity().setTitle("Hello " + usr);
+            } else {
+                getActivity().setTitle("Main");
+            }
         }
 
         // bind to service
