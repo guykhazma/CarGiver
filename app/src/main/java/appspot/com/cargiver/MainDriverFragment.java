@@ -65,7 +65,7 @@ public class MainDriverFragment extends Fragment {
         //michaeltah - set title
         String usr = null;
         final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (!currentUser.getDisplayName().equals("")) {
+        if (currentUser.getDisplayName()!=null && !currentUser.getDisplayName().equals("")) {
             StringBuffer MyUserName = new StringBuffer("Hello ");
             MyUserName.append(currentUser.getDisplayName());
             getActivity().setTitle(MyUserName);
@@ -80,7 +80,7 @@ public class MainDriverFragment extends Fragment {
             if (usr != null && !usr.equals("")) {
                 getActivity().setTitle("Hello " + usr);
             } else {
-                getActivity().setTitle("Main");
+                getActivity().setTitle("Hello Driver");
             }
         }
 

@@ -65,7 +65,7 @@ public class MainSuperFragment extends Fragment {
         //todo michaeltah getbytime
         //michaeltah - set title
         String usr = null;
-        if (!currentUser.getDisplayName().equals("")) {
+        if (currentUser.getDisplayName()!=null && !currentUser.getDisplayName().equals("")) {
             StringBuffer MyUserName = new StringBuffer("Hello ");
             MyUserName.append(currentUser.getDisplayName());
             getActivity().setTitle(MyUserName);
@@ -80,7 +80,7 @@ public class MainSuperFragment extends Fragment {
             if (usr != null && !usr.equals("")) {
                 getActivity().setTitle("Hello " + usr);
             } else {
-                getActivity().setTitle("Main");
+                getActivity().setTitle("Hello Supervisor");
             }
         }
 
