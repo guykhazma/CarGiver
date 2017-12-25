@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,19 +39,20 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ManageDriversFragment extends Fragment{
+public class ManageDriversFragment extends Fragment {
     private ArrayAdapter<String> listViewAdapter;
     private ArrayList<String> Drivernames;
-    public ManageDriversFragment(){
+
+    public ManageDriversFragment() {
         // Required empty public constructor
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState){
+                             Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view =  inflater.inflate(R.layout.manage_drivers_fragment, container, false);
-        View elemview =  inflater.inflate(R.layout.manage_driver_listitem, container, false);
+        View view = inflater.inflate(R.layout.manage_drivers_fragment, container, false);
+        View elemview = inflater.inflate(R.layout.manage_driver_listitem, container, false);
         // set as active in drawer
         // set menu as selected on startup
         NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_super);
@@ -71,12 +73,12 @@ public class ManageDriversFragment extends Fragment{
         Drivernames = new ArrayList<String>();
         //listViewAdapter=new ArrayAdapter<String>(
         //        getActivity(),R.layout.manage_driver_listitem,R.id.textDriver,
-       //         driverMails
-       // );
+        //         driverMails
+        // );
         //my adapter
-        final DriversListAdapter MyAdapter=new DriversListAdapter(getActivity(),driverMails);
+        final DriversListAdapter MyAdapter = new DriversListAdapter(getActivity(), driverMails);
         //default adapter
-        final ListView listView=(ListView)view.findViewById(R.id.listItem);
+        final ListView listView = (ListView) view.findViewById(R.id.listItem);
         listView.setAdapter(MyAdapter);
         dbRef.child("supervisors").child(uid).child("authorizedDriverIDs").addValueEventListener(new ValueEventListener() {
             @Override
@@ -88,15 +90,16 @@ public class ManageDriversFragment extends Fragment{
             }
 
             @Override
-            public void onCancelled(DatabaseError databaseError) {}
+            public void onCancelled(DatabaseError databaseError) {
+            }
         });
         // Convert IDs to emails
         dbRef.child("users").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot child: dataSnapshot.getChildren()) {
+                for (DataSnapshot child : dataSnapshot.getChildren()) {
                     // Check if this user correlates to a supervisor of current user
-                    if(driverIDs.contains(child.getKey())){
+                    if (driverIDs.contains(child.getKey())) {
                         driverMails.add(child.getValue(User.class).getEmail());
                         MyAdapter.notifyDataSetChanged();
                     }
@@ -128,13 +131,13 @@ public class ManageDriversFragment extends Fragment{
                                 dbRef.child("users").addListenerForSingleValueEvent(new ValueEventListener() {
                                     @Override
                                     public void onDataChange(DataSnapshot dataSnapshot) {
-                                        String driverID="";
-                                        String driverMail=driverMails.get(position);
+                                        String driverID = "";
+                                        String driverMail = driverMails.get(position);
                                         driverMails.remove(position);
                                         MyAdapter.notifyDataSetChanged();
                                         for (DataSnapshot child : dataSnapshot.getChildren()) {
                                             if (child.getValue(User.class).email.equals(driverMail)) {
-                                                driverID=child.getKey();
+                                                driverID = child.getKey();
                                                 dbRef.child("drivers").child(driverID).child("supervisorsIDs").child(uid).removeValue();
                                                 dbRef.child("supervisors").child(uid).child("authorizedDriverIDs").child(driverID).removeValue();
                                                 break;
@@ -260,4 +263,5 @@ public class ManageDriversFragment extends Fragment{
 */
         return view;
     }
+
 }
