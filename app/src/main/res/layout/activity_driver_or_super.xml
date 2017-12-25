@@ -42,6 +42,7 @@
                 android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="5dp"
                 android:layout_marginTop="20dp"
+                android:textAllCaps="false"
                 />
 
             <Button
@@ -58,7 +59,9 @@
                 android:textStyle="bold"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="10dp"
-                android:layout_marginTop="30dp"/>
+                android:layout_marginTop="30dp"
+                android:textAllCaps="false"
+                />
 
     </LinearLayout>
 

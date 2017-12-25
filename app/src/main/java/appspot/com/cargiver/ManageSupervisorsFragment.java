@@ -185,14 +185,14 @@ public class ManageSupervisorsFragment extends Fragment {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
                 AlertDialog.Builder builder1 = new AlertDialog.Builder(view.getContext());
-                builder1.setMessage("Do you Want to delete this Supervisor?");
+                builder1.setMessage("Do you want to delete this Supervisor?");
                 builder1.setCancelable(true);
-                builder1.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
+                builder1.setNegativeButton("No",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        });
                 builder1.setPositiveButton(
                         "Yes",
                         new DialogInterface.OnClickListener() {

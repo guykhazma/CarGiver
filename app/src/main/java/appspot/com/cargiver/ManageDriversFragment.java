@@ -1,6 +1,7 @@
 package appspot.com.cargiver;
 
 import android.app.AlertDialog;
+import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
@@ -115,14 +116,14 @@ public class ManageDriversFragment extends Fragment {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
                 AlertDialog.Builder builder1 = new AlertDialog.Builder(view.getContext());
-                builder1.setMessage("Do you Want to delete this Driver?");
+                builder1.setMessage("Do you want to delete this Driver?");
                 builder1.setCancelable(true);
-                builder1.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
+                builder1.setNegativeButton("No",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.cancel();
+                            }
+                        });
                 builder1.setPositiveButton(
                         "Yes",
                         new DialogInterface.OnClickListener() {
