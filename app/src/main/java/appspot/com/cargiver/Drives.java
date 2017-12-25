@@ -17,14 +17,14 @@ import java.util.Map;
 public class Drives {
 
     // date format
-    static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    static SimpleDateFormat dateFormat = new SimpleDateFormat ("dd.MM.yyyy HH:mm");
+
 
     ArrayList<Measurement> meas;
     Boolean ongoing;
     String driverID;
     float grade;
-
-
+    long StartTimeStamp; // !!!NEGATIVE!!! time stamp
 
     public Drives() {
         // Default constructor required for calls to DataSnapshot.getValue(Drives.class)

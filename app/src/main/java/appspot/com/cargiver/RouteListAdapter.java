@@ -63,7 +63,7 @@ public class RouteListAdapter extends ArrayAdapter {
         TextView RouteDateField = (TextView) rowView.findViewById(R.id.route_date);
 
         //michaeltah - print the date in human readable way:
-        SimpleDateFormat ft = new SimpleDateFormat ("dd.MM.yyyy hh:mm");
+        SimpleDateFormat ft = new SimpleDateFormat ("dd.MM.yyyy HH:mm");
 
         //this code sets the values of the objects to values from the arrays
         StringBuffer DriverField = new StringBuffer("Driver: ");
@@ -73,7 +73,7 @@ public class RouteListAdapter extends ArrayAdapter {
             RouteDateField.setText("ongoing drive");
             RouteDateField.setTextColor(Color.GREEN);
         }else{
-            DateField.append(ft.format(RoutesList.get(position).endTime()));
+            DateField.append(Drives.dateFormat.format(RoutesList.get(position).startTime()));
             RouteDateField.setText(DateField);
         }
         RouteDriverField.setText(DriverField);

@@ -408,6 +408,8 @@ public class BluetoothOBDService extends Service {
                             lat = location.getLatitude();
                             longitude = location.getLongitude();
                         }
+                        // set start time
+                        dbref.child("drives").child(driveKey).child("StartTimeStamp").setValue(-Calendar.getInstance().getTime().getTime());
                         measRef.setValue(new Measurement(0, lat, longitude, 0));
                     }});
 

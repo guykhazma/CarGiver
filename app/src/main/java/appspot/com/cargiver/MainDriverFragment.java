@@ -25,6 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.UserInfo;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
@@ -62,22 +63,27 @@ public class MainDriverFragment extends Fragment {
         Explain = view.findViewById(R.id.start_driving_explain);
 
         //michaeltah - set title
-        TheRoutesDB = FirebaseDatabase.getInstance().getReference();
+        String usr = null;
         final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        uid = currentUser.getUid(); // current user id
-        TheRoutesDB.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                StringBuffer MyUserName = new StringBuffer("Hello ");
-                MyUserName.append(dataSnapshot.child("users").child(uid).getValue(User.class).getUsername());
-                getActivity().setTitle(MyUserName);
+        if (currentUser.getDisplayName()!=null && !currentUser.getDisplayName().equals("")) {
+            StringBuffer MyUserName = new StringBuffer("Hello ");
+            MyUserName.append(currentUser.getDisplayName());
+            getActivity().setTitle(MyUserName);
+        }
+        else {
+            // try getting data from provider
+            for (UserInfo userInfo : currentUser.getProviderData()) {
+                if (usr == null && userInfo.getDisplayName() != null) {
+                    usr = userInfo.getDisplayName();
+                }
             }
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
+            if (usr != null && !usr.equals("")) {
+                getActivity().setTitle("Hello " + usr);
+            } else {
+                getActivity().setTitle("Hello Driver");
             }
-        });
+        }
 
-        //end of set title
         // bind to service
         // Bind to LocalService if exists
         Intent intent = new Intent(getActivity(), BluetoothOBDService.class);
@@ -89,8 +95,6 @@ public class MainDriverFragment extends Fragment {
             Explain.setText("When you arrive at your destination, please click on \'I have arrived\'");
             startDrivePressed = true;
         }
-
-        getActivity().setTitle("Driver");
 
         btnStartDrive = view.findViewById(R.id.btn_start_drive);
 

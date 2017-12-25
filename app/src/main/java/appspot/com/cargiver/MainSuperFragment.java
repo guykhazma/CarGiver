@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserInfo;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -61,20 +62,27 @@ public class MainSuperFragment extends Fragment {
         //1. get my user id
         final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         uid = currentUser.getUid(); // current user id
-
+        //todo michaeltah getbytime
         //michaeltah - set title
-        TheRoutesDB.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                StringBuffer MyUserName = new StringBuffer("Hello ");
-                MyUserName.append(dataSnapshot.child("users").child(uid).getValue(User.class).getUsername());
-                getActivity().setTitle(MyUserName);
+        String usr = null;
+        if (currentUser.getDisplayName()!=null && !currentUser.getDisplayName().equals("")) {
+            StringBuffer MyUserName = new StringBuffer("Hello ");
+            MyUserName.append(currentUser.getDisplayName());
+            getActivity().setTitle(MyUserName);
+        }
+        else {
+            // try getting data from provider
+            for (UserInfo userInfo : currentUser.getProviderData()) {
+                if (usr == null && userInfo.getDisplayName() != null) {
+                    usr = userInfo.getDisplayName();
+                }
             }
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
+            if (usr != null && !usr.equals("")) {
+                getActivity().setTitle("Hello " + usr);
+            } else {
+                getActivity().setTitle("Hello Supervisor");
             }
-        });
-        //end of set title
+        }
 
         //2. get my drivers
         TheRoutesDB.child("supervisors").child(uid).child("authorizedDriverIDs").addListenerForSingleValueEvent(new ValueEventListener() {
@@ -100,7 +108,10 @@ public class MainSuperFragment extends Fragment {
                                 if (CurrDrive.ongoing == true) { //we choose this drive
                                     DriveID = Child.getKey(); //this is the drive ID
                                     ChosenDrive = true;
-                                    btnOngoingDrive.setText("  Watch ongoing drive  ");
+                                    //print the name of the driver:
+                                    StringBuffer MyDriverName = new StringBuffer("Watch ongoing drive\nDriver: ");
+                                    MyDriverName.append(dataSnapshot.child("users").child(CurrDrive.driverID).getValue(User.class).getUsername());
+                                    btnOngoingDrive.setText(MyDriverName);
                                     btnOngoingDrive.setTextSize(20);
                                     btnOngoingDrive.setBackground(getResources().getDrawable(R.drawable.greenbuttonshape));
                                 }
