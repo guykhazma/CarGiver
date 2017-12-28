@@ -110,12 +110,14 @@ public class MainDriverFragment extends Fragment {
                     synchronized (BluetoothOBDService.class) {
                         MainDriverActivity.btService.stopped = true;
                     };
-                    getActivity().unbindService(mConnection);
-                    getActivity().stopService(intnt);
-                    Fragment ShowRouteRes = new RouteResultFragment();
                     // set parameters to fragment
                     Bundle bundle = new Bundle();
                     bundle.putString("driveID", MainDriverActivity.btService.getDriveKey());
+                    // stop service
+                    getActivity().unbindService(mConnection);
+                    getActivity().stopService(intnt);
+                    // load result fragment
+                    Fragment ShowRouteRes = new RouteResultFragment();
                     ShowRouteRes.setArguments(bundle);
                     getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
                 }
@@ -200,10 +202,30 @@ public class MainDriverFragment extends Fragment {
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
+            // if we disconnected unexpectedly
+            if (MainDriverActivity.btService != null) {
+                int serviceStatus = MainDriverActivity.btService.getState();
+                // stop service
+                Intent intnt = new Intent(getActivity(),BluetoothOBDService.class);
+                synchronized (BluetoothOBDService.class) {
+                    MainDriverActivity.btService.stopped = true;
+                };
+                getActivity().unbindService(this);
+                getActivity().stopService(intnt);
+                // if the service stopped after it was connected go to result fragment
+                if (MainDriverActivity.btService.getDriveKey() != null) {
+                    Fragment ShowRouteRes = new RouteResultFragment();
+                    // set parameters to fragment
+                    Bundle bundle = new Bundle();
+                    bundle.putString("driveID", MainDriverActivity.btService.getDriveKey());
+                    ShowRouteRes.setArguments(bundle);
+                    getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
+                }
+            }
+            // if service disconnected during connection
             MainDriverActivity.btService = null;
-            mProgressDlg.dismiss();
-            getActivity().unbindService(this);
             startDrivePressed = false;
+            mProgressDlg.dismiss();
         }
     };
 }

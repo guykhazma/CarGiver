@@ -4,24 +4,18 @@ package appspot.com.cargiver;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.ProgressDialog;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Binder;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
-import android.support.annotation.Nullable;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -33,11 +27,16 @@ import com.github.pires.obd.commands.protocol.TimeoutCommand;
 import com.github.pires.obd.enums.ObdProtocols;
 import com.github.pires.obd.commands.protocol.EchoOffCommand;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResponse;
+import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -46,7 +45,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.Calendar;
-import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -65,6 +63,12 @@ public class BluetoothOBDService extends Service {
     private ConnectedThread mConnectedThread;
     private int mState;
     private int NOTIFICATION = R.string.OBDservice;
+
+    // location
+    private LocationRequest locationRequest;
+    private FusedLocationProviderClient mFusedLocationClient;
+    private LocationCallback mLocationCallback;
+
     // Binder given to clients
     private final IBinder mBinder = new BluetoothOBDBinder();
 
@@ -98,39 +102,82 @@ public class BluetoothOBDService extends Service {
         // Display a notification about us starting.  We put an icon in the status bar.
         mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         showNotification();
+        // start location services
         driveKey = null;
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
+        // get parameters
         uid = intent.getStringExtra("userID");
         address = intent.getStringExtra("address");
-        dbref = FirebaseDatabase.getInstance().getReference();
 
-        // initiate connection
-        // Cancel any thread attempting to make a connection
-        if (mConnectThread != null) {
-            mConnectThread.cancel();
-            mConnectThread = null;
-        }
+        // make sure user has location permissions on
+        locationRequest = new LocationRequest();
+        locationRequest.setInterval(2000);
+        locationRequest.setFastestInterval(2000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        // check for user permissions
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest);
+        SettingsClient client = LocationServices.getSettingsClient(this);
+        Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
 
-        // Cancel any thread currently running a connection
-        if (mConnectedThread != null) {
-            mConnectedThread.cancel();
-            mConnectedThread = null;
-        }
-        BluetoothDevice dev = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(address);
-        // Start the thread to connect with the given device
-        mConnectThread = new ConnectThread(dev, true);
-        mConnectThread.start();
-        // do not restart if fails
+        task.addOnSuccessListener(new OnSuccessListener<LocationSettingsResponse>() {
+            @Override
+            public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
+                // All location settings are satisfied.
+                // start location updates
+                mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplicationContext());
+                // empty callback we will use get last location in code
+                mLocationCallback = new LocationCallback() {
+                    @Override
+                    public void onLocationResult(LocationResult locationResult) {
+                        // do nothing
+                    };
+                };
+                // make sure we have permissions
+                if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+                    Toast.makeText(getApplicationContext(), "Location Services is disabled - drive canceled", Toast.LENGTH_SHORT).show();
+                    stopSelf();
+                }
+
+                mFusedLocationClient.requestLocationUpdates(locationRequest, mLocationCallback, null);
+                dbref = FirebaseDatabase.getInstance().getReference();
+
+                // initiate connection
+                // Cancel any thread attempting to make a connection
+                if (mConnectThread != null) {
+                    mConnectThread.cancel();
+                    mConnectThread = null;
+                }
+
+                // Cancel any thread currently running a connection
+                if (mConnectedThread != null) {
+                    mConnectedThread.cancel();
+                    mConnectedThread = null;
+                }
+                BluetoothDevice dev = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(address);
+                // Start the thread to connect with the given device
+                mConnectThread = new ConnectThread(dev, true);
+                mConnectThread.start();
+            }
+        });
+
+        task.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(getApplicationContext(), "Location Services is disabled - drive canceled", Toast.LENGTH_SHORT).show();
+                stopSelf();
+            }
+        });
+
+        // do not restart service if fails
         return START_NOT_STICKY;
     }
 
-    /**
-     * Return the current connection state.
-     */
+/**
+ * Return the current connection state.
+ */
     public synchronized int getState() {
         return mState;
     }
@@ -146,7 +193,6 @@ public class BluetoothOBDService extends Service {
      * Indicate that the connection attempt failed and notify the UI Activity.
      */
     private void connectionFailed() {
-        this.stopSelf();
         // Send a failure message back to the Activity
         Handler mainHandler = new Handler(getMainLooper());
         mainHandler.post(new Runnable() {
@@ -155,6 +201,7 @@ public class BluetoothOBDService extends Service {
                 Toast.makeText(getApplicationContext(), "Failed to Connect to OBD", Toast.LENGTH_SHORT).show();
             }
         });
+        this.stopSelf();
     }
 
     /**
@@ -190,7 +237,7 @@ public class BluetoothOBDService extends Service {
 
         // Set the info for the views that show in the notification panel.
         Notification notification = new Notification.Builder(this)
-                .setSmallIcon(R.drawable.widget)  // the status icon
+                .setSmallIcon(R.drawable.app_logo)  // the status icon
                 .setTicker(text)  // the status text
                 .setWhen(System.currentTimeMillis())  // the time stamp
                 .setContentTitle(getText(R.string.OBDservice))  // the label of the entry
@@ -254,6 +301,8 @@ public class BluetoothOBDService extends Service {
     public void onDestroy() {
         // stop all threads
         this.stop();
+        // remove location updates
+        mFusedLocationClient.removeLocationUpdates(mLocationCallback);
         // set drive as finished
         if (driveKey != null) {
             dbref.child("drives").child(driveKey).child("ongoing").setValue(false);
@@ -310,6 +359,12 @@ public class BluetoothOBDService extends Service {
                 // successful connection or an exception
                 //android.os.Debug.waitForDebugger();
                 mmSocket.connect();
+                // Reset the ConnectThread because we're done
+                synchronized (BluetoothOBDService.this) {
+                    mConnectThread = null;
+                }
+                // Start the connected thread
+                connected(mmSocket, mmDevice, mSocketType);
             }catch (Exception e1) {
                 Log.d(TAG, "There was an error while establishing Bluetooth connection. Falling back..", e1);
                 Class<?> clazz = mmSocket.getRemoteDevice().getClass();
@@ -320,19 +375,17 @@ public class BluetoothOBDService extends Service {
                     BluetoothSocket sockFallback = (BluetoothSocket) m.invoke(mmSocket.getRemoteDevice(), params);
                     sockFallback.connect();
                     mmSocket = sockFallback;
+                    // Reset the ConnectThread because we're done
+                    synchronized (BluetoothOBDService.this) {
+                        mConnectThread = null;
+                    }
+                    // Start the connected thread
+                    connected(mmSocket, mmDevice, mSocketType);
                 } catch (Exception e2) {
-                    Log.e(TAG, "Couldn't fallback while establishing Bluetooth connection.", e2);
+                    Log.d(TAG, "Couldn't fallback while establishing Bluetooth connection.", e2);
                     connectionFailed();
-                    return;
                 }
             }
-
-            // Reset the ConnectThread because we're done
-            synchronized (BluetoothOBDService.this) {
-                mConnectThread = null;
-            }
-            // Start the connected thread
-            connected(mmSocket, mmDevice, mSocketType);
         }
 
         public void cancel() {
@@ -352,7 +405,6 @@ public class BluetoothOBDService extends Service {
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
-        private FusedLocationProviderClient mFusedLocationClient;
         private  Timer timer;
 
         public ConnectedThread(BluetoothSocket socket, String socketType) {
@@ -383,9 +435,8 @@ public class BluetoothOBDService extends Service {
                 // location init
                 if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
                     Toast.makeText(getApplicationContext(), "Location Services is disabled - drive canceled", Toast.LENGTH_SHORT).show();
-                    connectionLost();
+                    stopSelf();
                 }
-                mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplicationContext());
                 // create drive in db
                 driveKey = dbref.child("drives").push().getKey();
                 Drives newDrive = new Drives();
@@ -393,12 +444,8 @@ public class BluetoothOBDService extends Service {
                 newDrive.driverID = uid;
                 newDrive.grade = 0;
                 dbref.child("drives").child(driveKey).setValue(newDrive);
-                // add intial measuremnt
+                // add initial measuremnt
                 final DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child("0");
-                if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
-                    Toast.makeText(getApplicationContext(), "Location Services is disabled - drive canceled", Toast.LENGTH_SHORT).show();
-                    //connectionLost();
-                }
                 mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
                     @Override
                     public void onSuccess(Location location) {
@@ -435,13 +482,12 @@ public class BluetoothOBDService extends Service {
                     @Override
                     public void run() {
                         try {
-
                             rpmCMD.run(mmInStream, mmOutStream);
                             speedCMD.run(mmInStream, mmOutStream);
                             // push to dB
                             if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
                                 Toast.makeText(getApplicationContext(), "Location Services is disabled - drive canceled", Toast.LENGTH_SHORT).show();
-                                //connectionLost();
+                                stopSelf();
                             }
                             mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
                                 @Override

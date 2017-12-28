@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="appspot.com.cargiver">
-
+    <!-- recommended to have always permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- bluetooth permissions -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
