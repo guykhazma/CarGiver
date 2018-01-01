@@ -256,6 +256,8 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             if (drive.ongoing == false) {
                 title = "Finish Point";
                 snippet = "Time: " + Drives.dateFormat.format(drive.endTime());
+                // stop gauge tremble
+                speedometer.setWithTremble(false);
             }
             else {
                 title = "Current Speed:" + drive.meas.get(drive.meas.size() - 1).speed;
@@ -305,11 +307,12 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         public void onDataChange(DataSnapshot dataSnapshot) {
             boolean ongoing = dataSnapshot.getValue(Boolean.class);
             if (ongoing == false) {
-                // TODO: check why it fails without this if
                 if (getActivity() != null) {
                     Toast toast = Toast.makeText(getActivity(), "Drive Has Finished", Toast.LENGTH_SHORT);
                     toast.show();
                 }
+                // stop gauge tremble
+                speedometer.setWithTremble(false);
                 // set zoom to contain all path points
                 LatLngBounds bounds = mapBuilder.build();
                 CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);

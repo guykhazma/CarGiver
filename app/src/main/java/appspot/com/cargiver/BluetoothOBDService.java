@@ -153,8 +153,6 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mAccelerometer = mSensorManager
                 .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        mSensorManager.registerListener(this, mAccelerometer,
-                SensorManager.SENSOR_DELAY_UI, new Handler());
         // get supervisors' registration tokens (regTokens)
         regTokens = new ArrayList<String>();
         dbref.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -171,6 +169,8 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                 for(String id : supervisorIDs){
                     regTokens.add(dataSnapshot.child("regTokens").child(id).getValue(String.class));
                 }
+                // register listener once we have the values
+                mSensorManager.registerListener(BluetoothOBDService.this, mAccelerometer, SensorManager.SENSOR_DELAY_UI, new Handler());
             }
 
             @Override
@@ -370,6 +370,8 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
     public void onDestroy() {
         // stop all threads
         this.stop();
+        // remove accelerometer lisetner
+        mSensorManager.unregisterListener(this);
         // remove location updates
         mFusedLocationClient.removeLocationUpdates(mLocationCallback);
         // set drive as finished
