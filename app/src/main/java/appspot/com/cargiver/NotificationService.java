@@ -59,6 +59,7 @@ public class NotificationService extends FirebaseMessagingService {
         manager.notify(123, notification);
     }
 
+    // Send notification to multiple receivers
     public static void sendNotification(String msg, List<String> regTokens){
         Gson gson = new Gson();
         Data data = new Data();

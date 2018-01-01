@@ -51,15 +51,6 @@ public class ManageDriversFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
-        // NOTIFICATION TEST START
-        //List<String> regTokens = new ArrayList<String>();
-        //regTokens.add("cugWJJbGGqY:APA91bGj8EfaoUqXg1_oBr1_Ab0YhxT1bZVYfZRY1klG88C-ZjuLBGzjCphcIaKiIVmLJnmtpiN9CQ_U7c-o9stQaHBmXd_4dCF7Nv1uEpoWiSWk8JdDfcqUk5EQGI266fiivtd_h0Em");
-        //regTokens.add("fAMQfqFGybg:APA91bGKEArzNSPIaOHiO2LAIrDitwrMHjFDgWQyHygxJS8qCqnciyuEbPe5L5TVhDKYga_-OSp-QDAXs79fMiKQ9RzbXU-dSspyfswMS-Dl0Do8oNszmp9YLrqba2YapzVt2T-YnpqU");
-        //String msg = "Dangerous Driving!";
-        //NotificationService.sendNotification(msg, regTokens);
-        // NOTIFICATION TEST END
-
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.manage_drivers_fragment, container, false);
         View elemview = inflater.inflate(R.layout.manage_driver_listitem, container, false);
