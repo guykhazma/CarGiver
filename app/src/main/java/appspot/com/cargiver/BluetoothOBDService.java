@@ -365,7 +365,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
     public void onDestroy() {
         // stop all threads
         this.stop();
-        // remove accelerometer lisetner
+        // remove accelerometer listener
         mSensorManager.unregisterListener(this);
         // remove location updates
         mFusedLocationClient.removeLocationUpdates(mLocationCallback);
