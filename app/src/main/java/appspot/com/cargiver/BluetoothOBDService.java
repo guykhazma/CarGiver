@@ -21,7 +21,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.NotificationCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -96,6 +96,12 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
     private String driveKey;
     public  boolean stopped; // indicates whether failure caused the problem
 
+    // broadcast tags
+    public static String connectionFailedBroadcastIntent = "com.OBDService.ConnectionFailed";
+    public static String connectionLostBroadcastIntent = "com.OBDService.ConnectionLost";
+    public static String connectionConnectedBroadcastIntent = "com.OBDService.Connected";
+
+
     private DatabaseReference dbref;
 
     // Constants that indicate the current connection state
@@ -155,6 +161,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                 .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         // get supervisors' registration tokens (regTokens)
         regTokens = new ArrayList<String>();
+        dbref = FirebaseDatabase.getInstance().getReference();
         dbref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -211,7 +218,6 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                 }
 
                 mFusedLocationClient.requestLocationUpdates(locationRequest, mLocationCallback, null);
-                dbref = FirebaseDatabase.getInstance().getReference();
 
                 // initiate connection
                 // Cancel any thread attempting to make a connection
@@ -263,13 +269,8 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
      */
     private void connectionFailed() {
         // Send a failure message back to the Activity
-        Handler mainHandler = new Handler(getMainLooper());
-        mainHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(getApplicationContext(), "Failed to Connect to OBD", Toast.LENGTH_SHORT).show();
-            }
-        });
+        Intent intent = new Intent(BluetoothOBDService.connectionFailedBroadcastIntent);
+        LocalBroadcastManager.getInstance(this).sendBroadcastSync(intent);
         this.stopSelf();
     }
 
@@ -280,14 +281,8 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         // Send a failure message back to the Activity
         synchronized (BluetoothOBDService.class) {
             if (!stopped) {
-                Handler mainHandler = new Handler(getMainLooper());
-
-                mainHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(), "Connection with OBD is lost", Toast.LENGTH_SHORT).show();
-                    }
-                });
+                Intent intent = new Intent(BluetoothOBDService.connectionLostBroadcastIntent);
+                LocalBroadcastManager.getInstance(this).sendBroadcastSync(intent);
             }
             this.stopSelf();
         }
@@ -515,6 +510,9 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                 newDrive.driverID = uid;
                 newDrive.grade = 0;
                 dbref.child("drives").child(driveKey).setValue(newDrive);
+                // set as connected
+                Intent intent = new Intent(BluetoothOBDService.connectionConnectedBroadcastIntent);
+                LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcast(intent);
                 // add initial measuremnt
                 final DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child("0");
                 mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
@@ -574,7 +572,6 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                     // add to db only if speed is above 0
                                     if (speed > 0) {
                                         int rpm = rpmCMD.getRPM();
-
                                         DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child(String.valueOf(count));
                                         count++;
                                         measRef.setValue(new Measurement(speed, lat, longitude, rpm));

@@ -3,37 +3,27 @@ package appspot.com.cargiver;
 import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
-import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.UserInfo;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
 /**
  * Created by GK on 11/17/2017.
@@ -46,8 +36,59 @@ public class MainDriverFragment extends Fragment {
     boolean startDrivePressed;
     ImageButton btnStartDrive;
     TextView Explain;
-    public DatabaseReference TheRoutesDB;
-    String uid;
+
+    // Our handler for received Intents. This will be called whenever an Intent
+    private BroadcastReceiver mreceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (BluetoothOBDService.connectionFailedBroadcastIntent.equals(action)) {
+                // if service failed to connect to OBD
+                MainDriverActivity.btService = null;
+                startDrivePressed = false;
+                if (mProgressDlg != null) {
+                    mProgressDlg.dismiss();
+                }
+                getActivity().runOnUiThread(new Runnable() {
+                    public void run() {
+                        Toast.makeText(getActivity(), "Failed to Connect to OBD", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+            // connection lost case
+            else if (BluetoothOBDService.connectionLostBroadcastIntent.equals(action)) {
+                // TODO: finish handling connection lost case
+                getActivity().runOnUiThread(new Runnable() {
+                    public void run() {
+                        Toast.makeText(getActivity(), "Connection with OBD is lost", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+            }
+            // connected
+            else if (BluetoothOBDService.connectionConnectedBroadcastIntent.equals(action)) {
+                getActivity().runOnUiThread(new Runnable() {
+                    public void run() {
+                        changedToActiveDrive();
+                    }
+                });
+            }
+        }
+    };
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Register for broadcasts
+        IntentFilter filter = new IntentFilter();
+        // connection changes
+        filter.addAction(BluetoothOBDService.connectionFailedBroadcastIntent);
+        filter.addAction(BluetoothOBDService.connectionConnectedBroadcastIntent);
+        filter.addAction(BluetoothOBDService.connectionLostBroadcastIntent);
+        LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mreceiver, filter);
+    }
+
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -146,7 +187,6 @@ public class MainDriverFragment extends Fragment {
                     Intent intent = new Intent(getActivity(), BluetoothOBDService.class);
                     getActivity().bindService(intent, mConnection, 0);
                     getActivity().startService(intnt);
-                    //android.os.Debug.waitForDebugger();
                 }
                 // register press
                 startDrivePressed = !startDrivePressed;
@@ -158,6 +198,7 @@ public class MainDriverFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mreceiver);
         getActivity().unbindService(mConnection);
     }
 
@@ -181,23 +222,6 @@ public class MainDriverFragment extends Fragment {
             BluetoothOBDService.BluetoothOBDBinder binder = (BluetoothOBDService.BluetoothOBDBinder) service;
             MainDriverActivity.btService = (BluetoothOBDService) binder.getService();
             Handler handler = new Handler();
-            handler.postDelayed(new Runnable() {
-
-                public void run() {
-                        // wait till connected
-                        while (MainDriverActivity.btService!= null && MainDriverActivity.btService.getState() != BluetoothOBDService.STATE_CONNECTED) {
-
-                        }
-                        // if we had connected
-                        if (MainDriverActivity.btService != null && MainDriverActivity.btService.getState() == BluetoothOBDService.STATE_CONNECTED)
-                            changedToActiveDrive();
-                        else {
-                            mProgressDlg.dismiss();
-                            startDrivePressed = false;
-                        }
-
-                }
-            }, 3000);
         }
 
         @Override
