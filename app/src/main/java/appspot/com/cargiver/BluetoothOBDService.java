@@ -8,14 +8,20 @@ import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -37,21 +43,33 @@ import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
 
 
-public class BluetoothOBDService extends Service {
+public class BluetoothOBDService extends Service implements SensorEventListener {
+    // Accelerometer variables
+    private SensorManager mSensorManager;
+    private Sensor mAccelerometer;
+    private float mAccel; // acceleration apart from gravity
+    private float mAccelCurrent; // current acceleration including gravity
+    private float mAccelLast; // last acceleration including gravity
+
     private static final String TAG = "BluetoothOBDService";
     // Unique UUID for this application
     private static final UUID MY_UUID_SECURE = UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
@@ -72,6 +90,7 @@ public class BluetoothOBDService extends Service {
     // Binder given to clients
     private final IBinder mBinder = new BluetoothOBDBinder();
 
+    private List<String> regTokens;
     private String address;
     private String uid;
     private String driveKey;
@@ -88,6 +107,28 @@ public class BluetoothOBDService extends Service {
     public IBinder onBind(Intent intent) {
         return mBinder;
     }
+
+    @Override
+    // Accelerometer method
+    public void onSensorChanged(SensorEvent event) {
+        float x = event.values[0];
+        float y = event.values[1];
+        float z = event.values[2];
+        mAccelLast = mAccelCurrent;
+        mAccelCurrent = (float) Math.sqrt((double) (x * x + y * y + z * z));
+        float delta = mAccelCurrent - mAccelLast;
+        mAccel = mAccel * 0.9f + delta; // todo stav: tweak calculation to detect crash
+
+        // Send notification in case of crash
+        if (mAccel > 11) {  // todo stav: tweak calculation to detect crash
+            String msg = "Dangerous Driving!";
+            NotificationService.sendNotification(msg, regTokens);
+        }
+    }
+
+    @Override
+    // Accelerometer method
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 
     public class BluetoothOBDBinder extends Binder {
         public BluetoothOBDService getService() {
@@ -108,6 +149,34 @@ public class BluetoothOBDService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        // Accelerometer
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mAccelerometer = mSensorManager
+                .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mSensorManager.registerListener(this, mAccelerometer,
+                SensorManager.SENSOR_DELAY_UI, new Handler());
+        // get supervisors' registration tokens (regTokens)
+        regTokens = new ArrayList<String>();
+        dbref.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                List<String> supervisorIDs = new ArrayList<String>();
+
+                // make list of supervisor IDs
+                for (DataSnapshot child : dataSnapshot.child("drivers").child(uid).child("supervisorsIDs").getChildren()) {
+                    supervisorIDs.add(child.getKey());
+                }
+
+                // get registration ID for each supervisor
+                for(String id : supervisorIDs){
+                    regTokens.add(dataSnapshot.child("regTokens").child(id).getValue(String.class));
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {}
+        });
+
         // get parameters
         uid = intent.getStringExtra("userID");
         address = intent.getStringExtra("address");
