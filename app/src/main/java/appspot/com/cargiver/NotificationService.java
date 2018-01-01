@@ -20,6 +20,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,17 +59,14 @@ public class NotificationService extends FirebaseMessagingService {
         manager.notify(123, notification);
     }
 
+    // Send notification to multiple receivers
     public static void sendNotification(String msg, List<String> regTokens){
-                // todo: stav -- allow multiple receivers for a single notification
-    }
-
-    public static void sendNotification(String msg, String regToken) {
         Gson gson = new Gson();
         Data data = new Data();
         data.setTitle("CarGiver");
         data.setBody(msg);
         PostRequestData postRequestData = new PostRequestData();
-        postRequestData.setTo(regToken);
+        postRequestData.setRegistration_ids(regTokens);
         postRequestData.setData(data);
         String json = gson.toJson(postRequestData);
         String url = "https://fcm.googleapis.com/fcm/send";
@@ -101,6 +99,13 @@ public class NotificationService extends FirebaseMessagingService {
         };
         okhttp3.Call call = client.newCall(request);
         call.enqueue(responseCallBack);
+    }
+
+    // Send notification to a single receiver
+    public static void sendNotification(String msg, String regToken) {
+        List<String> regTokens = new ArrayList<String>();
+        regTokens.add(regToken);
+        sendNotification(msg, regTokens);
     }
 
 }
