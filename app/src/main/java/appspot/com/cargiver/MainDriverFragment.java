@@ -124,7 +124,7 @@ public class MainDriverFragment extends Fragment {
                 else {
                     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
                     // make sure bluetooth is on
-                    if (!mBluetoothAdapter.isEnabled()) {
+                    if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
                         Toast toast = Toast.makeText(getActivity().getApplicationContext(), "Please Enable Bluetooth", Toast.LENGTH_SHORT);
                         toast.show();
                         return;
