@@ -191,7 +191,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         // make sure user has location permissions on
         locationRequest = new LocationRequest();
         locationRequest.setInterval(2000);
-        locationRequest.setFastestInterval(2000);
+        locationRequest.setFastestInterval(1000);
         locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
         // check for user permissions
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest);
