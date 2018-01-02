@@ -131,7 +131,6 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         googleMap.setTrafficEnabled(true);
         // get drive id
         driveID = getArguments().getString("driveID");
-        //dbRef.child("drives").child(drive.driverID).child("meas").orderByKey();
         dbRef.child("drives").child(driveID).addListenerForSingleValueEvent(loadData);
     }
 
@@ -162,7 +161,6 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             mapBuilder.include(newPoint);
             // set camera position to track latest
             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newPoint, 18));
-            //if G-force is greater then 4, we send push notification to the supervisor:
 
             dataSnapshot.getRef().getParent().getParent().child("grade").addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
@@ -258,6 +256,8 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                 snippet = "Time: " + Drives.dateFormat.format(drive.endTime());
                 // stop gauge tremble
                 speedometer.setWithTremble(false);
+                // don't show traffic status for finished drive
+                googleMap.setTrafficEnabled(false);
             }
             else {
                 title = "Current Speed:" + drive.meas.get(drive.meas.size() - 1).speed;
@@ -313,6 +313,8 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                 }
                 // stop gauge tremble
                 speedometer.setWithTremble(false);
+                // don't show traffic status for finished drive
+                googleMap.setTrafficEnabled(false);
                 // set zoom to contain all path points
                 LatLngBounds bounds = mapBuilder.build();
                 CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
