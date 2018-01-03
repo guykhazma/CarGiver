@@ -174,12 +174,15 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
 
                     if (DriveGrade < 33){
                         rating.setText("Great");
+                        rating.setTextColor(Color.GREEN);
                     }
                     else if (DriveGrade >= 33 && DriveGrade < 66) {
                         rating.setText("Good");
+                        rating.setTextColor(Color.parseColor("#FFFFBB33"));
                     }
                     else {
                         rating.setText("Bad");
+                        rating.setTextColor(Color.RED);
                     }
 
                 }
@@ -270,12 +273,15 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             speedometer.speedTo(drive.grade, 1000);
             if (drive.grade < 33){
                 rating.setText("Great");
+                rating.setTextColor(Color.GREEN);
             }
             else if (drive.grade >= 33 && drive.grade < 66) {
                 rating.setText("Good");
+                rating.setTextColor(Color.parseColor("#FFFFBB33"));
             }
             else {
                 rating.setText("Bad");
+                rating.setTextColor(Color.RED);
             }
 
             // set zoom to contain all path points
