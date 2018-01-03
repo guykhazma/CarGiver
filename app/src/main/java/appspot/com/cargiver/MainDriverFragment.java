@@ -148,9 +148,7 @@ public class MainDriverFragment extends Fragment {
                 if (startDrivePressed){
                     // stop service
                     Intent intnt = new Intent(getActivity(),BluetoothOBDService.class);
-                    synchronized (BluetoothOBDService.class) {
-                        MainDriverActivity.btService.stopped = true;
-                    };
+                    MainDriverActivity.btService.stopped = true;
                     // set parameters to fragment
                     Bundle bundle = new Bundle();
                     bundle.putString("driveID", MainDriverActivity.btService.getDriveKey());
@@ -231,9 +229,7 @@ public class MainDriverFragment extends Fragment {
                 int serviceStatus = MainDriverActivity.btService.getState();
                 // stop service
                 Intent intnt = new Intent(getActivity(),BluetoothOBDService.class);
-                synchronized (BluetoothOBDService.class) {
-                    MainDriverActivity.btService.stopped = true;
-                };
+                MainDriverActivity.btService.stopped = true;
                 getActivity().unbindService(this);
                 getActivity().stopService(intnt);
                 // if the service stopped after it was connected go to result fragment

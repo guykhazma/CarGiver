@@ -94,7 +94,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
     private String address;
     private String uid;
     private String driveKey;
-    public  boolean stopped; // indicates whether failure caused the problem
+    public volatile boolean stopped; // indicates whether failure caused the problem
 
     // broadcast tags
     public static String connectionFailedBroadcastIntent = "com.OBDService.ConnectionFailed";
@@ -279,13 +279,11 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
      */
     private void connectionLost() {
         // Send a failure message back to the Activity
-        synchronized (BluetoothOBDService.class) {
-            if (!stopped) {
-                Intent intent = new Intent(BluetoothOBDService.connectionLostBroadcastIntent);
-                LocalBroadcastManager.getInstance(this).sendBroadcastSync(intent);
-            }
-            this.stopSelf();
+        if (!stopped) {
+            Intent intent = new Intent(BluetoothOBDService.connectionLostBroadcastIntent);
+            LocalBroadcastManager.getInstance(this).sendBroadcastSync(intent);
         }
+        this.stopSelf();
     }
 
     /**
@@ -423,7 +421,6 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
             try {
                 // This is a blocking call and will only return on a
                 // successful connection or an exception
-                //android.os.Debug.waitForDebugger();
                 mmSocket.connect();
                 // Reset the ConnectThread because we're done
                 synchronized (BluetoothOBDService.this) {
