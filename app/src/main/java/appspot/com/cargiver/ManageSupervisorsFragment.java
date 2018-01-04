@@ -145,12 +145,16 @@ public class ManageSupervisorsFragment extends Fragment {
                                 }
                                 //check if this Email exists
                                 else {
-                                    dbRef.child("users").addListenerForSingleValueEvent(new ValueEventListener() {
+                                    dbRef.addListenerForSingleValueEvent(new ValueEventListener() {
                                         @Override
                                         public void onDataChange(DataSnapshot dataSnapshot) {
-                                            for (DataSnapshot child : dataSnapshot.getChildren()) {
+                                            for (DataSnapshot child : dataSnapshot.child("users").getChildren()) {
                                                 User user = child.getValue(User.class);
                                                 if (user.email.equals(finalEmail) && user.type == User.SUPERVISOR) {
+                                                    // Send notification to supervisor
+                                                    String supervisorId = child.getKey();
+                                                    String regToken = dataSnapshot.child("regTokens").child(supervisorId).getValue(String.class);
+                                                    NotificationService.sendNotification("Someone added you as a supervisor!", regToken);
                                                     //add the supervisor to the drivers list
                                                     dbRef.child("drivers").child(uid).child("supervisorsIDs").child(child.getKey()).setValue(true);
                                                     //add the driver to supervisors
@@ -160,6 +164,7 @@ public class ManageSupervisorsFragment extends Fragment {
                                                     return;
                                                 }
                                             }
+
                                             //no such mail of Driver
                                             alert11.show();
                                         }
@@ -198,18 +203,21 @@ public class ManageSupervisorsFragment extends Fragment {
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.dismiss();
-                                dbRef.child("users").addListenerForSingleValueEvent(new ValueEventListener() {
+                                dbRef.addListenerForSingleValueEvent(new ValueEventListener() {
                                     @Override
                                     public void onDataChange(DataSnapshot dataSnapshot) {
                                         String superID="";
                                         String superMail=supervisorMails.get(position);
                                         supervisorMails.remove(position);
                                         listViewAdapter.notifyDataSetChanged();
-                                        for (DataSnapshot child : dataSnapshot.getChildren()) {
+                                        for (DataSnapshot child : dataSnapshot.child("users").getChildren()) {
                                             if (child.getValue(User.class).email.equals(superMail)) {
                                                 superID=child.getKey();
                                                 dbRef.child("drivers").child(uid).child("supervisorsIDs").child(superID).removeValue();
                                                 dbRef.child("supervisors").child(superID).child("authorizedDriverIDs").child(uid).removeValue();
+                                                // Send notification
+                                                String regToken = dataSnapshot.child("regTokens").child(superID).getValue(String.class);
+                                                NotificationService.sendNotification("Someone deleted you from their supervisor list!", regToken);
                                                 break;
                                             }
                                         }
