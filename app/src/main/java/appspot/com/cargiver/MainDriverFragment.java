@@ -9,6 +9,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -57,12 +59,27 @@ public class MainDriverFragment extends Fragment {
             }
             // connection lost case
             else if (BluetoothOBDService.connectionLostBroadcastIntent.equals(action)) {
-                // TODO: finish handling connection lost case
                 getActivity().runOnUiThread(new Runnable() {
                     public void run() {
                         Toast.makeText(getActivity(), "Connection with OBD is lost", Toast.LENGTH_SHORT).show();
                     }
                 });
+                // set parameters to fragment
+                String driveID = MainDriverActivity.btService.getDriveKey();
+                // if there is internet and drive has finished load result
+                if (driveID != null && isNetworkAvailable()) {
+                    Bundle bundle = new Bundle();
+                    bundle.putString("driveID", driveID);
+                    // load result fragment
+                    Fragment ShowRouteRes = new RouteResultFragment();
+                    ShowRouteRes.setArguments(bundle);
+                    getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
+                } else {
+                    startDrivePressed = false;
+                    btnStartDrive.setImageResource(R.drawable.startdriving);
+                    Explain.setText("Click \'Start Driving\' to start the data collection");
+                    Toast.makeText(getActivity(), "Drive has finished", Toast.LENGTH_SHORT).show();
+                }
 
             }
             // connected
@@ -70,6 +87,8 @@ public class MainDriverFragment extends Fragment {
                 getActivity().runOnUiThread(new Runnable() {
                     public void run() {
                         changedToActiveDrive();
+                        Toast toast = Toast.makeText(getActivity(), "Connected successfully to " + MainDriverActivity.bluetoothDevice.getName() , Toast.LENGTH_SHORT);
+                        toast.show();
                     }
                 });
             }
@@ -88,7 +107,12 @@ public class MainDriverFragment extends Fragment {
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mreceiver, filter);
     }
 
-
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -149,16 +173,28 @@ public class MainDriverFragment extends Fragment {
                     // stop service
                     Intent intnt = new Intent(getActivity(),BluetoothOBDService.class);
                     MainDriverActivity.btService.stopped = true;
-                    // set parameters to fragment
-                    Bundle bundle = new Bundle();
-                    bundle.putString("driveID", MainDriverActivity.btService.getDriveKey());
                     // stop service
                     getActivity().unbindService(mConnection);
                     getActivity().stopService(intnt);
-                    // load result fragment
-                    Fragment ShowRouteRes = new RouteResultFragment();
-                    ShowRouteRes.setArguments(bundle);
-                    getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
+                    // set parameters to fragment
+                    String driveID = MainDriverActivity.btService.getDriveKey();
+                    MainDriverActivity.btService.mState = BluetoothOBDService.STATE_NONE;
+                    // broadcast finish
+                    Intent intent = new Intent(BluetoothOBDService.driveFinishedBroadcastIntent);
+                    LocalBroadcastManager.getInstance(getActivity()).sendBroadcastSync(intent);
+                    // if there is internet and drive has finished load result
+                    if (driveID != null && isNetworkAvailable()) {
+                        Bundle bundle = new Bundle();
+                        bundle.putString("driveID", driveID);
+                        // load result fragment
+                        Fragment ShowRouteRes = new RouteResultFragment();
+                        ShowRouteRes.setArguments(bundle);
+                        getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
+                    } else {
+                        btnStartDrive.setImageResource(R.drawable.startdriving);
+                        Explain.setText("Click \'Start Driving\' to start the data collection");
+                        Toast.makeText(getActivity(), "Drive has finished", Toast.LENGTH_SHORT).show();
+                    }
                 }
                 else {
                     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -183,6 +219,8 @@ public class MainDriverFragment extends Fragment {
                     intnt.putExtra("address", MainDriverActivity.bluetoothDevice.getAddress());
                     intnt.putExtra("userID", FirebaseAuth.getInstance().getCurrentUser().getUid());
                     Intent intent = new Intent(getActivity(), BluetoothOBDService.class);
+                    BluetoothOBDService.numRestart = 0;
+                    BluetoothOBDService.restart = false;
                     getActivity().bindService(intent, mConnection, 0);
                     getActivity().startService(intnt);
                 }
@@ -211,7 +249,7 @@ public class MainDriverFragment extends Fragment {
     }
 
     /** Defines callbacks for service binding, passed to bindService() */
-    private ServiceConnection mConnection = new ServiceConnection() {
+    public ServiceConnection mConnection = new ServiceConnection() {
 
         @Override
         public void onServiceConnected(ComponentName className,
@@ -219,7 +257,6 @@ public class MainDriverFragment extends Fragment {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             BluetoothOBDService.BluetoothOBDBinder binder = (BluetoothOBDService.BluetoothOBDBinder) service;
             MainDriverActivity.btService = (BluetoothOBDService) binder.getService();
-            Handler handler = new Handler();
         }
 
         @Override

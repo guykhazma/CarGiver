@@ -160,7 +160,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             // include in map for finish
             mapBuilder.include(newPoint);
             // set camera position to track latest
-            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newPoint, 18));
+            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newPoint, 5));
 
             dataSnapshot.getRef().getParent().getParent().child("grade").addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
@@ -286,14 +286,18 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
 
             // set zoom to contain all path points
             if (drive.ongoing == false) {
-
                 LatLngBounds bounds = mapBuilder.build();
                 CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 100);
+                try {
                 googleMap.animateCamera(cu);
+                } catch (Exception ex) {
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() -1), 5));
+                }
+
             }
             // move to last marker
             else {
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() -1), 18));
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() -1), 5));
                 // listener to new points
                 dbRef.child("drives").child(driveID).child("meas").orderByChild("timeStamp").startAt(new Date().getTime()).addChildEventListener(updateMap);
                 // listener for finish event

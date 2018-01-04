@@ -24,6 +24,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -60,8 +61,7 @@ public class MainDriverActivity extends AppCompatActivity
     /*--------------------------Bluetooth-----------------------------------------------*/
     private final static int REQUEST_ENABLE_BT = 1; // for bluetooth request response code
     private static BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-    public static BluetoothOBDService btService;
-    boolean mBound = false;
+    public static volatile BluetoothOBDService btService;
     public static BluetoothDevice bluetoothDevice;
 
     /*------------------ Firebase DB-----------------------*/
@@ -114,6 +114,12 @@ public class MainDriverActivity extends AppCompatActivity
         filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
         filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
         registerReceiver(mReceiver, filter);
+        IntentFilter filterOBD = new IntentFilter();
+        filterOBD.addAction(BluetoothOBDService.connectionConnectedBroadcastIntent);
+        filterOBD.addAction(BluetoothOBDService.connectionLostBroadcastIntent);
+        filterOBD.addAction(BluetoothOBDService.driveFinishedBroadcastIntent);
+        LocalBroadcastManager.getInstance(this).registerReceiver(mreceiverOBD, filterOBD);
+
 
         // Bluetooth action button
         final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -147,6 +153,50 @@ public class MainDriverActivity extends AppCompatActivity
         }
     }
 
+    // Our handler for received Intents. This will be called whenever an Intent
+    private BroadcastReceiver mreceiverOBD = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+            if (BluetoothOBDService.connectionLostBroadcastIntent.equals(action) || BluetoothOBDService.driveFinishedBroadcastIntent.equals(action)) {
+                // delay to allow service to update
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                        Handler handler = new Handler();
+                        handler.postDelayed(new Runnable() {
+                            public void run() {
+                                // Switch to inactive bluetooth
+                                if (btService == null || btService.getState() == BluetoothOBDService.STATE_NONE) {
+                                    fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth, null));
+                                    fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#DD2C00")));
+                                }
+                            }
+                        }, 2000);
+                    }
+                });
+
+
+
+            } else if (BluetoothOBDService.connectionConnectedBroadcastIntent.equals(action))  {
+                // delay to allow service to update
+                runOnUiThread(new Runnable() {
+                    public void run() {
+                    Handler handler = new Handler();
+                    handler.postDelayed(new Runnable() {
+                        public void run() {
+                            // Switch to active bluetooth
+                            if (btService != null && btService.getState() == BluetoothOBDService.STATE_CONNECTED) {
+                                Log.w(TAG, "Bluetooth Connection Started");
+                                fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
+                                fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+                            };
+                        }
+                    }, 2000);}
+                });
+            }
+        }
+    };
 
         /**
          * Broadcast receiver reacts to bluetooth events
@@ -177,35 +227,6 @@ public class MainDriverActivity extends AppCompatActivity
                     toast.show();
 
                 }
-            } else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)) {
-                // delay to allow service to update
-                Handler handler = new Handler();
-                handler.postDelayed(new Runnable() {
-                    public void run() {
-                        // Switch to inactive bluetooth
-                        if (btService == null || btService.getState() == BluetoothOBDService.STATE_NONE) {
-                            Log.w(TAG, "Bluetooth Connection Lost");
-                            fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth, null));
-                            fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#DD2C00")));
-                        }
-                    }
-                }, 1500);
-
-            } else if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action))  {
-                // delay to allow service to update
-                Handler handler = new Handler();
-                handler.postDelayed(new Runnable() {
-                    public void run() {
-                        // Switch to active bluetooth
-                        if (btService != null && btService.getState() == BluetoothOBDService.STATE_CONNECTED) {
-                            Log.w(TAG, "Bluetooth Connection Started");
-                            fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
-                            fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
-                            Toast toast = Toast.makeText(getApplicationContext(), "Connected successfully to " + MainDriverActivity.bluetoothDevice.getName() , Toast.LENGTH_SHORT);
-                            toast.show();
-                        }
-                    }
-                }, 1500);
             }
         }
     };
@@ -325,6 +346,13 @@ public class MainDriverActivity extends AppCompatActivity
             transaction.commit();
 
         } else if (id == R.id.nav_sign_out_driver) {
+            // stop drive if there is an active drive
+            if (btService != null) {
+                // stop service
+                Intent intnt = new Intent(this,BluetoothOBDService.class);
+                MainDriverActivity.btService.stopped = true;
+                stopService(intnt);
+            }
             AuthUI.getInstance()
                     .signOut(this)
                     .addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -340,6 +368,18 @@ public class MainDriverActivity extends AppCompatActivity
         return true;
     }
 
+    private ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+
+        }
+    };
     @Override
     protected void onDestroy() {
         super.onDestroy();

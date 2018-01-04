@@ -59,7 +59,9 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
-
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 
 public class BluetoothOBDService extends Service implements SensorEventListener {
@@ -79,7 +81,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
     private NotificationManager mNM;
     private ConnectThread mConnectThread;
     private ConnectedThread mConnectedThread;
-    private int mState;
+    public volatile int mState;
     private int NOTIFICATION = R.string.OBDservice;
 
     // location
@@ -90,16 +92,28 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
     // Binder given to clients
     private final IBinder mBinder = new BluetoothOBDBinder();
 
+
     private List<String> regTokens;
+    private BluetoothDevice dev;
     private String address;
     private String uid;
     private String driveKey;
     public volatile boolean stopped; // indicates whether failure caused the problem
+    // indicates if restart was done
+    public static volatile int numRestart;
+    public static volatile boolean restart; // indicate whether the restart is after a succesfull connection
+
+    // grade
+    int count = 1; //num of measurements
+    int NumOfPunish = 0; //num of punishments
+    float AverageSpeed = 0; //the average speed
 
     // broadcast tags
     public static String connectionFailedBroadcastIntent = "com.OBDService.ConnectionFailed";
     public static String connectionLostBroadcastIntent = "com.OBDService.ConnectionLost";
     public static String connectionConnectedBroadcastIntent = "com.OBDService.Connected";
+    public static String driveFinishedBroadcastIntent = "com.OBDService.driveFinished";
+    private  static volatile ScheduledExecutorService scheduler;
 
 
     private DatabaseReference dbref;
@@ -219,6 +233,11 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
 
                 mFusedLocationClient.requestLocationUpdates(locationRequest, mLocationCallback, null);
 
+                // reset variables
+                count = 1; //num of measurements
+                NumOfPunish = 0; //num of punishments
+                AverageSpeed = 0; //the average speed
+
                 // initiate connection
                 // Cancel any thread attempting to make a connection
                 if (mConnectThread != null) {
@@ -231,7 +250,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                     mConnectedThread.cancel();
                     mConnectedThread = null;
                 }
-                BluetoothDevice dev = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(address);
+                dev = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(address);
                 // Start the thread to connect with the given device
                 mConnectThread = new ConnectThread(dev, true);
                 mConnectThread.start();
@@ -269,8 +288,11 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
      */
     private void connectionFailed() {
         // Send a failure message back to the Activity
-        Intent intent = new Intent(BluetoothOBDService.connectionFailedBroadcastIntent);
-        LocalBroadcastManager.getInstance(this).sendBroadcastSync(intent);
+        if (!restart) {
+            // failure message for failing to connect on
+            Intent intent = new Intent(BluetoothOBDService.connectionFailedBroadcastIntent);
+            LocalBroadcastManager.getInstance(this).sendBroadcastSync(intent);
+        }
         this.stopSelf();
     }
 
@@ -280,6 +302,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
     private void connectionLost() {
         // Send a failure message back to the Activity
         if (!stopped) {
+            this.mState = STATE_NONE;
             Intent intent = new Intent(BluetoothOBDService.connectionLostBroadcastIntent);
             LocalBroadcastManager.getInstance(this).sendBroadcastSync(intent);
         }
@@ -362,6 +385,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
 
     public void onDestroy() {
         // stop all threads
+        this.mState = STATE_NONE;
         this.stop();
         // remove accelerometer listener
         mSensorManager.unregisterListener(this);
@@ -416,37 +440,57 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
             Log.i(TAG, "BEGIN mConnectThread SocketType:" + mSocketType);
 
             setName("ConnectThread" + mSocketType);
-
-            // Make a connection to the BluetoothSocket
-            try {
-                // This is a blocking call and will only return on a
-                // successful connection or an exception
-                mmSocket.connect();
-                // Reset the ConnectThread because we're done
-                synchronized (BluetoothOBDService.this) {
-                    mConnectThread = null;
-                }
-                // Start the connected thread
-                connected(mmSocket, mmDevice, mSocketType);
-            }catch (Exception e1) {
-                Log.d(TAG, "There was an error while establishing Bluetooth connection. Falling back..", e1);
-                Class<?> clazz = mmSocket.getRemoteDevice().getClass();
-                Class<?>[] paramTypes = new Class<?>[]{Integer.TYPE};
+            // try connecting multiple times
+            while (true) {
+                // Make a connection to the BluetoothSocket
                 try {
-                    Method m = clazz.getMethod("createRfcommSocket", paramTypes);
-                    Object[] params = new Object[]{Integer.valueOf(1)};
-                    BluetoothSocket sockFallback = (BluetoothSocket) m.invoke(mmSocket.getRemoteDevice(), params);
-                    sockFallback.connect();
-                    mmSocket = sockFallback;
+                    // This is a blocking call and will only return on a
+                    // successful connection or an exception
+                    mmSocket.connect();
                     // Reset the ConnectThread because we're done
                     synchronized (BluetoothOBDService.this) {
                         mConnectThread = null;
                     }
                     // Start the connected thread
                     connected(mmSocket, mmDevice, mSocketType);
-                } catch (Exception e2) {
-                    Log.d(TAG, "Couldn't fallback while establishing Bluetooth connection.", e2);
-                    connectionFailed();
+                } catch (Exception e1) {
+                    Log.d(TAG, "There was an error while establishing Bluetooth connection. Falling back..", e1);
+                    Class<?> clazz = mmSocket.getRemoteDevice().getClass();
+                    Class<?>[] paramTypes = new Class<?>[]{Integer.TYPE};
+                    try {
+                        Method m = clazz.getMethod("createRfcommSocket", paramTypes);
+                        Object[] params = new Object[]{Integer.valueOf(1)};
+                        BluetoothSocket sockFallback = (BluetoothSocket) m.invoke(mmSocket.getRemoteDevice(), params);
+                        sockFallback.connect();
+                        mmSocket = sockFallback;
+                        // Reset the ConnectThread because we're done
+                        synchronized (BluetoothOBDService.this) {
+                            mConnectThread = null;
+                        }
+                        // Start the connected thread
+                        connected(mmSocket, mmDevice, mSocketType);
+                        return; // finish current thread
+                    } catch (Exception e2) {
+                        Log.d(TAG, "Couldn't fallback while establishing Bluetooth connection.", e2);
+                        if (numRestart > 3) {
+                            // send message accroding to failure type
+                            if (!restart) {
+                                connectionFailed();
+                            }
+                            else {
+                                connectionLost();
+                            }
+                            return;
+                        }
+                        else {
+                            numRestart++;
+                            try{
+                                Thread.sleep(4000);
+                            } catch(InterruptedException e){
+                                e.printStackTrace();
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -468,7 +512,6 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
-        private  Timer timer;
 
         public ConnectedThread(BluetoothSocket socket, String socketType) {
             //android.os.Debug.waitForDebugger();  // this line is key
@@ -500,33 +543,39 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                     Toast.makeText(getApplicationContext(), "Location Services is disabled - drive canceled", Toast.LENGTH_SHORT).show();
                     stopSelf();
                 }
-                // create drive in db
-                driveKey = dbref.child("drives").push().getKey();
-                Drives newDrive = new Drives();
-                newDrive.ongoing = true;
-                newDrive.driverID = uid;
-                newDrive.grade = 0;
-                dbref.child("drives").child(driveKey).setValue(newDrive);
-                // set as connected
-                Intent intent = new Intent(BluetoothOBDService.connectionConnectedBroadcastIntent);
-                LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcast(intent);
-                // add initial measuremnt
-                final DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child("0");
-                mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        double lat = -1;
-                        double longitude = -1;
-                        if (location != null) {
-                            lat = location.getLatitude();
-                            longitude = location.getLongitude();
+                // if it is not a restart create drive in db
+                if (!restart) {
+                    driveKey = dbref.child("drives").push().getKey();
+                    Drives newDrive = new Drives();
+                    newDrive.ongoing = true;
+                    newDrive.driverID = uid;
+                    newDrive.grade = 0;
+                    dbref.child("drives").child(driveKey).setValue(newDrive);
+                    // set as connected
+                    Intent intent = new Intent(BluetoothOBDService.connectionConnectedBroadcastIntent);
+                    LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcast(intent);
+                    // add initial measuremnt
+                    final DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child("0");
+
+                    mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location) {
+                            double lat = -1;
+                            double longitude = -1;
+                            if (location != null) {
+                                lat = location.getLatitude();
+                                longitude = location.getLongitude();
+                            }
+                            // set start time
+                            dbref.child("drives").child(driveKey).child("StartTimeStamp").setValue(-Calendar.getInstance().getTime().getTime());
+                            measRef.setValue(new Measurement(0, lat, longitude, 0));
                         }
-                        // set start time
-                        dbref.child("drives").child(driveKey).child("StartTimeStamp").setValue(-Calendar.getInstance().getTime().getTime());
-                        measRef.setValue(new Measurement(0, lat, longitude, 0));
-                    }});
-
-
+                    });
+                }
+                // if it is a restarted drive indicate restart has succeeded
+                else {
+                    numRestart = 0;
+                }
             }
             catch (Exception e) {
                 Log.e(TAG, "failed to initiate OBD general commands", e);
@@ -540,60 +589,87 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                 final SpeedCommand speedCMD = new SpeedCommand();
                 // init location service
 
-                this.timer = new Timer();
-                this.timer.scheduleAtFixedRate(new TimerTask() {
-                    int count = 1; //num of measurements
-                    int NumOfPunish = 0; //num of punishments
-                    float AverageSpeed = 0; //the average speed
-                    @Override
-                    public void run() {
-                        try {
-                            rpmCMD.run(mmInStream, mmOutStream);
-                            speedCMD.run(mmInStream, mmOutStream);
-                            // push to dB
-                            if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
-                                Toast.makeText(getApplicationContext(), "Location Services is disabled - drive canceled", Toast.LENGTH_SHORT).show();
-                                stopSelf();
-                            }
-                            mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-                                @Override
-                                public void onSuccess(Location location) {
-                                    // Got last known location. In some rare situations this can be null.
-                                    double lat = -1;
-                                    double longitude = -1;
-                                    if (location != null) {
-                                        lat = location.getLatitude();
-                                        longitude = location.getLongitude();
+                scheduler = Executors.newSingleThreadScheduledExecutor();
+                scheduler.scheduleAtFixedRate
+                        (new Runnable() {
+                            public void run() {
+                                try {
+                                    rpmCMD.run(mmInStream, mmOutStream);
+                                    speedCMD.run(mmInStream, mmOutStream);
+                                    // push to dB
+                                    if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+                                        Toast.makeText(getApplicationContext(), "Location Services is disabled - drive canceled", Toast.LENGTH_SHORT).show();
+                                        stopSelf();
                                     }
-                                    int speed = speedCMD.getMetricSpeed();
-                                    // add to db only if speed is above 0
-                                    if (speed > 0) {
-                                        int rpm = rpmCMD.getRPM();
-                                        DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child(String.valueOf(count));
-                                        count++;
-                                        measRef.setValue(new Measurement(speed, lat, longitude, rpm));
-                                        //this is the grading algorithm:
-                                        NumOfPunish += SetPunishForBadResult(speed, rpm);
-                                        AverageSpeed = (AverageSpeed*(count-1) + speed)/count;
-                                        float Grade = OneGradingAlg(count, AverageSpeed, NumOfPunish, speed, rpm);
-                                        dbref.child("drives").child(driveKey).child("grade").setValue(Grade);
+                                    mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                                        @Override
+                                        public void onSuccess(Location location) {
+                                            // Got last known location. In some rare situations this can be null.
+                                            double lat = -1;
+                                            double longitude = -1;
+                                            // insert only valid locations
+                                            if (location != null && driveKey != null) {
+                                                lat = location.getLatitude();
+                                                longitude = location.getLongitude();
+
+                                                int speed = speedCMD.getMetricSpeed();
+                                                // add to db only if speed is above 0
+                                                if (speed > 0) {
+                                                    int rpm = rpmCMD.getRPM();
+                                                    DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child(String.valueOf(count));
+                                                    count++;
+                                                    measRef.setValue(new Measurement(speed, lat, longitude, rpm));
+                                                    //this is the grading algorithm:
+                                                    NumOfPunish += SetPunishForBadResult(speed, rpm);
+                                                    AverageSpeed = (AverageSpeed * (count - 1) + speed) / count;
+                                                    float Grade = OneGradingAlg(count, AverageSpeed, NumOfPunish, speed, rpm);
+                                                    dbref.child("drives").child(driveKey).child("grade").setValue(Grade);
+                                                }
+                                            }
+                                        }
+                                    });
+
+                                } catch (Exception ex) {
+                                    // try restarting
+                                    if (ex instanceof IOException) {
+                                        // stop all active
+                                        // Start the thread to connect with the given device
+                                        Log.e(TAG, "attempting restart", ex);
+                                        scheduler.shutdown();
+                                        try {
+                                            scheduler.awaitTermination(2, TimeUnit.SECONDS);
+                                        } catch (InterruptedException exp) {
+
+                                        }
+                                        numRestart++;
+                                        restart = true; // changes only once to true
+                                        mConnectThread = new ConnectThread(dev, true);
+                                        mConnectThread.start();
+                                        return; // close current thread
+                                    } else {
+                                        scheduler.shutdown();
+                                        Log.e(TAG, "disconnected", ex);
+                                        try {
+                                            scheduler.awaitTermination(2, TimeUnit.SECONDS);
+                                        } catch (InterruptedException exp) {
+
+                                        }
+                                        stopped = false;
+                                        connectionLost();
                                     }
                                 }
-                            });
-
-                        } catch (Exception ex) {
-                            Log.e(TAG, "disconnected", ex);
-                            this.cancel(); // cancel timer
-                            stopped = false;
-                            connectionLost();
-                        }
-                    }
-                }, 2000, 2000);
+                            }
+                        }, 2, 2, TimeUnit.SECONDS);
         }
 
         public void cancel() {
             try {
-                timer.cancel();
+                scheduler.shutdown();
+                try {
+                    scheduler.awaitTermination(2, TimeUnit.SECONDS);
+                } catch (InterruptedException exp) {
+
+                }
                 mmSocket.close();
             } catch (IOException e) {
                 Log.e(TAG, "close() of connect socket failed", e);
