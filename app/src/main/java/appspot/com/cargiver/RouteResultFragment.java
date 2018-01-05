@@ -287,9 +287,15 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             // set zoom to contain all path points
             if (drive.ongoing == false) {
                 LatLngBounds bounds = mapBuilder.build();
-                CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 300);
+                // avoid a case where we have only one point
+                if (!bounds.northeast.equals(bounds.southwest)) {
+                    CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 300);
+                    googleMap.animateCamera(cu);
+                }
+                else {
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() -1), 15));
+                }
                 try {
-                googleMap.animateCamera(cu);
                 } catch (Exception ex) {
                     googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() -1), 15));
                 }
