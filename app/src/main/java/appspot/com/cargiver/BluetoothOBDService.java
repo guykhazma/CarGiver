@@ -252,6 +252,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                 }
                 dev = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(address);
                 // Start the thread to connect with the given device
+                numRestart = 0;
                 mConnectThread = new ConnectThread(dev, true);
                 mConnectThread.start();
             }
@@ -441,7 +442,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
 
             setName("ConnectThread" + mSocketType);
             // try connecting multiple times
-            while (true) {
+            while (numRestart < 4) {
                 // Make a connection to the BluetoothSocket
                 try {
                     // This is a blocking call and will only return on a
@@ -472,7 +473,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                         return; // finish current thread
                     } catch (Exception e2) {
                         Log.d(TAG, "Couldn't fallback while establishing Bluetooth connection.", e2);
-                        if (numRestart > 3) {
+                        if (numRestart > 2) {
                             // send message accroding to failure type
                             if (!restart) {
                                 connectionFailed();
@@ -484,6 +485,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                         }
                         else {
                             numRestart++;
+                            Log.d(TAG, "Restart" + numRestart);
                             try{
                                 Thread.sleep(4000);
                             } catch(InterruptedException e){
@@ -492,6 +494,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                         }
                     }
                 }
+                // try sending OBD command to make sure this is an OBD device
             }
         }
 
@@ -587,8 +590,10 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                 // initiate speed and RPM commands and make mesauremnt each 5 seconds
                 final RPMCommand rpmCMD = new RPMCommand();
                 final SpeedCommand speedCMD = new SpeedCommand();
-                // init location service
-
+                // check if we get valid result
+                if (rpmCMD.getResult() == "NO DATA") {
+                    Log.e(TAG, "Not OBD");
+                }
                 scheduler = Executors.newSingleThreadScheduledExecutor();
                 scheduler.scheduleAtFixedRate
                         (new Runnable() {
