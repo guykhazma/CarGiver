@@ -4,6 +4,8 @@ import android.app.Dialog;
 import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.graphics.Color;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.util.Log;
@@ -287,8 +289,14 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             // set zoom to contain all path points
             if (drive.ongoing == false) {
                 LatLngBounds bounds = mapBuilder.build();
-                // avoid a case where we have only one point
-                if (!bounds.northeast.equals(bounds.southwest)) {
+                // avoid a case where we have points in radius less then 200 meters
+                Location temp = new Location(LocationManager.GPS_PROVIDER);
+                temp.setLatitude(bounds.northeast.latitude);
+                temp.setLongitude(bounds.northeast.longitude);
+                Location temp2 = new Location(LocationManager.GPS_PROVIDER);
+                temp2.setLatitude(bounds.southwest.latitude);
+                temp2.setLongitude(bounds.southwest.longitude);
+                if (temp.distanceTo(temp2) > 200) {
                     CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 300);
                     googleMap.animateCamera(cu);
                 }
