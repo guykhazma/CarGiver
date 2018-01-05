@@ -495,6 +495,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                     }
                 }
                 // try sending OBD command to make sure this is an OBD device
+
             }
         }
 
@@ -590,10 +591,6 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                 // initiate speed and RPM commands and make mesauremnt each 5 seconds
                 final RPMCommand rpmCMD = new RPMCommand();
                 final SpeedCommand speedCMD = new SpeedCommand();
-                // check if we get valid result
-                if (rpmCMD.getResult() == "NO DATA") {
-                    Log.e(TAG, "Not OBD");
-                }
                 scheduler = Executors.newSingleThreadScheduledExecutor();
                 scheduler.scheduleAtFixedRate
                         (new Runnable() {

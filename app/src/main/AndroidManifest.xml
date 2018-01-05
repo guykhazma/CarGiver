@@ -37,6 +37,7 @@
        <activity
            android:name=".StartActivity"
            android:theme="@style/Splash"
+           android:layoutDirection="ltr"
            android:screenOrientation="portrait">
            <intent-filter>
                <action android:name="android.intent.action.MAIN" />
@@ -60,23 +61,27 @@
        <activity
            android:name=".LoginActivity"
            android:theme="@style/FullscreenThemeNoTitleBar"
+           android:layoutDirection="ltr"
            android:screenOrientation="portrait">
        </activity>
 
        <activity
            android:name=".MainSuperActivity"
            android:label="@string/title_activity_main_super"
+           android:layoutDirection="ltr"
            android:theme="@style/AppTheme.NoActionBar"
            android:screenOrientation="portrait"/>
 
        <activity
            android:name=".MainDriverActivity"
            android:theme="@style/AppTheme.NoActionBar"
+           android:layoutDirection="ltr"
            android:screenOrientation="portrait"/>
 
        <activity
            android:name=".DriverOrSuperActivity"
            android:theme="@style/FullscreenThemeNoTitleBar"
+           android:layoutDirection="ltr"
            android:screenOrientation="portrait">
        </activity>
    </application>
