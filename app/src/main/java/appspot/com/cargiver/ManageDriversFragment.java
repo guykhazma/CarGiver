@@ -141,6 +141,9 @@ public class ManageDriversFragment extends Fragment {
                                                 driverID = child.getKey();
                                                 dbRef.child("drivers").child(driverID).child("supervisorsIDs").child(uid).removeValue();
                                                 dbRef.child("supervisors").child(uid).child("authorizedDriverIDs").child(driverID).removeValue();
+                                                // Send notification to Driver that he was deleted
+                                                String regToken = dataSnapshot.child("regTokens").child(driverID).getValue(String.class);
+                                                NotificationService.sendNotification("Someone deleted you from their supervisor list!", regToken);
                                                 break;
                                             }
                                         }
