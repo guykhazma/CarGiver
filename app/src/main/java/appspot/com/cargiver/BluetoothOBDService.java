@@ -206,74 +206,83 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
 
 
         // make sure user has location permissions on
-        locationRequest = new LocationRequest();
-        locationRequest.setInterval(5000);
-        locationRequest.setFastestInterval(2000);
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        // check for user permissions
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest);
-        SettingsClient client = LocationServices.getSettingsClient(this);
-        Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
+        if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+            // failure message for failing to get location
+            Intent in = new Intent(BluetoothOBDService.permissionsErrorBroadcastIntent);
+            LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcastSync(in);
+            stopSelf();
+        } else {
+            locationRequest = new LocationRequest();
+            locationRequest.setInterval(5000);
+            locationRequest.setFastestInterval(2000);
+            locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+            // check for user permissions
+            LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest);
+            SettingsClient client = LocationServices.getSettingsClient(this);
+            Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
 
-        task.addOnSuccessListener(new OnSuccessListener<LocationSettingsResponse>() {
-            @Override
-            public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
-                // All location settings are satisfied.
-                // make sure we have permissions
-                if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+            task.addOnSuccessListener(new OnSuccessListener<LocationSettingsResponse>() {
+                @Override
+                public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
+                    // All location settings are satisfied.
+                    // make sure we have permissions
+                    if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+                        // failure message for failing to get location
+                        Intent intent = new Intent(BluetoothOBDService.permissionsErrorBroadcastIntent);
+                        LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcastSync(intent);
+                        stopSelf();
+                    } else {
+                        // start location updates
+                        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplicationContext());
+                        // empty callback we will use get last location in code
+                        mLocationCallback = new LocationCallback() {
+                            @Override
+                            public void onLocationResult(LocationResult locationResult) {
+                                // do nothing
+                            }
+
+                            ;
+                        };
+
+
+                        mFusedLocationClient.requestLocationUpdates(locationRequest, mLocationCallback, null);
+
+                        // reset variables
+                        count = 1; //num of measurements
+                        NumOfPunish = 0; //num of punishments
+                        AverageSpeed = 0; //the average speed
+
+                        // initiate connection
+                        // Cancel any thread attempting to make a connection
+                        if (mConnectThread != null) {
+                            mConnectThread.cancel();
+                            mConnectThread = null;
+                        }
+
+                        // Cancel any thread currently running a connection
+                        if (mConnectedThread != null) {
+                            mConnectedThread.cancel();
+                            mConnectedThread = null;
+                        }
+                        dev = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(address);
+                        // Start the thread to connect with the given device
+                        numRestart = 0;
+                        mConnectThread = new ConnectThread(dev, true);
+                        mConnectThread.start();
+                    }
+                }
+            });
+
+            task.addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
                     // failure message for failing to get location
                     Intent intent = new Intent(BluetoothOBDService.permissionsErrorBroadcastIntent);
                     LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcastSync(intent);
                     stopSelf();
                 }
-                // start location updates
-                mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplicationContext());
-                // empty callback we will use get last location in code
-                mLocationCallback = new LocationCallback() {
-                    @Override
-                    public void onLocationResult(LocationResult locationResult) {
-                        // do nothing
-                    };
-                };
-
-
-                mFusedLocationClient.requestLocationUpdates(locationRequest, mLocationCallback, null);
-
-                // reset variables
-                count = 1; //num of measurements
-                NumOfPunish = 0; //num of punishments
-                AverageSpeed = 0; //the average speed
-
-                // initiate connection
-                // Cancel any thread attempting to make a connection
-                if (mConnectThread != null) {
-                    mConnectThread.cancel();
-                    mConnectThread = null;
-                }
-
-                // Cancel any thread currently running a connection
-                if (mConnectedThread != null) {
-                    mConnectedThread.cancel();
-                    mConnectedThread = null;
-                }
-                dev = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(address);
-                // Start the thread to connect with the given device
-                numRestart = 0;
-                mConnectThread = new ConnectThread(dev, true);
-                mConnectThread.start();
-            }
-        });
-
-        task.addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                // failure message for failing to get location
-                Intent intent = new Intent(BluetoothOBDService.permissionsErrorBroadcastIntent);
-                LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcastSync(intent);
-                stopSelf();
-            }
-        });
-
+            });
+        }
         // do not restart service if fails
         return START_NOT_STICKY;
     }
@@ -561,45 +570,47 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                     LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcastSync(intent);
                     stopSelf();
                 }
-                // if it is not a restart create drive in db
-                if (!restart) {
-                    driveKey = dbref.child("drives").push().getKey();
-                    Drives newDrive = new Drives();
-                    newDrive.ongoing = true;
-                    newDrive.driverID = uid;
-                    newDrive.grade = 0;
-                    dbref.child("drives").child(driveKey).setValue(newDrive);
-                    // set as connected
-                    Intent intent = new Intent(BluetoothOBDService.connectionConnectedBroadcastIntent);
-                    LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcast(intent);
-                    // add initial measuremnt
-                    final DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child("0");
-
-                    mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-                        @Override
-                        public void onSuccess(Location location) {
-                            if (location != null) {
-                                double lat = location.getLatitude();
-                                double longitude = location.getLongitude();
-                                // set start time
-                                dbref.child("drives").child(driveKey).child("StartTimeStamp").setValue(-Calendar.getInstance().getTime().getTime());
-                                measRef.setValue(new Measurement(0, lat, longitude, 0));
-                                lastLocation = location;
-                            }
-                            // if somehow error occurred
-                            else {
-                                // failure message for failing to get location
-                                Intent intent = new Intent(BluetoothOBDService.errorOccurredBroadcastIntent);
-                                LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcastSync(intent);
-                                stopSelf();
-                            }
-
-                        }
-                    });
-                }
-                // if it is a restarted drive indicate restart has succeeded
                 else {
-                    numRestart = 0;
+                    // if it is not a restart create drive in db
+                    if (!restart) {
+                        driveKey = dbref.child("drives").push().getKey();
+                        Drives newDrive = new Drives();
+                        newDrive.ongoing = true;
+                        newDrive.driverID = uid;
+                        newDrive.grade = 0;
+                        dbref.child("drives").child(driveKey).setValue(newDrive);
+                        // set as connected
+                        Intent intent = new Intent(BluetoothOBDService.connectionConnectedBroadcastIntent);
+                        LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcast(intent);
+                        // add initial measuremnt
+                        final DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child("0");
+
+                        mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                            @Override
+                            public void onSuccess(Location location) {
+                                if (location != null) {
+                                    double lat = location.getLatitude();
+                                    double longitude = location.getLongitude();
+                                    // set start time
+                                    dbref.child("drives").child(driveKey).child("StartTimeStamp").setValue(-Calendar.getInstance().getTime().getTime());
+                                    measRef.setValue(new Measurement(0, lat, longitude, 0));
+                                    lastLocation = location;
+                                }
+                                // if somehow error occurred
+                                else {
+                                    // failure message for failing to get location
+                                    Intent intent = new Intent(BluetoothOBDService.errorOccurredBroadcastIntent);
+                                    LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcastSync(intent);
+                                    stopSelf();
+                                }
+
+                            }
+                        });
+                    }
+                    // if it is a restarted drive indicate restart has succeeded
+                    else {
+                        numRestart = 0;
+                    }
                 }
             }
             catch (Exception e) {
@@ -626,41 +637,41 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                         LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcastSync(intent);
                                         stopSelf();
                                     }
-                                    mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-                                        @Override
-                                        public void onSuccess(Location location) {
-                                            // insert only valid locations
-                                            if (location != null && driveKey != null) {
-                                                double lat = location.getLatitude();
-                                                double longitude = location.getLongitude();
+                                    else {
+                                        mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
+                                            @Override
+                                            public void onSuccess(Location location) {
+                                                // insert only valid locations
+                                                if (location != null && driveKey != null) {
+                                                    double lat = location.getLatitude();
+                                                    double longitude = location.getLongitude();
 
-                                                int speed = speedCMD.getMetricSpeed();
-                                                int rpm = rpmCMD.getRPM();
-                                                DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child(String.valueOf(count));
-                                                count++;
-                                                // if current location is far then 20m then last location update
-                                                // avoid a case where we have points in radius less then 200 meters
-                                                if (isBetterLocation(location, lastLocation) && location.distanceTo(lastLocation) > 100) {
-                                                    // put new in db and update
-                                                    measRef.setValue(new Measurement(speed, lat, longitude, rpm));
-                                                    lastLocation = location;
-                                                }
-                                                else {
-                                                    Log.e(TAG, "in");
-                                                    measRef.setValue(new Measurement(speed, lastLocation.getLatitude(), lastLocation.getLongitude(), rpm));
-                                                }
-                                                // update grade only if speed is above 0
-                                                if (speed > 0) {
-                                                    //this is the grading algorithm:
-                                                    NumOfPunish += SetPunishForBadResult(speed, rpm);
-                                                    AverageSpeed = (AverageSpeed * (count - 1) + speed) / count;
-                                                    float Grade = OneGradingAlg(count, AverageSpeed, NumOfPunish, speed, rpm);
-                                                    dbref.child("drives").child(driveKey).child("grade").setValue(Grade);
+                                                    int speed = speedCMD.getMetricSpeed();
+                                                    int rpm = rpmCMD.getRPM();
+                                                    DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child(String.valueOf(count));
+                                                    count++;
+                                                    // if current location is far then 20m then last location update
+                                                    // avoid a case where we have points in radius less then 200 meters
+                                                    if (isBetterLocation(location, lastLocation) && location.distanceTo(lastLocation) > 100) {
+                                                        // put new in db and update
+                                                        measRef.setValue(new Measurement(speed, lat, longitude, rpm));
+                                                        lastLocation = location;
+                                                    } else {
+                                                        Log.e(TAG, "in");
+                                                        measRef.setValue(new Measurement(speed, lastLocation.getLatitude(), lastLocation.getLongitude(), rpm));
+                                                    }
+                                                    // update grade only if speed is above 0
+                                                    if (speed > 0) {
+                                                        //this is the grading algorithm:
+                                                        NumOfPunish += SetPunishForBadResult(speed, rpm);
+                                                        AverageSpeed = (AverageSpeed * (count - 1) + speed) / count;
+                                                        float Grade = OneGradingAlg(count, AverageSpeed, NumOfPunish, speed, rpm);
+                                                        dbref.child("drives").child(driveKey).child("grade").setValue(Grade);
+                                                    }
                                                 }
                                             }
-                                        }
-                                    });
-
+                                        });
+                                    }
                                 } catch (Exception ex) {
                                     // try restarting
                                     if (ex instanceof IOException) {

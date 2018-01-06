@@ -65,21 +65,23 @@ public class MainDriverFragment extends Fragment {
                         Toast.makeText(getActivity(), "Connection with OBD is lost", Toast.LENGTH_SHORT).show();
                     }
                 });
-                // set parameters to fragment
-                String driveID = MainDriverActivity.btService.getDriveKey();
-                // if there is internet and drive has finished load result
-                if (driveID != null && isNetworkAvailable()) {
-                    Bundle bundle = new Bundle();
-                    bundle.putString("driveID", driveID);
-                    // load result fragment
-                    Fragment ShowRouteRes = new RouteResultFragment();
-                    ShowRouteRes.setArguments(bundle);
-                    getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
-                } else {
-                    startDrivePressed = false;
-                    btnStartDrive.setImageResource(R.drawable.startdriving);
-                    Explain.setText("Click \'Start Driving\' to start the data collection");
-                    Toast.makeText(getActivity(), "Drive has been cancelled", Toast.LENGTH_SHORT).show();
+                if (MainDriverActivity.btService != null) {
+                    // set parameters to fragment
+                    String driveID = MainDriverActivity.btService.getDriveKey();
+                    // if there is internet and drive has finished load result
+                    if (driveID != null && isNetworkAvailable()) {
+                        Bundle bundle = new Bundle();
+                        bundle.putString("driveID", driveID);
+                        // load result fragment
+                        Fragment ShowRouteRes = new RouteResultFragment();
+                        ShowRouteRes.setArguments(bundle);
+                        getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
+                    } else {
+                        startDrivePressed = false;
+                        btnStartDrive.setImageResource(R.drawable.startdriving);
+                        Explain.setText("Click \'Start Driving\' to start the data collection");
+                        Toast.makeText(getActivity(), "Drive has been cancelled", Toast.LENGTH_SHORT).show();
+                    }
                 }
 
             }
@@ -101,20 +103,22 @@ public class MainDriverFragment extends Fragment {
                     }
                 });
                 // set parameters to fragment
-                String driveID = MainDriverActivity.btService.getDriveKey();
-                // if there is internet and drive has finished load result
-                if (driveID != null && isNetworkAvailable()) {
-                    Bundle bundle = new Bundle();
-                    bundle.putString("driveID", driveID);
-                    // load result fragment
-                    Fragment ShowRouteRes = new RouteResultFragment();
-                    ShowRouteRes.setArguments(bundle);
-                    getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
-                } else {
-                    startDrivePressed = false;
-                    btnStartDrive.setImageResource(R.drawable.startdriving);
-                    Explain.setText("Click \'Start Driving\' to start the data collection");
-                    Toast.makeText(getActivity(), "Drive has been cancelled", Toast.LENGTH_SHORT).show();
+                if (MainDriverActivity.btService != null) {
+                    String driveID = MainDriverActivity.btService.getDriveKey();
+                    // if there is internet and drive has finished load result
+                    if (driveID != null && isNetworkAvailable()) {
+                        Bundle bundle = new Bundle();
+                        bundle.putString("driveID", driveID);
+                        // load result fragment
+                        Fragment ShowRouteRes = new RouteResultFragment();
+                        ShowRouteRes.setArguments(bundle);
+                        getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
+                    } else {
+                        startDrivePressed = false;
+                        btnStartDrive.setImageResource(R.drawable.startdriving);
+                        Explain.setText("Click \'Start Driving\' to start the data collection");
+                        Toast.makeText(getActivity(), "Drive has been cancelled", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
             // internal error ocurred
@@ -125,20 +129,22 @@ public class MainDriverFragment extends Fragment {
                     }
                 });
                 // set parameters to fragment
-                String driveID = MainDriverActivity.btService.getDriveKey();
-                // if there is internet and drive has finished load result
-                if (driveID != null && isNetworkAvailable()) {
-                    Bundle bundle = new Bundle();
-                    bundle.putString("driveID", driveID);
-                    // load result fragment
-                    Fragment ShowRouteRes = new RouteResultFragment();
-                    ShowRouteRes.setArguments(bundle);
-                    getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
-                } else {
-                    startDrivePressed = false;
-                    btnStartDrive.setImageResource(R.drawable.startdriving);
-                    Explain.setText("Click \'Start Driving\' to start the data collection");
-                    Toast.makeText(getActivity(), "Drive has been cancelled", Toast.LENGTH_SHORT).show();
+                if (MainDriverActivity.btService != null) {
+                    String driveID = MainDriverActivity.btService.getDriveKey();
+                    // if there is internet and drive has finished load result
+                    if (driveID != null && isNetworkAvailable()) {
+                        Bundle bundle = new Bundle();
+                        bundle.putString("driveID", driveID);
+                        // load result fragment
+                        Fragment ShowRouteRes = new RouteResultFragment();
+                        ShowRouteRes.setArguments(bundle);
+                        getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
+                    } else {
+                        startDrivePressed = false;
+                        btnStartDrive.setImageResource(R.drawable.startdriving);
+                        Explain.setText("Click \'Start Driving\' to start the data collection");
+                        Toast.makeText(getActivity(), "Drive has been cancelled", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
 
