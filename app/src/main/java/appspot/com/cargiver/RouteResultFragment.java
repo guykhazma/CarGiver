@@ -37,11 +37,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by MT on 27/17/2017.
@@ -76,8 +73,9 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
     Marker lastMarker;
     PolylineOptions pathOptions = null;
     LatLngBounds.Builder mapBuilder = null;
-
-
+    // distance objects
+    Location temp;
+    Location temp2;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -106,8 +104,12 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         mMapView = (MapView) view.findViewById(R.id.mapView);
         mMapView.onCreate(savedInstanceState);
         mMapView.onResume(); // needed to get the map to display immediately
+        // init distance objects
+        temp = new Location(LocationManager.GPS_PROVIDER);
+        temp2 = new Location(LocationManager.GPS_PROVIDER);
         // init db
         dbRef = FirebaseDatabase.getInstance().getReference();
+
 
         // all data loading is being done when map get loaded
         mMapView.getMapAsync(this);
@@ -290,10 +292,8 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             if (drive.ongoing == false) {
                 LatLngBounds bounds = mapBuilder.build();
                 // avoid a case where we have points in radius less then 200 meters
-                Location temp = new Location(LocationManager.GPS_PROVIDER);
                 temp.setLatitude(bounds.northeast.latitude);
                 temp.setLongitude(bounds.northeast.longitude);
-                Location temp2 = new Location(LocationManager.GPS_PROVIDER);
                 temp2.setLatitude(bounds.southwest.latitude);
                 temp2.setLongitude(bounds.southwest.longitude);
                 if (temp.distanceTo(temp2) > 200) {

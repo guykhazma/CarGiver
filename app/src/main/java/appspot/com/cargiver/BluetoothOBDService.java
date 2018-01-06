@@ -16,6 +16,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
@@ -23,7 +24,6 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.github.pires.obd.commands.SpeedCommand;
 import com.github.pires.obd.commands.engine.RPMCommand;
@@ -107,12 +107,19 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
     int count = 1; //num of measurements
     int NumOfPunish = 0; //num of punishments
     float AverageSpeed = 0; //the average speed
+    double lastLongitude;
+    double lastLatitude;
+    // distance objects
+    Location temp;
+    Location temp2;
 
     // broadcast tags
     public static String connectionFailedBroadcastIntent = "com.OBDService.ConnectionFailed";
     public static String connectionLostBroadcastIntent = "com.OBDService.ConnectionLost";
     public static String connectionConnectedBroadcastIntent = "com.OBDService.Connected";
     public static String driveFinishedBroadcastIntent = "com.OBDService.driveFinished";
+    public static String errorOccurredBroadcastIntent = "com.OBDService.errorOcurred";
+    public static String permissionsErrorBroadcastIntent = "com.OBDService.permissionsError";
     private  static volatile ScheduledExecutorService scheduler;
 
 
@@ -202,11 +209,14 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         uid = intent.getStringExtra("userID");
         address = intent.getStringExtra("address");
 
+        // distance objects
+        temp = new Location(LocationManager.GPS_PROVIDER);
+        temp2 = new Location(LocationManager.GPS_PROVIDER);
         // make sure user has location permissions on
         locationRequest = new LocationRequest();
-        locationRequest.setInterval(2000);
-        locationRequest.setFastestInterval(1000);
-        locationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        locationRequest.setInterval(4000);
+        locationRequest.setFastestInterval(2000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         // check for user permissions
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(locationRequest);
         SettingsClient client = LocationServices.getSettingsClient(this);
@@ -227,7 +237,9 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                 };
                 // make sure we have permissions
                 if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
-                    Toast.makeText(getApplicationContext(), "Location Services is disabled - drive canceled", Toast.LENGTH_SHORT).show();
+                    // failure message for failing to get location
+                    Intent intent = new Intent(BluetoothOBDService.permissionsErrorBroadcastIntent);
+                    LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcastSync(intent);
                     stopSelf();
                 }
 
@@ -261,7 +273,9 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         task.addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-                Toast.makeText(getApplicationContext(), "Location Services is disabled - drive canceled", Toast.LENGTH_SHORT).show();
+                // failure message for failing to get location
+                Intent intent = new Intent(BluetoothOBDService.permissionsErrorBroadcastIntent);
+                LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcastSync(intent);
                 stopSelf();
             }
         });
@@ -544,7 +558,9 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                 new SelectProtocolCommand(ObdProtocols.AUTO).run(mmInStream, mmOutStream);
                 // location init
                 if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
-                    Toast.makeText(getApplicationContext(), "Location Services is disabled - drive canceled", Toast.LENGTH_SHORT).show();
+                    // failure message for failing to get location
+                    Intent intent = new Intent(BluetoothOBDService.permissionsErrorBroadcastIntent);
+                    LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcastSync(intent);
                     stopSelf();
                 }
                 // if it is not a restart create drive in db
@@ -564,15 +580,23 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                     mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
                         @Override
                         public void onSuccess(Location location) {
-                            double lat = -1;
-                            double longitude = -1;
                             if (location != null) {
-                                lat = location.getLatitude();
-                                longitude = location.getLongitude();
+                                double lat = location.getLatitude();
+                                double longitude = location.getLongitude();
+                                // set start time
+                                dbref.child("drives").child(driveKey).child("StartTimeStamp").setValue(-Calendar.getInstance().getTime().getTime());
+                                measRef.setValue(new Measurement(0, lat, longitude, 0));
+                                lastLatitude = lastLatitude;
+                                lastLongitude = longitude;
                             }
-                            // set start time
-                            dbref.child("drives").child(driveKey).child("StartTimeStamp").setValue(-Calendar.getInstance().getTime().getTime());
-                            measRef.setValue(new Measurement(0, lat, longitude, 0));
+                            // if somehow error occurred
+                            else {
+                                // failure message for failing to get location
+                                Intent intent = new Intent(BluetoothOBDService.errorOccurredBroadcastIntent);
+                                LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcastSync(intent);
+                                stopSelf();
+                            }
+
                         }
                     });
                 }
@@ -600,27 +624,41 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                     speedCMD.run(mmInStream, mmOutStream);
                                     // push to dB
                                     if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
-                                        Toast.makeText(getApplicationContext(), "Location Services is disabled - drive canceled", Toast.LENGTH_SHORT).show();
+                                        // failure message for failing to get location
+                                        Intent intent = new Intent(BluetoothOBDService.permissionsErrorBroadcastIntent);
+                                        LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcastSync(intent);
                                         stopSelf();
                                     }
                                     mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
                                         @Override
                                         public void onSuccess(Location location) {
-                                            // Got last known location. In some rare situations this can be null.
-                                            double lat = -1;
-                                            double longitude = -1;
                                             // insert only valid locations
                                             if (location != null && driveKey != null) {
-                                                lat = location.getLatitude();
-                                                longitude = location.getLongitude();
+                                                double lat = location.getLatitude();
+                                                double longitude = location.getLongitude();
 
                                                 int speed = speedCMD.getMetricSpeed();
-                                                // add to db only if speed is above 0
-                                                if (speed > 0) {
-                                                    int rpm = rpmCMD.getRPM();
-                                                    DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child(String.valueOf(count));
-                                                    count++;
+                                                int rpm = rpmCMD.getRPM();
+                                                DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child(String.valueOf(count));
+                                                count++;
+                                                // if current location is far then 20m then last location update
+                                                // avoid a case where we have points in radius less then 200 meters
+                                                temp.setLatitude(lat);
+                                                temp.setLongitude(longitude);
+                                                temp2.setLatitude(lastLatitude);
+                                                temp2.setLongitude(lastLongitude);
+                                                if (temp.distanceTo(temp2) > 20) {
+                                                    // put new in db and update
                                                     measRef.setValue(new Measurement(speed, lat, longitude, rpm));
+                                                    lastLongitude = longitude;
+                                                    lastLatitude = lat;
+                                                }
+                                                else {
+                                                    Log.e(TAG, "in");
+                                                    measRef.setValue(new Measurement(speed, lastLatitude, lastLongitude, rpm));
+                                                }
+                                                // update grade only if speed is above 0
+                                                if (speed > 0) {
                                                     //this is the grading algorithm:
                                                     NumOfPunish += SetPunishForBadResult(speed, rpm);
                                                     AverageSpeed = (AverageSpeed * (count - 1) + speed) / count;
@@ -661,7 +699,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                     }
                                 }
                             }
-                        }, 2, 2, TimeUnit.SECONDS);
+                        }, 2, 4, TimeUnit.SECONDS);
         }
 
         public void cancel() {

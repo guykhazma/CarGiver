@@ -44,6 +44,7 @@ public class MainDriverFragment extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
+            // connection failed
             if (BluetoothOBDService.connectionFailedBroadcastIntent.equals(action)) {
                 // if service failed to connect to OBD
                 MainDriverActivity.btService = null;
@@ -78,7 +79,7 @@ public class MainDriverFragment extends Fragment {
                     startDrivePressed = false;
                     btnStartDrive.setImageResource(R.drawable.startdriving);
                     Explain.setText("Click \'Start Driving\' to start the data collection");
-                    Toast.makeText(getActivity(), "Drive has finished", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Drive has been cancelled", Toast.LENGTH_SHORT).show();
                 }
 
             }
@@ -92,6 +93,55 @@ public class MainDriverFragment extends Fragment {
                     }
                 });
             }
+            // no location permissions
+            else if (BluetoothOBDService.permissionsErrorBroadcastIntent.equals(action)) {
+                getActivity().runOnUiThread(new Runnable() {
+                    public void run() {
+                        Toast.makeText(getActivity(), "Failed getting location permission denied", Toast.LENGTH_SHORT).show();
+                    }
+                });
+                // set parameters to fragment
+                String driveID = MainDriverActivity.btService.getDriveKey();
+                // if there is internet and drive has finished load result
+                if (driveID != null && isNetworkAvailable()) {
+                    Bundle bundle = new Bundle();
+                    bundle.putString("driveID", driveID);
+                    // load result fragment
+                    Fragment ShowRouteRes = new RouteResultFragment();
+                    ShowRouteRes.setArguments(bundle);
+                    getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
+                } else {
+                    startDrivePressed = false;
+                    btnStartDrive.setImageResource(R.drawable.startdriving);
+                    Explain.setText("Click \'Start Driving\' to start the data collection");
+                    Toast.makeText(getActivity(), "Drive has been cancelled", Toast.LENGTH_SHORT).show();
+                }
+            }
+            // internal error ocurred
+            else if (BluetoothOBDService.errorOccurredBroadcastIntent.equals(action)) {
+                getActivity().runOnUiThread(new Runnable() {
+                    public void run() {
+                        Toast.makeText(getActivity(), "Failed getting location permission denied", Toast.LENGTH_SHORT).show();
+                    }
+                });
+                // set parameters to fragment
+                String driveID = MainDriverActivity.btService.getDriveKey();
+                // if there is internet and drive has finished load result
+                if (driveID != null && isNetworkAvailable()) {
+                    Bundle bundle = new Bundle();
+                    bundle.putString("driveID", driveID);
+                    // load result fragment
+                    Fragment ShowRouteRes = new RouteResultFragment();
+                    ShowRouteRes.setArguments(bundle);
+                    getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
+                } else {
+                    startDrivePressed = false;
+                    btnStartDrive.setImageResource(R.drawable.startdriving);
+                    Explain.setText("Click \'Start Driving\' to start the data collection");
+                    Toast.makeText(getActivity(), "Drive has been cancelled", Toast.LENGTH_SHORT).show();
+                }
+            }
+
         }
     };
 
@@ -104,6 +154,8 @@ public class MainDriverFragment extends Fragment {
         filter.addAction(BluetoothOBDService.connectionFailedBroadcastIntent);
         filter.addAction(BluetoothOBDService.connectionConnectedBroadcastIntent);
         filter.addAction(BluetoothOBDService.connectionLostBroadcastIntent);
+        filter.addAction(BluetoothOBDService.errorOccurredBroadcastIntent);
+        filter.addAction(BluetoothOBDService.permissionsErrorBroadcastIntent);
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mreceiver, filter);
     }
 
