@@ -68,9 +68,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
     // Accelerometer variables
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
-    private float mAccel; // acceleration apart from gravity
-    private float mAccelCurrent; // current acceleration including gravity
-    private float mAccelLast; // last acceleration including gravity
+    private float mAccelCurrent; // current acceleration
 
     private static final String TAG = "BluetoothOBDService";
     // Unique UUID for this application
@@ -94,6 +92,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
 
 
     private List<String> regTokens;
+    private String userName;
     private BluetoothDevice dev;
     private String address;
     private String uid;
@@ -134,17 +133,18 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
     @Override
     // Accelerometer method
     public void onSensorChanged(SensorEvent event) {
-        float x = event.values[0];
-        float y = event.values[1];
-        float z = event.values[2];
-        mAccelLast = mAccelCurrent;
+        float x = event.values[0]/(float)9.81;
+        float y = event.values[1]/(float)9.81;
+        float z = event.values[2]/(float)9.81;
         mAccelCurrent = (float) Math.sqrt((double) (x * x + y * y + z * z));
-        float delta = mAccelCurrent - mAccelLast;
-        mAccel = mAccel * 0.9f + delta; // todo stav: tweak calculation to detect crash
 
         // Send notification in case of crash
-        if (mAccel > 11) {  // todo stav: tweak calculation to detect crash
-            String msg = "Dangerous Driving!";
+        if (mAccelCurrent > 0.4 && mAccelCurrent < 1.2) {
+            String msg = "Dangerous driving by "+userName+"!";
+            NotificationService.sendNotification(msg, regTokens);
+        }
+        if(mAccelCurrent >= 1.2){
+            String msg = "Possible crash detected! "+userName;
             NotificationService.sendNotification(msg, regTokens);
         }
     }
@@ -176,14 +176,21 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mAccelerometer = mSensorManager
                 .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+
+        // get parameters
+        uid = intent.getStringExtra("userID");
+        address = intent.getStringExtra("address");
+
         // get supervisors' registration tokens (regTokens)
         regTokens = new ArrayList<String>();
         dbref = FirebaseDatabase.getInstance().getReference();
         dbref.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                List<String> supervisorIDs = new ArrayList<String>();
+                // Get user's name
+                userName = dataSnapshot.child("users").child(uid).getValue(User.class).username;
 
+                List<String> supervisorIDs = new ArrayList<String>();
                 // make list of supervisor IDs
                 for (DataSnapshot child : dataSnapshot.child("drivers").child(uid).child("supervisorsIDs").getChildren()) {
                     supervisorIDs.add(child.getKey());
@@ -201,9 +208,6 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
             public void onCancelled(DatabaseError databaseError) {}
         });
 
-        // get parameters
-        uid = intent.getStringExtra("userID");
-        address = intent.getStringExtra("address");
 
         // make sure user has location permissions on
         locationRequest = new LocationRequest();
