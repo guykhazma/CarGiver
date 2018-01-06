@@ -219,6 +219,13 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
             @Override
             public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
                 // All location settings are satisfied.
+                // make sure we have permissions
+                if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
+                    // failure message for failing to get location
+                    Intent intent = new Intent(BluetoothOBDService.permissionsErrorBroadcastIntent);
+                    LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcastSync(intent);
+                    stopSelf();
+                }
                 // start location updates
                 mFusedLocationClient = LocationServices.getFusedLocationProviderClient(getApplicationContext());
                 // empty callback we will use get last location in code
@@ -228,13 +235,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                         // do nothing
                     };
                 };
-                // make sure we have permissions
-                if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
-                    // failure message for failing to get location
-                    Intent intent = new Intent(BluetoothOBDService.permissionsErrorBroadcastIntent);
-                    LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcastSync(intent);
-                    stopSelf();
-                }
+
 
                 mFusedLocationClient.requestLocationUpdates(locationRequest, mLocationCallback, null);
 
