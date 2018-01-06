@@ -699,7 +699,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                     }
                                 }
                             }
-                        }, 2, 4, TimeUnit.SECONDS);
+                        }, 2, 3, TimeUnit.SECONDS);
         }
 
         public void cancel() {
