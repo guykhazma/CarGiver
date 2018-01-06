@@ -121,7 +121,7 @@ public class MainDriverFragment extends Fragment {
             else if (BluetoothOBDService.errorOccurredBroadcastIntent.equals(action)) {
                 getActivity().runOnUiThread(new Runnable() {
                     public void run() {
-                        Toast.makeText(getActivity(), "Failed getting location permission denied", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), "Error occurred", Toast.LENGTH_SHORT).show();
                     }
                 });
                 // set parameters to fragment
