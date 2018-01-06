@@ -396,9 +396,13 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         this.mState = STATE_NONE;
         this.stop();
         // remove accelerometer listener
-        mSensorManager.unregisterListener(this);
+        if (mSensorManager != null) {
+            mSensorManager.unregisterListener(this);
+        }
         // remove location updates
-        mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+        if (mFusedLocationClient != null) {
+            mFusedLocationClient.removeLocationUpdates(mLocationCallback);
+        }
         // set drive as finished
         if (driveKey != null) {
             dbref.child("drives").child(driveKey).child("ongoing").setValue(false);
