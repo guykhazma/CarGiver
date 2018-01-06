@@ -297,7 +297,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                 temp2.setLatitude(bounds.southwest.latitude);
                 temp2.setLongitude(bounds.southwest.longitude);
                 if (temp.distanceTo(temp2) > 200) {
-                    CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 300);
+                    CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 200);
                     googleMap.animateCamera(cu);
                 }
                 else {
