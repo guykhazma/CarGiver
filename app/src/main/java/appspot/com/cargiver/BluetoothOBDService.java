@@ -106,6 +106,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
     int count = 1; //num of measurements
     int NumOfPunish = 0; //num of punishments
     float AverageSpeed = 0; //the average speed
+    float NumOfKm = 0; //todo guy update it (time*AverageSpeed)...
     Location lastLocation;
 
     // broadcast tags
@@ -402,6 +403,13 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
     }
 
     public void onDestroy() {
+        //todo guy update the driver info for grade and total km. is it here?
+        //DriverGrade = the grade from the db
+        //DriverKm = the km from the dbv
+        //this is the new grade and km that need to put into the db:
+        //float NewKm = DriverKm + NumOfKm;
+        //float NewGrade = (DriverKm*DriverGrade + NumOfKm*Grade)/(DriverKm+NumOfKm);
+
         // stop all threads
         this.mState = STATE_NONE;
         this.stop();
@@ -593,7 +601,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                     double longitude = location.getLongitude();
                                     // set start time
                                     dbref.child("drives").child(driveKey).child("StartTimeStamp").setValue(-Calendar.getInstance().getTime().getTime());
-                                    measRef.setValue(new Measurement(0, lat, longitude, 0));
+                                    measRef.setValue(new Measurement(0, lat, longitude, 0, 0));
                                     lastLocation = location;
                                 }
                                 // if somehow error occurred
@@ -653,12 +661,14 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                                     // if current location is far then 20m then last location update
                                                     // avoid a case where we have points in radius less then 200 meters
                                                     if (isBetterLocation(location, lastLocation) && location.distanceTo(lastLocation) > 100) {
+                                                        int color = MeasColorAlg(speed, rpm);
                                                         // put new in db and update
-                                                        measRef.setValue(new Measurement(speed, lat, longitude, rpm));
+                                                        measRef.setValue(new Measurement(speed, lat, longitude, rpm, color));
                                                         lastLocation = location;
                                                     } else {
                                                         Log.e(TAG, "in");
-                                                        measRef.setValue(new Measurement(speed, lastLocation.getLatitude(), lastLocation.getLongitude(), rpm));
+                                                        int color = MeasColorAlg(speed, rpm);
+                                                        measRef.setValue(new Measurement(speed, lastLocation.getLatitude(), lastLocation.getLongitude(), rpm, color));
                                                     }
                                                     // update grade only if speed is above 0
                                                     if (speed > 0) {
@@ -729,6 +739,14 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         }
         return 0;
     }
+    public static int MeasColorAlg(float CurrSpeed, float CurrRpm) {
+        if(CurrRpm>=4000 || CurrSpeed>=110) {
+            return 2; //red
+        }else if (CurrSpeed>=85 && CurrSpeed<110){
+            return 1; //orange
+        }
+        return 0; //green
+    }
 
     public static float OneGradingAlg(int NumOfMeas, float AverageSpeed, int NumOfPunish, float CurrSpeed, float CurrRpm) {
         float Grade;
@@ -738,7 +756,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         else{
             Grade = AverageSpeed *2/3;
         }
-        float PunishRate = NumOfPunish/NumOfMeas;
+        float PunishRate = 10*NumOfPunish/NumOfMeas;
         Grade = Grade*(1+PunishRate);
         if (Grade>100){
             Grade=100;
