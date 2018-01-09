@@ -53,11 +53,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -103,10 +102,10 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
     public static volatile boolean restart; // indicate whether the restart is after a succesfull connection
 
     // grade
-    int count = 1; //num of measurements
+    volatile int count = 1; //num of measurements
     int NumOfPunish = 0; //num of punishments
     float AverageSpeed = 0; //the average speed
-    float NumOfKm = 0; //todo guy update it (time*AverageSpeed)...
+    long startTimeStamp;
     Location lastLocation;
 
     // broadcast tags
@@ -249,7 +248,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                         mFusedLocationClient.requestLocationUpdates(locationRequest, mLocationCallback, null);
 
                         // reset variables
-                        count = 1; //num of measurements
+                        count = 0; //num of measurements
                         NumOfPunish = 0; //num of punishments
                         AverageSpeed = 0; //the average speed
 
@@ -403,13 +402,6 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
     }
 
     public void onDestroy() {
-        //todo guy update the driver info for grade and total km. is it here?
-        //DriverGrade = the grade from the db
-        //DriverKm = the km from the dbv
-        //this is the new grade and km that need to put into the db:
-        //float NewKm = DriverKm + NumOfKm;
-        //float NewGrade = (DriverKm*DriverGrade + NumOfKm*Grade)/(DriverKm+NumOfKm);
-
         // stop all threads
         this.mState = STATE_NONE;
         this.stop();
@@ -421,8 +413,12 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         if (mFusedLocationClient != null) {
             mFusedLocationClient.removeLocationUpdates(mLocationCallback);
         }
-        // set drive as finished
+
+        // if drive was active update drive and driver details
         if (driveKey != null) {
+            // set finish time
+            dbref.child("drives").child(driveKey).child("totalKm").setValue(AverageSpeed*(Calendar.getInstance().getTime().getTime() - startTimeStamp)/ (1000.0*60.0*60.0));
+            // set drive as finished, cloud function will update driver grade
             dbref.child("drives").child(driveKey).child("ongoing").setValue(false);
         }
         // reset all variables
@@ -600,7 +596,8 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                     double lat = location.getLatitude();
                                     double longitude = location.getLongitude();
                                     // set start time
-                                    dbref.child("drives").child(driveKey).child("StartTimeStamp").setValue(-Calendar.getInstance().getTime().getTime());
+                                    startTimeStamp = Calendar.getInstance().getTime().getTime();
+                                    dbref.child("drives").child(driveKey).child("StartTimeStamp").setValue(-startTimeStamp);
                                     measRef.setValue(new Measurement(0, lat, longitude, 0, 0));
                                     lastLocation = location;
                                 }
@@ -656,19 +653,15 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
 
                                                     int speed = speedCMD.getMetricSpeed();
                                                     int rpm = rpmCMD.getRPM();
-                                                    DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child(String.valueOf(count));
+
+                                                    // insert every 20 measures
                                                     count++;
-                                                    // if current location is far then 20m then last location update
-                                                    // avoid a case where we have points in radius less then 200 meters
-                                                    if (isBetterLocation(location, lastLocation) && location.distanceTo(lastLocation) > 100) {
-                                                        int color = MeasColorAlg(speed, rpm);
+                                                    DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child(String.valueOf(count));
+                                                    // if current location is far then 100m then last location update
+                                                    if (isBetterLocation(location, lastLocation) && location.distanceTo(lastLocation) > 50) {
                                                         // put new in db and update
-                                                        measRef.setValue(new Measurement(speed, lat, longitude, rpm, color));
+                                                        measRef.setValue(new Measurement(speed, lat, longitude, rpm, MeasColorAlg(speed, rpm)));
                                                         lastLocation = location;
-                                                    } else {
-                                                        Log.e(TAG, "in");
-                                                        int color = MeasColorAlg(speed, rpm);
-                                                        measRef.setValue(new Measurement(speed, lastLocation.getLatitude(), lastLocation.getLongitude(), rpm, color));
                                                     }
                                                     // update grade only if speed is above 0
                                                     if (speed > 0) {
@@ -712,7 +705,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                     }
                                 }
                             }
-                        }, 2, 3, TimeUnit.SECONDS);
+                        }, 1, 1, TimeUnit.SECONDS);
         }
 
         public void cancel() {
