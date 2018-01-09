@@ -153,6 +153,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             // getting current measurement
             Measurement currMeasurment = dataSnapshot.getValue(Measurement.class);
             LatLng newPoint = new LatLng(currMeasurment.latitude, currMeasurment.longitude);
+            lastPoint = newPoint;
             // adding to map
             String title = "Current Speed:" + currMeasurment.speed;
             String snippet = "Time Taken: " + Drives.dateFormat.format(currMeasurment.timeStamp);
@@ -162,10 +163,36 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             // add to route
             List<LatLng> points = path.getPoints();
             points.add(newPoint);
-            //add to path
+            // add to current path
             path.setPoints(points);
             // include in map for finish
             mapBuilder.include(newPoint);
+            // if we switched color switch poly line
+            if (currMeasurment.color != lastColorSeen) {
+                // clear points for next path
+                points.clear();
+                // green
+                if (currMeasurment.color == 0) {
+                    pathOptions = new PolylineOptions().width(15).color(Color.GREEN);
+                    path = googleMap.addPolyline(pathOptions);
+                    // add new point
+                    points.add(newPoint);
+                }
+                else if (currMeasurment.color == 1) {
+                    pathOptions = new PolylineOptions().width(15).color(Color.YELLOW);
+                    path = googleMap.addPolyline(pathOptions);
+                    // add new point
+                    points.add(newPoint);
+                }
+                else if (currMeasurment.color == 2) {
+                    pathOptions = new PolylineOptions().width(15).color(Color.RED);
+                    path = googleMap.addPolyline(pathOptions);
+                    // add new point
+                    points.add(newPoint);
+                }
+                // update last color seen
+                lastColorSeen = currMeasurment.color;
+            }
             // set camera position to track latest
             googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(newPoint, 15));
 
@@ -260,7 +287,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                 // add to polyline
                 points.add(newPoint);
                 // include in map
-                mapBuilder.include(newPoint);;
+                mapBuilder.include(newPoint);
                 // add marker if there was a change in color
                 if (i < drive.meas.size() && drive.meas.get(i).color != lastColorSeen) {
                     // write latest path
