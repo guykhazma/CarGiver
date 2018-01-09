@@ -177,18 +177,24 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                     path = googleMap.addPolyline(pathOptions);
                     // add new point
                     points.add(newPoint);
+                    // add to current path
+                    path.setPoints(points);
                 }
                 else if (currMeasurment.color == 1) {
                     pathOptions = new PolylineOptions().width(15).color(Color.YELLOW);
                     path = googleMap.addPolyline(pathOptions);
                     // add new point
                     points.add(newPoint);
+                    // add to current path
+                    path.setPoints(points);
                 }
                 else if (currMeasurment.color == 2) {
                     pathOptions = new PolylineOptions().width(15).color(Color.RED);
                     path = googleMap.addPolyline(pathOptions);
                     // add new point
                     points.add(newPoint);
+                    // add to current path
+                    path.setPoints(points);
                 }
                 // update last color seen
                 lastColorSeen = currMeasurment.color;
