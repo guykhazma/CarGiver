@@ -36,7 +36,7 @@ public class Measurement {
     }
 
     public Date date() {
-        return new Date(timeStamp);
+        return new Date(this.timeStamp);
     }
 
 }
