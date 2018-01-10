@@ -19,22 +19,24 @@ public class Measurement {
     int rpm;
     double latitude;
     double longitude;
+    int color; //0=green, 1=orange, 2=red
 
     @Keep
     public Measurement() {
         // Default constructor required for calls to DataSnapshot.getValue(Drives.class)
     }
 
-    public Measurement(int speed, double latitude, double longitude, int rpm) {
+    public Measurement(int speed, double latitude, double longitude, int rpm, int color) {
         this.speed = speed;
         this.rpm = rpm;
         this.latitude = latitude;
         this.longitude = longitude;
         this.timeStamp = Calendar.getInstance().getTime().getTime();
+        this.color = color;
     }
 
     public Date date() {
-        return new Date(timeStamp);
+        return new Date(this.timeStamp);
     }
 
 }

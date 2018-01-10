@@ -24,6 +24,7 @@ public class Drives {
     Boolean ongoing;
     String driverID;
     float grade;
+    float totalKm;
     long StartTimeStamp; // !!!NEGATIVE!!! time stamp
 
     public Drives() {
