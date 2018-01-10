@@ -28,6 +28,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.PopupWindow;
+import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -43,13 +45,16 @@ import java.util.List;
 public class ManageDriversFragment extends Fragment {
     private ArrayAdapter<String> listViewAdapter;
     private ArrayList<String> Drivernames;
-
+    //for popup window
+    private Button test;
+    private PopupWindow popupWindow;
+    private LayoutInflater layoutInflater;
     public ManageDriversFragment() {
         // Required empty public constructor
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(final LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.manage_drivers_fragment, container, false);
@@ -102,6 +107,7 @@ public class ManageDriversFragment extends Fragment {
                     // Check if this user correlates to a supervisor of current user
                     if (driverIDs.contains(child.getKey())) {
                         driverMails.add(child.getValue(User.class).getEmail());
+                        //driverGrades.add(child.getValue(User.class).);
                         MyAdapter.notifyDataSetChanged();
                     }
                 }
@@ -116,16 +122,21 @@ public class ManageDriversFragment extends Fragment {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
                 AlertDialog.Builder builder1 = new AlertDialog.Builder(view.getContext());
-                builder1.setMessage("Do you want to delete this Driver?");
+                builder1.setMessage("Driver's details");
+                View viewThis=inflater.inflate(R.layout.driver_details,null);
+                builder1.setView(viewThis);
                 builder1.setCancelable(true);
-                builder1.setNegativeButton("No",
+                //define the mail
+                TextView textView = (TextView)viewThis.findViewById(R.id.textView6);
+                textView.setText(driverMails.get(position));
+                builder1.setNegativeButton("back",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.cancel();
                             }
                         });
                 builder1.setPositiveButton(
-                        "Yes",
+                        "Delete",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.dismiss();

@@ -151,6 +151,9 @@ public class ManageSupervisorsFragment extends Fragment {
                                             for (DataSnapshot child : dataSnapshot.child("users").getChildren()) {
                                                 User user = child.getValue(User.class);
                                                 if (user.email.equals(finalEmail) && user.type == User.SUPERVISOR) {
+                                                    //add supervisor to his list
+                                                    supervisorMails.add(m_Text);
+                                                    listViewAdapter.notifyDataSetChanged();
                                                     // Send notification to supervisor
                                                     String supervisorId = child.getKey();
                                                     String regToken = dataSnapshot.child("regTokens").child(supervisorId).getValue(String.class);
@@ -159,8 +162,7 @@ public class ManageSupervisorsFragment extends Fragment {
                                                     dbRef.child("drivers").child(uid).child("supervisorsIDs").child(child.getKey()).setValue(true);
                                                     //add the driver to supervisors
                                                     dbRef.child("supervisors").child(child.getKey()).child("authorizedDriverIDs").child(uid).setValue(true);
-                                                    supervisorMails.add(m_Text);
-                                                    listViewAdapter.notifyDataSetChanged();
+
                                                     return;
                                                 }
                                             }
