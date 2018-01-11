@@ -55,11 +55,13 @@ public class NotificationService extends FirebaseMessagingService {
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this,0,intent,PendingIntent.FLAG_ONE_SHOT);
         Notification notification = new NotificationCompat.Builder(this)
+                .setDefaults(Notification.DEFAULT_ALL)
                 .setContentTitle(remoteMessage.getData().get("title"))
                 .setContentText(remoteMessage.getData().get("body"))
                 .setSmallIcon(R.drawable.app_logo)
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent)
+                .setPriority(NotificationManager.IMPORTANCE_DEFAULT)
                 .build();
         NotificationManagerCompat manager = NotificationManagerCompat.from(getApplicationContext());
         manager.notify(123, notification);
@@ -81,14 +83,12 @@ public class NotificationService extends FirebaseMessagingService {
 
         OkHttpClient client = new OkHttpClient();
 
-
         RequestBody body = RequestBody.create(JSON, json);
         Request request = new Request.Builder()
                 .url(url)
                 .header("Authorization", "key=" + SERVER_KEY)
                 .post(body)
                 .build();
-
 
         Callback responseCallBack = new Callback() {
             @Override
