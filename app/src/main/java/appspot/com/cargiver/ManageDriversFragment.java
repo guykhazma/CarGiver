@@ -2,8 +2,10 @@ package appspot.com.cargiver;
 
 import android.app.AlertDialog;
 import android.app.FragmentManager;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.view.KeyEvent;
@@ -50,6 +52,13 @@ public class ManageDriversFragment extends Fragment {
     private Button test;
     private PopupWindow popupWindow;
     private LayoutInflater layoutInflater;
+    private ProgressDialog mProgressDlg;
+    String DriveID;
+    boolean ChosenDrive;
+    Button btnWatchPervDrive;
+    AlertDialog.Builder builder1;
+    AlertDialog alert11;
+
     public ManageDriversFragment() {
         // Required empty public constructor
     }
@@ -127,35 +136,98 @@ public class ManageDriversFragment extends Fragment {
         //set on item on list view clicked
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
-                AlertDialog.Builder builder1 = new AlertDialog.Builder(view.getContext());
-                builder1.setMessage("Driver's details");
+                builder1 = new AlertDialog.Builder(view.getContext());
+                //builder1.setMessage("Driver's details");
                 final View viewThis=inflater.inflate(R.layout.driver_details,null);
+
                 builder1.setView(viewThis);
                 builder1.setCancelable(true);
-                //define the mail
-                TextView textView = (TextView)viewThis.findViewById(R.id.textView6);
-                textView.setText(driverMails.get(position));
-                //define total kms
+
+                //this is the button that shows the recent drive if exist
+                btnWatchPervDrive = (Button)viewThis.findViewById(R.id.recent_drive);
+                btnWatchPervDrive.setOnClickListener( new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (ChosenDrive==false){
+                            return;
+                        }else{
+                            Fragment ShowRouteRes = new RouteResultFragment();
+                            // set parameters to fragment
+                            Bundle bundle = new Bundle();
+                            bundle.putString("driveID", DriveID);
+                            ShowRouteRes.setArguments(bundle);
+                            getFragmentManager().beginTransaction().replace(R.id.fragment_container_super, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
+                            alert11.dismiss();
+                        }
+                    }
+                });
+
                 // get grades and totalKM of drivers
-                dbRef.child("drivers").addListenerForSingleValueEvent(new ValueEventListener() {
+                dbRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+                        // show loading
+                        mProgressDlg = new ProgressDialog(getActivity());
+                        mProgressDlg.setMessage("Loading...");
+                        mProgressDlg.setCancelable(false);
+                        mProgressDlg.show();
 
-                        for (DataSnapshot child : dataSnapshot.getChildren()) {
+                        /////////////driver details////////////////////////
+                        DataSnapshot Drivers = dataSnapshot.child("drivers");
+                        for (DataSnapshot child : Drivers.getChildren()) {
                             // Check if this user correlates to a supervisor of current user
                             if (driverIDs.contains(child.getKey()) && child.getKey().equals(driverIDs.get(position))) {
-                                TextView textViewKms = (TextView)viewThis.findViewById(R.id.textView8);
-                                String mytext=Float.toString(child.getValue(Driver.class).totalKm);
-                                textViewKms.setText(mytext);
-                                TextView textViewGrade = (TextView)viewThis.findViewById(R.id.textViewGrade);
-                                Speedometer speedometer;
-                                speedometer = (Speedometer)  viewThis.findViewById(R.id.speedView2);
-                                // stop gauge tremble
-                                speedometer.setWithTremble(false);
-                                String myGradetext=Float.toString(child.getValue(Driver.class).grade);
+                                //set total kms
+                                TextView textViewKms = (TextView)viewThis.findViewById(R.id.DriverTotalKm);
+                                StringBuffer TotalKmText = new StringBuffer("Total KM driven: ");
+                                TotalKmText.append(Integer.toString((int)child.getValue(Driver.class).totalKm));
+                                TotalKmText.append(" kms");
+                                textViewKms.setText(TotalKmText);
+
+                                //set drivers grade:
+                                TextView textViewGrade = (TextView)viewThis.findViewById(R.id.DriverGrade);
+                                StringBuffer myGradetext = new StringBuffer("Driver's Grade: ");
+                                myGradetext.append(ConvertGradeToText(child.getValue(Driver.class).grade));
                                 textViewGrade.setText(myGradetext);
+
+                                //set the speedometer
+                                Speedometer speedometer;
+                                speedometer = (Speedometer)  viewThis.findViewById(R.id.speedViewMD);
+                                speedometer.speedTo(child.getValue(Driver.class).grade, 1000);
+                                speedometer.setWithTremble(false);
+
                             }
                         }
+
+                        //////////////////set driver name//////////////////////
+                        TextView textViewDriverName = (TextView)viewThis.findViewById(R.id.DriverName);
+                        StringBuffer MyDriverName = new StringBuffer("Name: ");
+                        MyDriverName.append(dataSnapshot.child("users").child(driverIDs.get(position)).getValue(User.class).getUsername());
+                        textViewDriverName.setText(MyDriverName);
+
+                        //////////////////set route details////////////////
+                        dbRef.child("drives").orderByChild("StartTimeStamp").addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                ChosenDrive = false;
+                                for (DataSnapshot Child: dataSnapshot.getChildren()) {
+                                    if(ChosenDrive) {break;}
+                                    Drives CurrDrive = Child.getValue(Drives.class);
+                                    if(CurrDrive.driverID.equals(driverIDs.get(position))){
+                                        DriveID = Child.getKey(); //this is the drive ID
+                                        ChosenDrive = true;
+                                        btnWatchPervDrive.setText("Watch recent drive");
+                                        // hide progress bar
+                                        mProgressDlg.dismiss();
+                                    }
+                                    mProgressDlg.dismiss();
+                                }
+                            }
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {}
+                        });
+
+
                     }
 
                     @Override
@@ -167,6 +239,7 @@ public class ManageDriversFragment extends Fragment {
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.cancel();
+                                ChosenDrive = false;
                             }
                         });
                 builder1.setPositiveButton(
@@ -201,7 +274,7 @@ public class ManageDriversFragment extends Fragment {
                                 });
                             }
                         });
-                final AlertDialog alert11 = builder1.create();
+                alert11 = builder1.create();
                 alert11.show();
             }
         });
@@ -310,7 +383,20 @@ public class ManageDriversFragment extends Fragment {
 //                        builder2.show(); }
 //                });
 */
+
+
         return view;
+    }
+    public static String ConvertGradeToText(float Grade){
+        if (Grade < 33){
+            return "Great";
+        }
+        else if (Grade >= 33 && Grade < 66) {
+            return "Good";
+        }
+        else {
+            return "Bad";
+        }
     }
 
 }
