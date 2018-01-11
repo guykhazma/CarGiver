@@ -140,7 +140,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
 
         // Send notification in case of crash
         if(mAccelCurrent >= 3.5){
-            String msg = "Possible crash detected! "+userName;
+            String msg = "Possible crash detected!";
             NotificationService.sendNotification(msg, regTokens);
         }
     }

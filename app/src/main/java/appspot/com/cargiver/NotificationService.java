@@ -39,8 +39,14 @@ import okhttp3.Response;
 
 public class NotificationService extends FirebaseMessagingService {
 
+    private static String sender;
+
     private static final String SERVER_KEY =
             "AAAAVPQRc4g:APA91bGx63EZBBC6CSjyvNUcu6zQ5tmx63OsLu3VWW3YZdZH-v6pOTN0yMG4QixljIVEoiDKwJum3mSp0bD--gsglpYX5wRa79IOC8SsJuU9IPCrmeTSRJB0RatkNmiGiNwzmewO5O8K";
+
+    public static void setSender(String senderName){
+        sender = senderName;
+    }
 
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
@@ -63,7 +69,7 @@ public class NotificationService extends FirebaseMessagingService {
     public static void sendNotification(String msg, List<String> regTokens){
         Gson gson = new Gson();
         Data data = new Data();
-        data.setTitle("CarGiver");
+        data.setTitle(sender);
         data.setBody(msg);
         PostRequestData postRequestData = new PostRequestData();
         postRequestData.setRegistration_ids(regTokens);
