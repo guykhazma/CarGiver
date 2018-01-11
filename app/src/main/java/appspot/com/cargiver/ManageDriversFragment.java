@@ -31,6 +31,7 @@ import android.widget.ListView;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
+import com.github.anastr.speedviewlib.Speedometer;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -72,7 +73,10 @@ public class ManageDriversFragment extends Fragment {
         final String uid = currentUser.getUid(); // current user id
         // Get list of authorized driver IDs.
         final List<String> driverIDs = new ArrayList<String>();
-
+        //grades of drivers
+        final float[] driverGrades ;
+        final float[] driverKms ;
+        int driversCnt;
         //define listview
         final List<String> driverMails = new ArrayList<String>();
         //final Button button = (Button) view.findViewById(R.id.addBtn);
@@ -107,7 +111,6 @@ public class ManageDriversFragment extends Fragment {
                     // Check if this user correlates to a supervisor of current user
                     if (driverIDs.contains(child.getKey())) {
                         driverMails.add(child.getValue(User.class).getEmail());
-                        //driverGrades.add(child.getValue(User.class).);
                         MyAdapter.notifyDataSetChanged();
                     }
                 }
@@ -118,17 +121,48 @@ public class ManageDriversFragment extends Fragment {
 
             }
         });
+        driversCnt=driverMails.size();
+        driverGrades=new float[driversCnt];
+        driverKms=new float[driversCnt];
         //set on item on list view clicked
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
                 AlertDialog.Builder builder1 = new AlertDialog.Builder(view.getContext());
                 builder1.setMessage("Driver's details");
-                View viewThis=inflater.inflate(R.layout.driver_details,null);
+                final View viewThis=inflater.inflate(R.layout.driver_details,null);
                 builder1.setView(viewThis);
                 builder1.setCancelable(true);
                 //define the mail
                 TextView textView = (TextView)viewThis.findViewById(R.id.textView6);
                 textView.setText(driverMails.get(position));
+                //define total kms
+                // get grades and totalKM of drivers
+                dbRef.child("drivers").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+
+                        for (DataSnapshot child : dataSnapshot.getChildren()) {
+                            // Check if this user correlates to a supervisor of current user
+                            if (driverIDs.contains(child.getKey()) && child.getKey().equals(driverIDs.get(position))) {
+                                TextView textViewKms = (TextView)viewThis.findViewById(R.id.textView8);
+                                String mytext=Float.toString(child.getValue(Driver.class).totalKm);
+                                textViewKms.setText(mytext);
+                                TextView textViewGrade = (TextView)viewThis.findViewById(R.id.textViewGrade);
+                                Speedometer speedometer;
+                                speedometer = (Speedometer)  viewThis.findViewById(R.id.speedView2);
+                                // stop gauge tremble
+                                speedometer.setWithTremble(false);
+                                String myGradetext=Float.toString(child.getValue(Driver.class).grade);
+                                textViewGrade.setText(myGradetext);
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
                 builder1.setNegativeButton("back",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
