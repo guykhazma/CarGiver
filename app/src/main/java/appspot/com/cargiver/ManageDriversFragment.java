@@ -181,7 +181,7 @@ public class ManageDriversFragment extends Fragment {
                                 TextView textViewKms = (TextView)viewThis.findViewById(R.id.DriverTotalKm);
                                 StringBuffer TotalKmText = new StringBuffer("Total KM driven: ");
                                 TotalKmText.append(Integer.toString((int)child.getValue(Driver.class).totalKm));
-                                TotalKmText.append(" kms");
+                                TotalKmText.append(" km");
                                 textViewKms.setText(TotalKmText);
 
                                 //set drivers grade:
@@ -237,13 +237,10 @@ public class ManageDriversFragment extends Fragment {
                 });
                 builder1.setNegativeButton("back",
                         new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                dialog.cancel();
-                                ChosenDrive = false;
-                            }
+                            public void onClick(DialogInterface dialog, int id) {dialog.cancel();}
                         });
                 builder1.setPositiveButton(
-                        "Delete",
+                        "Delete Driver",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.dismiss();
