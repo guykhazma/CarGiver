@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="10dp" >
+
+
+
+    <LinearLayout android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        >
+        <TextView
+            android:id="@+id/textView9"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Contact Details"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <ImageView
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:src="@android:drawable/divider_horizontal_dark"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:scaleType="fitXY"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingBottom="2dp"
+            android:paddingTop="2dp" />
+        <ImageView
+            android:src="@drawable/driver_item"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_margin="5dp"/>
+
+        <ImageView
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:src="@android:drawable/divider_horizontal_dark"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:scaleType="fitXY"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingBottom="2dp"
+            android:paddingTop="2dp" />
+
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+
+
+            <ImageView
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:src="@android:drawable/divider_horizontal_dark"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:scaleType="fitXY"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:paddingBottom="2dp"
+                android:paddingTop="2dp" />
+            <ImageView
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:src="@android:drawable/divider_horizontal_dark"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:scaleType="fitXY"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:paddingBottom="2dp"
+                android:paddingTop="2dp" />
+            <TableRow
+                android:id="@+id/tableRow3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="5dp" >
+
+                <TextView
+                    android:id="@+id/textView5"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Email:"
+                    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+                <TextView
+                    android:id="@+id/textView6"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:hint="Email Address"
+                    android:textAppearance="?android:attr/textAppearanceMedium" />
+
+            </TableRow>
+
+            <ImageView
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:src="@android:drawable/divider_horizontal_dark"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:scaleType="fitXY"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:paddingBottom="2dp"
+                android:paddingTop="2dp" />
+        </TableLayout>
+        <TextView
+            android:id="@+id/textView7"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Total KM driven:"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:padding="5dp" />
+
+        <TextView
+            android:id="@+id/textView8"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:hint="kms"
+            android:padding="5dp" />
+        <TextView
+            android:id="@+id/Grade"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Grade:"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:padding="5dp" />
+
+        <TextView
+            android:id="@+id/textViewGrade"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:hint="grade"
+            android:padding="5dp" />
+
+        <com.github.anastr.speedviewlib.SpeedView
+            android:id="@+id/speedView2"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center"
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="245dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.589"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/textViewGrade"
+            app:layout_constraintVertical_bias="0.0"
+            app:sv_endDegree="360"
+            app:sv_indicator="NeedleIndicator"
+            app:sv_lowSpeedPercent="33"
+            app:sv_maxSpeed="100"
+            app:sv_mediumSpeedPercent="66"
+            app:sv_minSpeed="0"
+            app:sv_speedTextColor="@android:color/transparent"
+            app:sv_speedTextPosition="BOTTOM_CENTER"
+            app:sv_startDegree="180"
+            app:sv_unitTextColor="@android:color/transparent"
+            app:sv_unitUnderSpeedText="false"
+            app:sv_withTremble="false" />
+    </LinearLayout>
+</RelativeLayout>
