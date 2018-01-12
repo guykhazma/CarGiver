@@ -666,9 +666,14 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                                     if (speed > 0) {
                                                         //this is the grading algorithm:
                                                         NumOfPunish += SetPunishForBadResult(speed, rpm);
-                                                        AverageSpeed = (AverageSpeed * (count - 1) + speed) / count;
-                                                        float Grade = OneGradingAlg(count, AverageSpeed, NumOfPunish, speed, rpm);
-                                                        dbref.child("drives").child(driveKey).child("grade").setValue(Grade);
+                                                        // calculate only if we received one count at least
+                                                        if (count> 0) {
+                                                            AverageSpeed = (AverageSpeed * (count - 1) + speed) / count;
+                                                            dbref.child("drives").child(driveKey).child("grade").setValue(OneGradingAlg(count, AverageSpeed, NumOfPunish, speed, rpm));
+                                                        }
+                                                        else {
+                                                            AverageSpeed = 0;
+                                                        }
                                                     }
                                                 }
                                             }
