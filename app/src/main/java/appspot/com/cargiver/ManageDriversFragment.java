@@ -166,12 +166,6 @@ public class ManageDriversFragment extends Fragment {
                 dbRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        // show loading
-                        mProgressDlg = new ProgressDialog(getActivity());
-                        mProgressDlg.setMessage("Loading...");
-                        mProgressDlg.setCancelable(false);
-                        mProgressDlg.show();
-
                         /////////////driver details////////////////////////
                         DataSnapshot Drivers = dataSnapshot.child("drivers");
                         for (DataSnapshot child : Drivers.getChildren()) {
@@ -273,6 +267,12 @@ public class ManageDriversFragment extends Fragment {
                         });
                 alert11 = builder1.create();
                 alert11.show();
+
+                // show loading
+                mProgressDlg = new ProgressDialog(getActivity());
+                mProgressDlg.setMessage("Loading...");
+                mProgressDlg.setCancelable(false);
+                mProgressDlg.show();
             }
         });
 ////////////////////////////////////////////////////////////////////////////////////
