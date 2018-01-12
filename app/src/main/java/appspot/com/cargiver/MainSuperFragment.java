@@ -88,7 +88,7 @@ public class MainSuperFragment extends Fragment {
         TheRoutesDB.child("supervisors").child(uid).child("authorizedDriverIDs").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                // show loading
+                 // show loading
                 mProgressDlg = new ProgressDialog(getActivity());
                 mProgressDlg.setMessage("Loading...");
                 mProgressDlg.setCancelable(false);
@@ -97,7 +97,7 @@ public class MainSuperFragment extends Fragment {
                 for (DataSnapshot Child : dataSnapshot.getChildren()) {
                     MyUsers.add(Child.getKey()); //all my drivers
                 }
-                //3. get all the drives that this supervisor can see
+                 //3. get all the drives that this supervisor can see
                 TheRoutesDB.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
@@ -117,7 +117,7 @@ public class MainSuperFragment extends Fragment {
                                 }
                             }
                         }
-                        // hide progress bar
+                         // hide progress bar
                         mProgressDlg.dismiss();
                     }
                     @Override
@@ -138,7 +138,7 @@ public class MainSuperFragment extends Fragment {
                     return;
                 }else{
                     Fragment ShowRouteRes = new RouteResultFragment();
-                    // set parameters to fragment
+                     // set parameters to fragment
                     Bundle bundle = new Bundle();
                     bundle.putString("driveID", DriveID);
                     ShowRouteRes.setArguments(bundle);
