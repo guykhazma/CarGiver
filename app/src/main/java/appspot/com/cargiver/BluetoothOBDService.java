@@ -654,11 +654,10 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                                     int speed = speedCMD.getMetricSpeed();
                                                     int rpm = rpmCMD.getRPM();
 
-                                                    // insert every 20 measures
-                                                    count++;
-                                                    DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child(String.valueOf(count));
-                                                    // if current location is far then 100m then last location update
+                                                    // if current location is far then 100m then last location update insert to db
                                                     if (isBetterLocation(location, lastLocation) && location.distanceTo(lastLocation) > 50) {
+                                                        count++;
+                                                        DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child(String.valueOf(count));
                                                         // put new in db and update
                                                         measRef.setValue(new Measurement(speed, lat, longitude, rpm, MeasColorAlg(speed, rpm)));
                                                         lastLocation = location;
