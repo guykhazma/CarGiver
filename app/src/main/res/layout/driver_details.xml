@@ -14,8 +14,8 @@
         <TextView
             android:id="@+id/textView9"
             android:layout_height="wrap_content"
-            android:text="Contact Details"
-            android:layout_width="350dp"
+            android:text="Driver Details"
+            android:layout_width="match_parent"
             android:gravity="center"
             android:textAppearance="?android:attr/textAppearanceLarge" />
 

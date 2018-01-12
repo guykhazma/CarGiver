@@ -157,7 +157,7 @@ public class ManageSupervisorsFragment extends Fragment {
                                                     // Send notification to supervisor
                                                     String supervisorId = child.getKey();
                                                     String regToken = dataSnapshot.child("regTokens").child(supervisorId).getValue(String.class);
-                                                    NotificationService.sendNotification("Someone added you as a supervisor!", regToken);
+                                                    NotificationService.sendNotification("Added you as a supervisor!", regToken);
                                                     //add the supervisor to the drivers list
                                                     dbRef.child("drivers").child(uid).child("supervisorsIDs").child(child.getKey()).setValue(true);
                                                     //add the driver to supervisors
@@ -219,7 +219,7 @@ public class ManageSupervisorsFragment extends Fragment {
                                                 dbRef.child("supervisors").child(superID).child("authorizedDriverIDs").child(uid).removeValue();
                                                 // Send notification
                                                 String regToken = dataSnapshot.child("regTokens").child(superID).getValue(String.class);
-                                                NotificationService.sendNotification("Someone deleted you from their supervisor list!", regToken);
+                                                NotificationService.sendNotification("Deleted you from their supervisor list!", regToken);
                                                 break;
                                             }
                                         }

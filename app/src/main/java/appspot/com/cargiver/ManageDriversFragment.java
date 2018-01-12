@@ -166,12 +166,6 @@ public class ManageDriversFragment extends Fragment {
                 dbRef.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        // show loading
-                        mProgressDlg = new ProgressDialog(getActivity());
-                        mProgressDlg.setMessage("Loading...");
-                        mProgressDlg.setCancelable(false);
-                        mProgressDlg.show();
-
                         /////////////driver details////////////////////////
                         DataSnapshot Drivers = dataSnapshot.child("drivers");
                         for (DataSnapshot child : Drivers.getChildren()) {
@@ -181,7 +175,7 @@ public class ManageDriversFragment extends Fragment {
                                 TextView textViewKms = (TextView)viewThis.findViewById(R.id.DriverTotalKm);
                                 StringBuffer TotalKmText = new StringBuffer("Total KM driven: ");
                                 TotalKmText.append(Integer.toString((int)child.getValue(Driver.class).totalKm));
-                                TotalKmText.append(" kms");
+                                TotalKmText.append(" km");
                                 textViewKms.setText(TotalKmText);
 
                                 //set drivers grade:
@@ -237,13 +231,10 @@ public class ManageDriversFragment extends Fragment {
                 });
                 builder1.setNegativeButton("back",
                         new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                dialog.cancel();
-                                ChosenDrive = false;
-                            }
+                            public void onClick(DialogInterface dialog, int id) {dialog.cancel();}
                         });
                 builder1.setPositiveButton(
-                        "Delete",
+                        "Delete Driver",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.dismiss();
@@ -261,7 +252,7 @@ public class ManageDriversFragment extends Fragment {
                                                 dbRef.child("supervisors").child(uid).child("authorizedDriverIDs").child(driverID).removeValue();
                                                 // Send notification to Driver that he was deleted
                                                 String regToken = dataSnapshot.child("regTokens").child(driverID).getValue(String.class);
-                                                NotificationService.sendNotification("Someone deleted you from their driver list!", regToken);
+                                                NotificationService.sendNotification("Deleted you from their driver list!", regToken);
                                                 break;
                                             }
                                         }
@@ -276,6 +267,12 @@ public class ManageDriversFragment extends Fragment {
                         });
                 alert11 = builder1.create();
                 alert11.show();
+
+                // show loading
+                mProgressDlg = new ProgressDialog(getActivity());
+                mProgressDlg.setMessage("Loading...");
+                mProgressDlg.setCancelable(false);
+                mProgressDlg.show();
             }
         });
 ////////////////////////////////////////////////////////////////////////////////////

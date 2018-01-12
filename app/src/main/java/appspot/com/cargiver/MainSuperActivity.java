@@ -42,6 +42,9 @@ public class MainSuperActivity extends AppCompatActivity
             finish();
         }
 
+        // Set sender name for notifications.
+        NotificationService.setSender(user.getDisplayName());
+
         setContentView(R.layout.activity_main_super);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_super);
         setSupportActionBar(toolbar);
