@@ -31,14 +31,6 @@
         android:scaleType="centerInside"
         app:srcCompat="@drawable/driver_item" />
 
-    <ImageView
-        android:id="@+id/imageView45"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
-        android:layout_marginEnd="11dp"
-        android:scaleType="centerInside"
-        app:srcCompat="@drawable/remove_icon"  />
+
 
 </RelativeLayout>

@@ -62,7 +62,9 @@ public class ManageSupervisorsFragment extends Fragment {
                 getActivity(),R.layout.manage_supervisor_listitem,R.id.textSupervisor,
                 supervisorMails
         );
-        listView.setAdapter(listViewAdapter);
+        //listView.setAdapter(listViewAdapter);
+        final SupervisorsListViewAdapter superAdapter=new SupervisorsListViewAdapter(getActivity(),supervisorMails);
+        listView.setAdapter(superAdapter);
             // Get list of authorized supervisor_item IDs.
             dbRef.child("drivers").child(uid).child("supervisorsIDs").addValueEventListener(new ValueEventListener() {
                 @Override
@@ -85,7 +87,8 @@ public class ManageSupervisorsFragment extends Fragment {
                     // Check if this user correlates to a supervisor of current user
                     if(supervisorIDs.contains(child.getKey())){
                         supervisorMails.add(child.getValue(User.class).getEmail());
-                        listViewAdapter.notifyDataSetChanged();
+                        //listViewAdapter.notifyDataSetChanged();
+                        superAdapter.notifyDataSetChanged();
                     }
                 }
             }
@@ -153,7 +156,8 @@ public class ManageSupervisorsFragment extends Fragment {
                                                 if (user.email.equals(finalEmail) && user.type == User.SUPERVISOR) {
                                                     //add supervisor to his list
                                                     supervisorMails.add(m_Text);
-                                                    listViewAdapter.notifyDataSetChanged();
+                                                    //listViewAdapter.notifyDataSetChanged();
+                                                    superAdapter.notifyDataSetChanged();
                                                     // Send notification to supervisor
                                                     String supervisorId = child.getKey();
                                                     String regToken = dataSnapshot.child("regTokens").child(supervisorId).getValue(String.class);
@@ -189,53 +193,53 @@ public class ManageSupervisorsFragment extends Fragment {
                         builder.show(); }
                 });
         //set on item on list view clicked
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
-                AlertDialog.Builder builder1 = new AlertDialog.Builder(view.getContext());
-                builder1.setMessage("Do you want to delete this Supervisor?");
-                builder1.setCancelable(true);
-                builder1.setNegativeButton("No",
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                dialog.cancel();
-                            }
-                        });
-                builder1.setPositiveButton(
-                        "Yes",
-                        new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                dialog.dismiss();
-                                dbRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(DataSnapshot dataSnapshot) {
-                                        String superID="";
-                                        String superMail=supervisorMails.get(position);
-                                        supervisorMails.remove(position);
-                                        listViewAdapter.notifyDataSetChanged();
-                                        for (DataSnapshot child : dataSnapshot.child("users").getChildren()) {
-                                            if (child.getValue(User.class).email.equals(superMail)) {
-                                                superID=child.getKey();
-                                                dbRef.child("drivers").child(uid).child("supervisorsIDs").child(superID).removeValue();
-                                                dbRef.child("supervisors").child(superID).child("authorizedDriverIDs").child(uid).removeValue();
-                                                // Send notification
-                                                String regToken = dataSnapshot.child("regTokens").child(superID).getValue(String.class);
-                                                NotificationService.sendNotification("Deleted you from their supervisor list!", regToken);
-                                                break;
-                                            }
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onCancelled(DatabaseError databaseError) {
-
-                                    }
-                                });
-                            }
-                        });
-                final AlertDialog alert11 = builder1.create();
-                alert11.show();
-            }
-        });
+//        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
+//                AlertDialog.Builder builder1 = new AlertDialog.Builder(view.getContext());
+//                builder1.setMessage("Do you want to delete this Supervisor?");
+//                builder1.setCancelable(true);
+//                builder1.setNegativeButton("No",
+//                        new DialogInterface.OnClickListener() {
+//                            public void onClick(DialogInterface dialog, int id) {
+//                                dialog.cancel();
+//                            }
+//                        });
+//                builder1.setPositiveButton(
+//                        "Yes",
+//                        new DialogInterface.OnClickListener() {
+//                            public void onClick(DialogInterface dialog, int id) {
+//                                dialog.dismiss();
+//                                dbRef.addListenerForSingleValueEvent(new ValueEventListener() {
+//                                    @Override
+//                                    public void onDataChange(DataSnapshot dataSnapshot) {
+//                                        String superID="";
+//                                        String superMail=supervisorMails.get(position);
+//                                        supervisorMails.remove(position);
+//                                        listViewAdapter.notifyDataSetChanged();
+//                                        for (DataSnapshot child : dataSnapshot.child("users").getChildren()) {
+//                                            if (child.getValue(User.class).email.equals(superMail)) {
+//                                                superID=child.getKey();
+//                                                dbRef.child("drivers").child(uid).child("supervisorsIDs").child(superID).removeValue();
+//                                                dbRef.child("supervisors").child(superID).child("authorizedDriverIDs").child(uid).removeValue();
+//                                                // Send notification
+//                                                String regToken = dataSnapshot.child("regTokens").child(superID).getValue(String.class);
+//                                                NotificationService.sendNotification("Deleted you from their supervisor list!", regToken);
+//                                                break;
+//                                            }
+//                                        }
+//                                    }
+//
+//                                    @Override
+//                                    public void onCancelled(DatabaseError databaseError) {
+//
+//                                    }
+//                                });
+//                            }
+//                        });
+//                final AlertDialog alert11 = builder1.create();
+//                alert11.show();
+//            }
+//        });
         return view;
     }
 
