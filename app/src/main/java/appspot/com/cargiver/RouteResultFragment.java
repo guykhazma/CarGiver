@@ -280,6 +280,8 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             title = "Start Point";
             snippet = "Time: " +  Drives.dateFormat.format(drive.startTime());
             newPoint = new LatLng(drive.meas.get(0).latitude, drive.meas.get(0).longitude);
+            points.add(newPoint);
+            mapBuilder.include(newPoint);
             lastPoint = newPoint;
             googleMap.addMarker(new MarkerOptions().position(newPoint).title(title).snippet(snippet));
 
@@ -368,10 +370,6 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                     googleMap.animateCamera(cu);
                 }
                 else {
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() -1), 15));
-                }
-                try {
-                } catch (Exception ex) {
                     googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() -1), 15));
                 }
 
