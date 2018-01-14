@@ -424,6 +424,9 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         // reset all variables
         stopped = false;
         driveKey = null;
+        count = 1;
+        NumOfPunish = 0; //num of punishments
+        AverageSpeed = 0; //the average speed
 
         // Cancel the persistent notification.
         mNM.cancel(NOTIFICATION);
@@ -588,7 +591,6 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                         LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcast(intent);
                         // add initial measuremnt
                         final DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child("0");
-
                         mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
                             @Override
                             public void onSuccess(Location location) {
@@ -667,7 +669,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                                         //this is the grading algorithm:
                                                         NumOfPunish += SetPunishForBadResult(speed, rpm);
                                                         // calculate only if we received one count at least
-                                                        if (count> 0) {
+                                                        if (count> 1) {
                                                             AverageSpeed = (AverageSpeed * (count - 1) + speed) / count;
                                                             dbref.child("drives").child(driveKey).child("grade").setValue(OneGradingAlg(count, AverageSpeed, NumOfPunish, speed, rpm));
                                                         }
