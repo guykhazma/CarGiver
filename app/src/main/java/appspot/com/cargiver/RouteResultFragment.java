@@ -159,7 +159,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             String snippet = "Time Taken: " + Drives.dateFormat.format(currMeasurment.timeStamp);
             // add new marker remove last
             lastMarker.remove();
-            lastMarker = googleMap.addMarker(new MarkerOptions().position(newPoint).title(title).snippet(snippet));
+            lastMarker = googleMap.addMarker(new MarkerOptions().position(newPoint).title(title).snippet(snippet).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
             // add to route
             List<LatLng> points = path.getPoints();
             points.add(newPoint);
