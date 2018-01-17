@@ -755,7 +755,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         else{
             Grade = AverageSpeed *2/3;
         }
-        float PunishRate = 10*NumOfPunish/NumOfMeas;
+        float PunishRate = 30*NumOfPunish/NumOfMeas;
         Grade = Grade*(1+PunishRate);
         if (Grade>100){
             Grade=100;
