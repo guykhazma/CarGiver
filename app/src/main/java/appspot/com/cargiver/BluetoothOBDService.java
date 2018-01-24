@@ -158,7 +158,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.d("BluetoothOBDService", "Service started");
+        //Log.d("BluetoothOBDService", "Service started");
         // Display a notification about us starting.  We put an icon in the status bar.
         mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         showNotification();
@@ -359,7 +359,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
      * Stop all threads
      */
     public synchronized void stop() {
-        Log.d(TAG, "stop");
+        //Log.d(TAG, "stop");
 
         if (mConnectThread != null) {
             mConnectThread.cancel();
@@ -382,7 +382,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
      */
     public synchronized void connected(BluetoothSocket socket, BluetoothDevice
             device, final String socketType) {
-        Log.d(TAG, "connected, Socket Type:" + socketType);
+        //Log.d(TAG, "connected, Socket Type:" + socketType);
 
         // Cancel the thread that completed the connection
         if (mConnectThread != null) {
@@ -458,7 +458,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                             MY_UUID_INSECURE);
                 }
             } catch (IOException e) {
-                Log.e(TAG, "Socket Type: " + mSocketType + "create() failed", e);
+                //Log.e(TAG, "Socket Type: " + mSocketType + "create() failed", e);
             }
             mmSocket = tmp;
             mState = STATE_CONNECTING;
@@ -466,7 +466,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
 
         public void run() {
             //android.os.Debug.waitForDebugger();  // this line is key
-            Log.i(TAG, "BEGIN mConnectThread SocketType:" + mSocketType);
+            //Log.i(TAG, "BEGIN mConnectThread SocketType:" + mSocketType);
 
             setName("ConnectThread" + mSocketType);
             // try connecting multiple times
@@ -483,7 +483,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                     // Start the connected thread
                     connected(mmSocket, mmDevice, mSocketType);
                 } catch (Exception e1) {
-                    Log.d(TAG, "There was an error while establishing Bluetooth connection. Falling back..", e1);
+                    //Log.d(TAG, "There was an error while establishing Bluetooth connection. Falling back..", e1);
                     Class<?> clazz = mmSocket.getRemoteDevice().getClass();
                     Class<?>[] paramTypes = new Class<?>[]{Integer.TYPE};
                     try {
@@ -500,7 +500,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                         connected(mmSocket, mmDevice, mSocketType);
                         return; // finish current thread
                     } catch (Exception e2) {
-                        Log.d(TAG, "Couldn't fallback while establishing Bluetooth connection.", e2);
+                        //Log.d(TAG, "Couldn't fallback while establishing Bluetooth connection.", e2);
                         if (numRestart > 2) {
                             // send message accroding to failure type
                             if (!restart) {
@@ -513,7 +513,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                         }
                         else {
                             numRestart++;
-                            Log.d(TAG, "Restart" + numRestart);
+                            //Log.d(TAG, "Restart" + numRestart);
                             try{
                                 Thread.sleep(4000);
                             } catch(InterruptedException e){
@@ -531,7 +531,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
             try {
                 mmSocket.close();
             } catch (IOException e) {
-                Log.e(TAG, "close() of connect " + mSocketType + " socket failed", e);
+                //Log.e(TAG, "close() of connect " + mSocketType + " socket failed", e);
             }
         }
     }
@@ -547,7 +547,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
 
         public ConnectedThread(BluetoothSocket socket, String socketType) {
             //android.os.Debug.waitForDebugger();  // this line is key
-            Log.d(TAG, "create ConnectedThread: " + socketType);
+            //Log.d(TAG, "create ConnectedThread: " + socketType);
             mmSocket = socket;
             InputStream tmpIn = null;
             OutputStream tmpOut = null;
@@ -558,7 +558,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                 tmpIn = socket.getInputStream();
                 tmpOut = socket.getOutputStream();
             } catch (IOException e) {
-                Log.e(TAG, "temp sockets not created", e);
+                //Log.e(TAG, "temp sockets not created", e);
             }
 
             mmInStream = tmpIn;
@@ -621,12 +621,12 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                 }
             }
             catch (Exception e) {
-                Log.e(TAG, "failed to initiate OBD general commands", e);
+                //Log.e(TAG, "failed to initiate OBD general commands", e);
             }
         }
 
             public void run() {
-                Log.i(TAG, "BEGIN mConnectedThread");
+                //Log.i(TAG, "BEGIN mConnectedThread");
                 // initiate speed and RPM commands and make mesauremnt each 5 seconds
                 final RPMCommand rpmCMD = new RPMCommand();
                 final SpeedCommand speedCMD = new SpeedCommand();
@@ -686,7 +686,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                     if (ex instanceof IOException) {
                                         // stop all active
                                         // Start the thread to connect with the given device
-                                        Log.e(TAG, "attempting restart", ex);
+                                        //Log.e(TAG, "attempting restart", ex);
                                         scheduler.shutdown();
                                         try {
                                             scheduler.awaitTermination(2, TimeUnit.SECONDS);
@@ -700,7 +700,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                         return; // close current thread
                                     } else {
                                         scheduler.shutdown();
-                                        Log.e(TAG, "disconnected", ex);
+                                        //Log.e(TAG, "disconnected", ex);
                                         try {
                                             scheduler.awaitTermination(2, TimeUnit.SECONDS);
                                         } catch (InterruptedException exp) {
@@ -724,7 +724,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                 }
                 mmSocket.close();
             } catch (IOException e) {
-                Log.e(TAG, "close() of connect socket failed", e);
+                //Log.e(TAG, "close() of connect socket failed", e);
             }
         }
     }
