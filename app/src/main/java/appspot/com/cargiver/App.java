@@ -14,8 +14,5 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
         FirebaseDatabase.getInstance().setPersistenceEnabled(true);
-        // keep drives fresh
-        DatabaseReference drives = FirebaseDatabase.getInstance().getReference("drives");
-        drives.keepSynced(true);
     }
 }

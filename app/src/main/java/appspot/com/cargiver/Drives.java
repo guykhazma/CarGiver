@@ -17,15 +17,15 @@ import java.util.Map;
 public class Drives {
 
     // date format
-    static SimpleDateFormat dateFormat = new SimpleDateFormat ("dd.MM.yyyy HH:mm");
+    public static SimpleDateFormat dateFormat = new SimpleDateFormat ("dd.MM.yyyy HH:mm");
 
 
-    ArrayList<Measurement> meas;
-    Boolean ongoing;
-    String driverID;
-    float grade;
-    float totalKm;
-    long StartTimeStamp; // !!!NEGATIVE!!! time stamp
+    public ArrayList<Measurement> meas;
+    public Boolean ongoing;
+    public String driverID;
+    public float grade;
+    public float totalKm;
+    public long StartTimeStamp; // !!!NEGATIVE!!! time stamp
 
     public Drives() {
         // Default constructor required for calls to DataSnapshot.getValue(Drives.class)

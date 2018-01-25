@@ -83,11 +83,9 @@ public class LoginActivity extends AppCompatActivity {
 
         if (requestCode == RC_SIGN_IN) {
             IdpResponse response = IdpResponse.fromResultIntent(data);
-
             if (resultCode == RESULT_OK) {
                 final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                 // Add user to db if it does not exist
-
                 final DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference();
                 dbRef.child("regTokens").child(user.getUid()).setValue(FirebaseInstanceId.getInstance().getToken()); // save user's registration token
                 dbRef.child("users").child(user.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -97,6 +95,9 @@ public class LoginActivity extends AppCompatActivity {
                         if (dataSnapshot.getValue() != null) {
                             // parse object to User class
                             User currentUser = dataSnapshot.getValue(User.class);
+                            // keep drives fresh
+                            DatabaseReference drives = FirebaseDatabase.getInstance().getReference("drives");
+                            drives.keepSynced(true);
                             // user is driver
                             if (currentUser.type == User.DRIVER) {
                                 // Load driver activity

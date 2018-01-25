@@ -11,13 +11,13 @@ import java.util.List;
 
 public class User {
 
-    final static int UNKNOWN_TYPE = 0;
-    final static int DRIVER = 1;
-    final static int SUPERVISOR = 2;
+    public final static int UNKNOWN_TYPE = 0;
+    public final static int DRIVER = 1;
+    public final static int SUPERVISOR = 2;
 
-    String username;
-    String email;
-    int type;
+    public String username;
+    public String email;
+    public int type;
 
     public User() {
         // Default constructor required for calls to DataSnapshot.getValue(User.class)

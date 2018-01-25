@@ -14,12 +14,12 @@ import java.util.Date;
 // Represent measurement during drive
 
 public class Measurement {
-    long timeStamp; // the time stamp of the measurement
-    int speed; // current vehicle speed
-    int rpm;
-    double latitude;
-    double longitude;
-    int color; //0=green, 1=orange, 2=red
+    public long timeStamp; // the time stamp of the measurement
+    public int speed; // current vehicle speed
+    public int rpm;
+    public double latitude;
+    public double longitude;
+    public int color; //0=green, 1=orange, 2=red
 
     @Keep
     public Measurement() {
