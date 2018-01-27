@@ -93,11 +93,19 @@ public class LoginActivity extends AppCompatActivity {
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         // if user exists check type
                         if (dataSnapshot.getValue() != null) {
-                            // parse object to User class
-                            User currentUser = dataSnapshot.getValue(User.class);
-                            // keep drives fresh
+                            // keep data fresh
                             DatabaseReference drives = FirebaseDatabase.getInstance().getReference("drives");
                             drives.keepSynced(true);
+                            DatabaseReference drivers = FirebaseDatabase.getInstance().getReference("drivers");
+                            drivers.keepSynced(true);
+                            DatabaseReference supervisors = FirebaseDatabase.getInstance().getReference("supervisors");
+                            supervisors.keepSynced(true);
+                            DatabaseReference users = FirebaseDatabase.getInstance().getReference("users");
+                            users.keepSynced(true);
+                            DatabaseReference regtokens = FirebaseDatabase.getInstance().getReference("regTokens");
+                            regtokens.keepSynced(true);
+                            // parse object to User class
+                            User currentUser = dataSnapshot.getValue(User.class);
                             // user is driver
                             if (currentUser.type == User.DRIVER) {
                                 // Load driver activity
