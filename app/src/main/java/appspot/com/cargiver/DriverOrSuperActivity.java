@@ -28,7 +28,7 @@ public class DriverOrSuperActivity extends AppCompatActivity {
     }
 
     // Redirect to driver main on click
-    protected void DriverMain(View v)
+    public void DriverMain(View v)
     {
         AlertDialog.Builder DriverHlp = new AlertDialog.Builder(this);
         DriverHlp.setTitle("I Am Driver");
@@ -54,7 +54,7 @@ public class DriverOrSuperActivity extends AppCompatActivity {
     }
 
     // Redirect to super main on click
-    protected void SuperMain(View v)
+    public void SuperMain(View v)
     {
         AlertDialog.Builder DriverHlp = new AlertDialog.Builder(this);
         DriverHlp.setTitle("I Am Supervisor");
@@ -79,7 +79,7 @@ public class DriverOrSuperActivity extends AppCompatActivity {
 
     }
 
-    protected void DriverHelp(View v) {//michaeltah
+    public void DriverHelp(View v) {//michaeltah
         AlertDialog.Builder DriverHlp = new AlertDialog.Builder(this);
         DriverHlp.setTitle("I Am Driver");
         DriverHlp.setMessage("Driver Activity:\nyou will connect to the obd before start driving, and all of your supervisors will be able to see your routes details");
@@ -92,7 +92,7 @@ public class DriverOrSuperActivity extends AppCompatActivity {
         DriverHlp.create();
         DriverHlp.show();
     }
-    protected void SuperHelp(View v) {//michaeltah
+    public void SuperHelp(View v) {//michaeltah
         AlertDialog.Builder DriverHlp = new AlertDialog.Builder(this);
         DriverHlp.setTitle("I Am Supervisor");
         DriverHlp.setMessage("Supervisor Activity:\nyou can define your drivers, and see their routes details");
