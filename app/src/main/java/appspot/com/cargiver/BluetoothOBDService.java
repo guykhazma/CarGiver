@@ -62,6 +62,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static java.lang.Math.abs;
+
 
 public class BluetoothOBDService extends Service implements SensorEventListener {
     // Accelerometer variables
@@ -107,7 +109,10 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
     float AverageSpeed = 0; //the average speed
     long startTimeStamp;
     Location lastLocation;
-
+    int TotalNumOfMeas;
+    int TotalHighSpeed;
+    int TotalSpeedChanges;
+    float OldSpeed;
     // broadcast tags
     public static String connectionFailedBroadcastIntent = "com.OBDService.ConnectionFailed";
     public static String connectionLostBroadcastIntent = "com.OBDService.ConnectionLost";
@@ -251,6 +256,10 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                         count = 0; //num of measurements
                         NumOfPunish = 0; //num of punishments
                         AverageSpeed = 0; //the average speed
+                        TotalNumOfMeas = 0;//counts only the "real" measurements (with speed > 0);
+                        TotalHighSpeed=0;
+                        TotalSpeedChanges=0;
+                        OldSpeed=0;
 
                         // initiate connection
                         // Cancel any thread attempting to make a connection
@@ -420,13 +429,23 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
             dbref.child("drives").child(driveKey).child("totalKm").setValue(AverageSpeed*(Calendar.getInstance().getTime().getTime() - startTimeStamp)/ (1000.0*60.0*60.0));
             // set drive as finished, cloud function will update driver grade
             dbref.child("drives").child(driveKey).child("ongoing").setValue(false);
+            int GradeReason = CheckGradeReason(TotalNumOfMeas, TotalHighSpeed, TotalSpeedChanges);
+            dbref.child("drives").child(driveKey).child("GradeReason").setValue(GradeReason);
+            dbref.child("drives").child(driveKey).child("TotalMeas").setValue(TotalNumOfMeas);
+            dbref.child("drives").child(driveKey).child("TotalSpeedChanges").setValue(TotalSpeedChanges);
+            dbref.child("drives").child(driveKey).child("TotalHighSpeed").setValue(TotalHighSpeed);
         }
+
         // reset all variables
         stopped = false;
         driveKey = null;
         count = 1;
         NumOfPunish = 0; //num of punishments
         AverageSpeed = 0; //the average speed
+        TotalNumOfMeas=0;
+        TotalHighSpeed=0;
+        TotalSpeedChanges=0;
+        OldSpeed=0;
 
         // Cancel the persistent notification.
         mNM.cancel(NOTIFICATION);
@@ -661,22 +680,32 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                                         count++;
                                                         DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child(String.valueOf(count));
                                                         // put new in db and update
-                                                        measRef.setValue(new Measurement(speed, lat, longitude, rpm, MeasColorAlg(speed, rpm)));
+                                                        int MeasColor;
+                                                        if(OldSpeed != 0){ //not the first measurment
+                                                            MeasColor = MeasColorAlg(speed, rpm, OldSpeed);
+                                                        }else{
+                                                            MeasColor = MeasColorAlg(speed, rpm, speed);
+                                                        }
+                                                        measRef.setValue(new Measurement(speed, lat, longitude, rpm, MeasColor));
                                                         lastLocation = location;
                                                     }
                                                     // update grade only if speed is above 0
                                                     if (speed > 0) {
-                                                        //this is the grading algorithm:
-                                                        NumOfPunish += SetPunishForBadResult(speed, rpm);
                                                         // calculate only if we received one count at least
                                                         if (count> 1) {
+                                                            //this is the grading algorithm:
+                                                            NumOfPunish += SetPunishForBadResult(speed, rpm, OldSpeed);
                                                             AverageSpeed = (AverageSpeed * (count - 1) + speed) / count;
                                                             dbref.child("drives").child(driveKey).child("grade").setValue(OneGradingAlg(count, AverageSpeed, NumOfPunish, speed, rpm));
-                                                        }
+                                                            TotalNumOfMeas += 1;
+                                                            TotalHighSpeed += CheckHighSpeed(speed);
+                                                            TotalSpeedChanges += CheckSpeedChanges(rpm, speed, OldSpeed);
+                                                       }
                                                         else {
                                                             AverageSpeed = 0;
                                                         }
                                                     }
+                                                    OldSpeed = speed;
                                                 }
                                             }
                                         });
@@ -729,8 +758,48 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         }
     }
 
-    public static int SetPunishForBadResult(float CurrSpeed, float CurrRpm) {
+    public static int CheckGradeReason(int TotalNumOfMeas, int TotalHighSpeed, int TotalSpeedChanges){
+        if(TotalNumOfMeas==0) {return 0;}
+        if ((TotalHighSpeed/TotalNumOfMeas)>0.1 && (TotalSpeedChanges/TotalNumOfMeas)>0.1){
+            return 3;
+        }
+        if ((TotalSpeedChanges/TotalNumOfMeas)>0.1){
+            return 2;
+        }
+        if ((TotalHighSpeed/TotalNumOfMeas)>0.1){
+            return 1;
+        }
+        return 0;
+    };
+
+    public static int CheckHighSpeed(float CurrSpeed) {
+        if (CurrSpeed>110){ //high speed
+            return 2;
+        }
+        if(CurrSpeed<90){ //good speed
+            return 0;
+        }
+        return 1; //speed in [90,110]
+    }
+
+    public static int CheckSpeedChanges(float CurrRpm, float NewSpeed, float OldSpeed) {
+        if (CurrRpm > 4000){ //high rpm <-> high acceleration
+            return 5;
+        }
+        if (abs(NewSpeed-OldSpeed) > 10){ //is we got 10 km change in 1.1 second -> 4.9 km/s^2
+            return (int) abs(NewSpeed-OldSpeed);
+        }
+        if (abs(NewSpeed-OldSpeed) > 5){ //not so high change of speed. but can point on "unrelaxed" driving
+            return 1;
+        }
+        return 0;
+    }
+
+    public static int SetPunishForBadResult(float CurrSpeed, float CurrRpm, float OldSpeed) {
         if (CurrSpeed>110 || CurrRpm>4000){ //high speed/rpm
+            return 1;
+        }
+        if (abs(CurrSpeed-OldSpeed) > 5){ //not so high change of speed. but can point on "unrelaxed" driving
             return 1;
         }
         if(CurrSpeed<30 && CurrRpm>3500){ //"drifting" - high acceleration
@@ -738,10 +807,17 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         }
         return 0;
     }
-    public static int MeasColorAlg(float CurrSpeed, float CurrRpm) {
+    public static int MeasColorAlg(float CurrSpeed, float CurrRpm, float OldSpeed) {
         if(CurrRpm>=4000 || CurrSpeed>=110) {
             return 2; //red
-        }else if (CurrSpeed>=85 && CurrSpeed<110){
+        };
+        if (abs(CurrSpeed-OldSpeed) > 10){ //not so high change of speed. but can point on "unrelaxed" driving
+            return 2; //red
+        }
+        if (CurrSpeed>=85 && CurrSpeed<110){
+            return 1; //orange
+        }
+        if (abs(CurrSpeed-OldSpeed) > 5){ //not so high change of speed. but can point on "unrelaxed" driving
             return 1; //orange
         }
         return 0; //green

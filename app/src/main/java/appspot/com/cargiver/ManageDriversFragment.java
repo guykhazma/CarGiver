@@ -42,6 +42,8 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.w3c.dom.Text;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -180,8 +182,10 @@ public class ManageDriversFragment extends Fragment {
 
                                 //set drivers grade:
                                 TextView textViewGrade = (TextView)viewThis.findViewById(R.id.DriverGrade);
-                                StringBuffer myGradetext = new StringBuffer("Driver's Grade: ");
-                                myGradetext.append(ConvertGradeToText(child.getValue(Driver.class).grade));
+                                StringBuffer myGradetext = new StringBuffer("Driver's summary: ");
+                                myGradetext.append(ConvertGradeToText(child.getValue(Driver.class).grade, child.getValue(Driver.class).TotalMeas,
+                                        child.getValue(Driver.class).TotalHighSpeed, child.getValue(Driver.class).TotalSpeedChanges));
+
                                 textViewGrade.setText(myGradetext);
 
                                 //set the speedometer
@@ -384,14 +388,30 @@ public class ManageDriversFragment extends Fragment {
 
         return view;
     }
-    public static String ConvertGradeToText(float Grade){
+    public static String ConvertGradeToText(float Grade, int TotalNumOfMeas,int TotalHighSpeed, int TotalSpeedChanges){
         if (Grade < 33){
-            return "Great";
+            return "Great!";
         }
-        else if (Grade >= 33 && Grade < 66) {
+        if(TotalNumOfMeas==0) { //backword compatibale
+            if (Grade >= 33 && Grade < 66) {
+                return "Good";
+            } else {
+                return "Bad";
+            }
+        }
+        if ((TotalHighSpeed/TotalNumOfMeas)>0.1 && (TotalSpeedChanges/TotalNumOfMeas)>0.1){
+            return "high speed and rapid speed changes";
+        }
+        if ((TotalSpeedChanges/TotalNumOfMeas)>0.1){
+            return "rapid speed changes";
+        }
+        if ((TotalHighSpeed/TotalNumOfMeas)>0.1){
+            return "driving at high speed";
+        }
+        //if we don't have enough information about the driving
+        if (Grade >= 33 && Grade < 66) {
             return "Good";
-        }
-        else {
+        } else {
             return "Bad";
         }
     }

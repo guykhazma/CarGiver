@@ -340,16 +340,31 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
 
             // set grade
             speedometer.speedTo(drive.grade, 1000);
+            String Text;
+            switch (drive.GradeReason){
+                case 1 :
+                    Text = "driving at high speed";
+                    break;
+                case 2 :
+                    Text = "rapid speed changes";
+                    break;
+                case 3 :
+                    Text = "high speed and rapid speed changes";
+                    break;
+                default:
+                    Text = "";
+                    break;
+            }
             if (drive.grade < 33){
                 rating.setText("Great");
                 rating.setTextColor(Color.GREEN);
             }
             else if (drive.grade >= 33 && drive.grade < 66) {
-                rating.setText("Good");
+                rating.setText(Text);
                 rating.setTextColor(Color.parseColor("#FFFFBB33"));
             }
             else {
-                rating.setText("Bad");
+                rating.setText(Text);
                 rating.setTextColor(Color.RED);
             }
 

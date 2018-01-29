@@ -26,6 +26,10 @@ public class Drives {
     public float grade;
     public float totalKm;
     public long StartTimeStamp; // !!!NEGATIVE!!! time stamp
+    public int GradeReason; //0-ok, 1-high speed, 2-speed changes, 3-both
+    public int TotalMeas; //total measurments for this driver
+    public int TotalHighSpeed;
+    public int TotalSpeedChanges;
 
     public Drives() {
         // Default constructor required for calls to DataSnapshot.getValue(Drives.class)
