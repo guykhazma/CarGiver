@@ -13,6 +13,8 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.util.List;
+
 public class DriverOrSuperActivity extends AppCompatActivity {
 
     FirebaseUser user;
@@ -38,6 +40,12 @@ public class DriverOrSuperActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int id) {
                         // update db set to driver type, and add to drivers
                         dbRef.child("users").child(user.getUid()).child("type").setValue(User.DRIVER);
+                        //set default vlues for new users
+                        dbRef.child("drivers").child(user.getUid()).child("TotalHighSpeed").setValue(0);
+                        dbRef.child("drivers").child(user.getUid()).child("TotalMeas").setValue(0);
+                        dbRef.child("drivers").child(user.getUid()).child("TotalSpeedChanges").setValue(0);
+                        dbRef.child("drivers").child(user.getUid()).child("grade").setValue(0);
+                        dbRef.child("drivers").child(user.getUid()).child("totalKm").setValue(0);
                         startActivity(new Intent(getBaseContext(), MainDriverActivity.class));
                         finish();
                     }

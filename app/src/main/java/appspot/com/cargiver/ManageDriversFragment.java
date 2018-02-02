@@ -389,6 +389,9 @@ public class ManageDriversFragment extends Fragment {
         return view;
     }
     public static String ConvertGradeToText(float Grade, int TotalNumOfMeas,int TotalHighSpeed, int TotalSpeedChanges){
+        if (Grade == 0){ //no drives yes
+            return "Doesn't have drives yes";
+        }
         if (Grade < 33){
             return "Great!";
         }
