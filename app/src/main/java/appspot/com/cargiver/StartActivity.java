@@ -33,6 +33,17 @@ public class StartActivity extends AppCompatActivity {
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 final FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
+                    // keep data fresh
+                    DatabaseReference drives = FirebaseDatabase.getInstance().getReference("drives");
+                    drives.keepSynced(true);
+                    DatabaseReference drivers = FirebaseDatabase.getInstance().getReference("drivers");
+                    drivers.keepSynced(true);
+                    DatabaseReference supervisors = FirebaseDatabase.getInstance().getReference("supervisors");
+                    supervisors.keepSynced(true);
+                    DatabaseReference users = FirebaseDatabase.getInstance().getReference("users");
+                    users.keepSynced(true);
+                    DatabaseReference regtokens = FirebaseDatabase.getInstance().getReference("regTokens");
+                    regtokens.keepSynced(true);
                     // user is already logged make sure it has type in db
                     final DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference();
                     dbRef.child("users").child(user.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -40,17 +51,6 @@ public class StartActivity extends AppCompatActivity {
                         public void onDataChange(DataSnapshot dataSnapshot) {
                             // if user exists check type
                             if (dataSnapshot.getValue() != null) {
-                                // keep data fresh
-                                DatabaseReference drives = FirebaseDatabase.getInstance().getReference("drives");
-                                drives.keepSynced(true);
-                                DatabaseReference drivers = FirebaseDatabase.getInstance().getReference("drivers");
-                                drivers.keepSynced(true);
-                                DatabaseReference supervisors = FirebaseDatabase.getInstance().getReference("supervisors");
-                                supervisors.keepSynced(true);
-                                DatabaseReference users = FirebaseDatabase.getInstance().getReference("users");
-                                users.keepSynced(true);
-                                DatabaseReference regtokens = FirebaseDatabase.getInstance().getReference("regTokens");
-                                regtokens.keepSynced(true);
                                 // parse object to User class
                                 User currentUser = dataSnapshot.getValue(User.class);
                                 // user is driver
