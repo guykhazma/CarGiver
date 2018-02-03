@@ -125,6 +125,20 @@ public class ManageDriversFragment extends Fragment {
                         MyAdapter.notifyDataSetChanged();
                     }
                 }
+                //if he doesn't have drivers he can see
+                if(driverMails.size()==0) {
+                    AlertDialog.Builder NoDrivers = new AlertDialog.Builder(getActivity());
+                    NoDrivers.setTitle("no drivers");
+                    NoDrivers.setMessage("you currently have no drivers to watch");
+                    NoDrivers.setNegativeButton("OK",
+                            new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    getFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                                }
+                            });
+                    NoDrivers.create();
+                    NoDrivers.show();
+                }
             }
 
             @Override
