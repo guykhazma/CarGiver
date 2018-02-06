@@ -256,14 +256,14 @@ public class ManageDriversFragment extends Fragment {
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 dialog.dismiss();
-                                dbRef.child("users").addListenerForSingleValueEvent(new ValueEventListener() {
+                                dbRef.addListenerForSingleValueEvent(new ValueEventListener() {
                                     @Override
                                     public void onDataChange(DataSnapshot dataSnapshot) {
                                         String driverID = "";
                                         String driverMail = driverMails.get(position);
                                         driverMails.remove(position);
                                         MyAdapter.notifyDataSetChanged();
-                                        for (DataSnapshot child : dataSnapshot.getChildren()) {
+                                        for (DataSnapshot child : dataSnapshot.child("users").getChildren()) {
                                             if (child.getValue(User.class).email.equals(driverMail)) {
                                                 driverID = child.getKey();
                                                 dbRef.child("drivers").child(driverID).child("supervisorsIDs").child(uid).removeValue();

@@ -43,9 +43,6 @@ public class NotificationService extends FirebaseMessagingService {
 
     private static String sender;
 
-    private static final String SERVER_KEY =
-            "AAAAVPQRc4g:APA91bGx63EZBBC6CSjyvNUcu6zQ5tmx63OsLu3VWW3YZdZH-v6pOTN0yMG4QixljIVEoiDKwJum3mSp0bD--gsglpYX5wRa79IOC8SsJuU9IPCrmeTSRJB0RatkNmiGiNwzmewO5O8K";
-
     public static void setSender(String senderName){
         sender = senderName;
     }
@@ -67,46 +64,6 @@ public class NotificationService extends FirebaseMessagingService {
                 .build();
         NotificationManagerCompat manager = NotificationManagerCompat.from(getApplicationContext());
         manager.notify(123, notification);
-    }
-
-    // Send notification to multiple receivers
-    public static void sendNotification_old(String msg, List<String> regTokens){
-        Gson gson = new Gson();
-        Data data = new Data();
-        data.setTitle(sender);
-        data.setBody(msg);
-        PostRequestData postRequestData = new PostRequestData();
-        postRequestData.setRegistration_ids(regTokens);
-        postRequestData.setData(data);
-        String json = gson.toJson(postRequestData);
-        String url = "https://fcm.googleapis.com/fcm/send";
-
-        final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-
-        OkHttpClient client = new OkHttpClient();
-
-        RequestBody body = RequestBody.create(JSON, json);
-        Request request = new Request.Builder()
-                .url(url)
-                .header("Authorization", "key=" + SERVER_KEY)
-                .post(body)
-                .build();
-
-        Callback responseCallBack = new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                Log.v("Fail Message", "fail");
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                Log.v("response", response.toString());
-            }
-
-
-        };
-        okhttp3.Call call = client.newCall(request);
-        call.enqueue(responseCallBack);
     }
 
     // Send notification to multiple receivers
