@@ -111,11 +111,10 @@ public class NotificationService extends FirebaseMessagingService {
 
     // Send notification to multiple receivers
     public static void sendNotification(String msg, List<String> regTokens){
-        String[] tokens = regTokens.toArray(new String[regTokens.size()]);
         CustomNotification notif = new CustomNotification();
         notif.setBody(msg);
         notif.setTitle(sender);
-        notif.setTokens(tokens);
+        notif.setTokens(regTokens);
         final DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference();
         dbRef.child("notification").setValue(notif);
     }

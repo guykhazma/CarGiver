@@ -1,5 +1,7 @@
 package appspot.com.cargiver;
 
+import java.util.List;
+
 /**
  * Created by Stav on 06/02/2018.
  */
@@ -7,7 +9,7 @@ package appspot.com.cargiver;
 public class CustomNotification {
     private String title;
     private String body;
-    private String[] tokens;
+    private List<String> tokens;
 
     public void setTitle(String title){
         this.title = title;
@@ -17,7 +19,7 @@ public class CustomNotification {
         this.body = body;
     }
 
-    public void setTokens(String[] tokens){
+    public void setTokens(List<String> tokens){
         this.tokens = tokens;
     }
 
@@ -29,7 +31,7 @@ public class CustomNotification {
         return this.body;
     }
 
-    public String[] getTokens(){
+    public List<String> getTokens(){
         return this.tokens;
     }
 }
