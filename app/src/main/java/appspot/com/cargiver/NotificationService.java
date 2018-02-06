@@ -12,6 +12,8 @@ import android.util.Log;
 import com.android.volley.AuthFailureError;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.google.gson.Gson;
@@ -68,7 +70,7 @@ public class NotificationService extends FirebaseMessagingService {
     }
 
     // Send notification to multiple receivers
-    public static void sendNotification(String msg, List<String> regTokens){
+    public static void sendNotification_old(String msg, List<String> regTokens){
         Gson gson = new Gson();
         Data data = new Data();
         data.setTitle(sender);
@@ -105,6 +107,17 @@ public class NotificationService extends FirebaseMessagingService {
         };
         okhttp3.Call call = client.newCall(request);
         call.enqueue(responseCallBack);
+    }
+
+    // Send notification to multiple receivers
+    public static void sendNotification(String msg, List<String> regTokens){
+        String[] tokens = regTokens.toArray(new String[regTokens.size()]);
+        CustomNotification notif = new CustomNotification();
+        notif.setBody(msg);
+        notif.setTitle(sender);
+        notif.setTokens(tokens);
+        final DatabaseReference dbRef = FirebaseDatabase.getInstance().getReference();
+        dbRef.child("notification").setValue(notif);
     }
 
     // Send notification to a single receiver
