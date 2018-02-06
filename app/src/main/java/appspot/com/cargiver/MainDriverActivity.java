@@ -78,7 +78,12 @@ public class MainDriverActivity extends AppCompatActivity
         }
 
         // Set sender name for notifications.
-        NotificationService.setSender(user.getDisplayName());
+        if(user.getDisplayName().equals("")){
+            NotificationService.setSender(user.getEmail());
+        }
+        else{
+            NotificationService.setSender(user.getDisplayName());
+        }
 
         setContentView(R.layout.activity_main_driver);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_driver);

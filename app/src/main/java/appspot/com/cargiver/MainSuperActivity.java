@@ -3,6 +3,7 @@ package appspot.com.cargiver;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.app.Notification;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -43,7 +44,12 @@ public class MainSuperActivity extends AppCompatActivity
         }
 
         // Set sender name for notifications.
-        NotificationService.setSender(user.getDisplayName());
+        if(user.getDisplayName().equals("")){
+            NotificationService.setSender(user.getEmail());
+        }
+        else{
+            NotificationService.setSender(user.getDisplayName());
+        }
 
         setContentView(R.layout.activity_main_super);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_super);
