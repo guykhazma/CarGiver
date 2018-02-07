@@ -32,8 +32,11 @@ public class User {
     public String getUsername(){
         if (this.username != null)
             return this.username;
-        else
-            return this.email;
+        else{
+            String Email = this.email;
+            String[] UserNameFromMail = Email.split("@");
+            return UserNameFromMail[0];
+        }
     }
     public String getEmail(){
         return this.email;
