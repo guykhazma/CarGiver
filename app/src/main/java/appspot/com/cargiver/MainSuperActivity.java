@@ -44,7 +44,7 @@ public class MainSuperActivity extends AppCompatActivity
         }
 
         // Set sender name for notifications.
-        if(user.getDisplayName().equals("")){
+        if(user.getDisplayName() != null && user.getDisplayName().equals("")){
             NotificationService.setSender(user.getEmail());
         }
         else{
