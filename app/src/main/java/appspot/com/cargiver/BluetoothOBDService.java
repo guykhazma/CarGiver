@@ -792,10 +792,10 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         if (CurrRpm > 4000){ //high rpm <-> high acceleration
             return 5;
         }
-        if (abs(NewSpeed-OldSpeed) > 10){ //is we got 10 km change in 1.1 second -> 4.9 km/s^2
+        if (abs(NewSpeed-OldSpeed) > 20){ //is we got 20 km change in 1.1 second -> 10 km/s^2
             return (int) abs(NewSpeed-OldSpeed);
         }
-        if (abs(NewSpeed-OldSpeed) > 5){ //not so high change of speed. but can point on "unrelaxed" driving
+        if (abs(NewSpeed-OldSpeed) > 10){ //not so high change of speed. but can point on "unrelaxed" driving
             return 1;
         }
         return 0;
@@ -805,7 +805,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         if (CurrSpeed>110 || CurrRpm>4000){ //high speed/rpm
             return 1;
         }
-        if (abs(CurrSpeed-OldSpeed) > 5){ //not so high change of speed. but can point on "unrelaxed" driving
+        if (abs(CurrSpeed-OldSpeed) > 20){ //not so high change of speed. but can point on "unrelaxed" driving
             return 1;
         }
         if(CurrSpeed<30 && CurrRpm>3500){ //"drifting" - high acceleration
@@ -817,13 +817,13 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         if(CurrRpm>=4000 || CurrSpeed>=110) {
             return 2; //red
         };
-        if (abs(CurrSpeed-OldSpeed) > 10){ //not so high change of speed. but can point on "unrelaxed" driving
+        if (abs(CurrSpeed-OldSpeed) > 20){ //not so high change of speed. but can point on "unrelaxed" driving
             return 2; //red
         }
         if (CurrSpeed>=85 && CurrSpeed<110){
             return 1; //orange
         }
-        if (abs(CurrSpeed-OldSpeed) > 5){ //not so high change of speed. but can point on "unrelaxed" driving
+        if (abs(CurrSpeed-OldSpeed) > 10){ //not so high change of speed. but can point on "unrelaxed" driving
             return 1; //orange
         }
         return 0; //green
@@ -837,7 +837,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         else{
             Grade = AverageSpeed *2/3;
         }
-        float PunishRate = 30*NumOfPunish/NumOfMeas;
+        float PunishRate = 20*NumOfPunish/NumOfMeas;
         Grade = Grade*(1+PunishRate);
         if (Grade>100){
             Grade=100;
