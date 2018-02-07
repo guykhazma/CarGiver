@@ -352,7 +352,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                     Text = "high speed and rapid speed changes";
                     break;
                 default:
-                    Text = "";
+                    Text = "great";
                     break;
             }
             if (drive.grade < 33){
