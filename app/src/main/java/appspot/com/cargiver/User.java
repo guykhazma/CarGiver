@@ -30,7 +30,10 @@ public class User {
     }
 
     public String getUsername(){
-        return this.username;
+        if (this.username != null)
+            return this.username;
+        else
+            return this.email;
     }
     public String getEmail(){
         return this.email;

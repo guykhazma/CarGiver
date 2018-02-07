@@ -54,7 +54,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
     // data loaded from db
     String driveID;
     Drives drive; // will save current drive
-    String driver;
+    User driver;
     String supervisor;
 
     // view objects
@@ -251,7 +251,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         public void onDataChange(DataSnapshot dataSnapshot) {
             drive = dataSnapshot.getValue(Drives.class);
             // get driver data and it will call supervisor data
-            dbRef.child("users").child(drive.driverID).child("username").addListenerForSingleValueEvent(loadDriverData);
+            dbRef.child("users").child(drive.driverID).addListenerForSingleValueEvent(loadDriverData);
             // load points to map
             pathOptions = new PolylineOptions().width(15).color(Color.GREEN);
             path = googleMap.addPolyline(pathOptions);
@@ -442,8 +442,8 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
     final ValueEventListener loadDriverData = new ValueEventListener() {
         @Override
         public void onDataChange(DataSnapshot dataSnapshot) {
-            driver = dataSnapshot.getValue(String.class);
-            driverName.setText("Driver: " +  driver);
+            driver = dataSnapshot.getValue(User.class);
+            driverName.setText("Driver: " + driver.getUsername());
             // get supervisor data
             // finish
             // show data
