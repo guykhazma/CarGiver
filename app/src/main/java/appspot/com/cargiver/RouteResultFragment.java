@@ -352,8 +352,14 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
                     Text = "high speed and rapid speed changes";
                     break;
                 default:
-                    Text = "great";
+                    Text = "";
                     break;
+            }
+            if(drive.GradeReason==0 && drive.grade>=33 && drive.grade<66){
+                Text = "Good";
+            }
+            if(drive.GradeReason==0 && drive.grade>=66) {
+                Text = "Bad";
             }
             if (drive.grade < 33){
                 rating.setText("Great");
