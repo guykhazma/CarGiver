@@ -105,6 +105,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
 
     // grade
     volatile int count = 1; //num of measurements
+    volatile int countSPEED = 1; //num of measurements
     int NumOfPunish = 0; //num of punishments
     float AverageSpeed = 0; //the average speed
     long startTimeStamp;
@@ -254,6 +255,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
 
                         // reset variables
                         count = 0; //num of measurements
+                        countSPEED = 0;
                         NumOfPunish = 0; //num of punishments
                         AverageSpeed = 0; //the average speed
                         TotalNumOfMeas = 0;//counts only the "real" measurements (with speed > 0);
@@ -439,7 +441,8 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         // reset all variables
         stopped = false;
         driveKey = null;
-        count = 1;
+        count = 0;
+        countSPEED = 0;
         NumOfPunish = 0; //num of punishments
         AverageSpeed = 0; //the average speed
         TotalNumOfMeas=0;
@@ -620,6 +623,8 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                     startTimeStamp = Calendar.getInstance().getTime().getTime();
                                     dbref.child("drives").child(driveKey).child("StartTimeStamp").setValue(-startTimeStamp);
                                     measRef.setValue(new Measurement(0, lat, longitude, 0, 0));
+                                    count++;
+                                    countSPEED++;
                                     lastLocation = location;
                                 }
                                 // if somehow error occurred
@@ -677,8 +682,8 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
 
                                                     // if current location is far then 100m then last location update insert to db
                                                     if (isBetterLocation(location, lastLocation) && location.distanceTo(lastLocation) > 50) {
-                                                        count++;
                                                         DatabaseReference measRef = dbref.child("drives").child(driveKey).child("meas").child(String.valueOf(count));
+                                                        count++;
                                                         // put new in db and update
                                                         int MeasColor;
                                                         if(OldSpeed != 0){ //not the first measurment
@@ -691,8 +696,9 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                                     }
                                                     // update grade only if speed is above 0
                                                     if (speed > 0) {
+                                                        countSPEED++;
                                                         // calculate only if we received one count at least
-                                                        if (count> 1) {
+                                                        if (countSPEED> 1) {
                                                             //this is the grading algorithm:
                                                             NumOfPunish += SetPunishForBadResult(speed, rpm, OldSpeed);
                                                             AverageSpeed = (AverageSpeed * (count - 1) + speed) / count;
