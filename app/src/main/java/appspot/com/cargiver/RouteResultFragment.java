@@ -378,18 +378,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             if (drive.ongoing == false) {
                 LatLngBounds bounds = mapBuilder.build();
                 // avoid a case where we have points in radius less then 200 meters
-                temp.setLatitude(bounds.northeast.latitude);
-                temp.setLongitude(bounds.northeast.longitude);
-                temp2.setLatitude(bounds.southwest.latitude);
-                temp2.setLongitude(bounds.southwest.longitude);
-                if (temp.distanceTo(temp2) > 200) {
-                    CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 200);
-                    googleMap.animateCamera(cu);
-                }
-                else {
-                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() -1), 15));
-                }
-
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() -1), 15));
             }
             // move to last marker
             else {

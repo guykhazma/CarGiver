@@ -34,6 +34,7 @@ import com.google.firebase.auth.FirebaseUser;
 public class MainDriverFragment extends Fragment {
 
     // progress dialog
+    public boolean isbound; //  checks whether the service is bound
     private ProgressDialog mProgressDlg;
     boolean startDrivePressed;
     ImageButton btnStartDrive;
@@ -52,19 +53,9 @@ public class MainDriverFragment extends Fragment {
                 if (mProgressDlg != null) {
                     mProgressDlg.dismiss();
                 }
-                getActivity().runOnUiThread(new Runnable() {
-                    public void run() {
-                        Toast.makeText(getActivity(), "Failed to Connect to OBD", Toast.LENGTH_SHORT).show();
-                    }
-                });
             }
             // connection lost case
             else if (BluetoothOBDService.connectionLostBroadcastIntent.equals(action)) {
-                getActivity().runOnUiThread(new Runnable() {
-                    public void run() {
-                        Toast.makeText(getActivity(), "Connection with OBD is lost", Toast.LENGTH_SHORT).show();
-                    }
-                });
                 if (MainDriverActivity.btService != null) {
                     // set parameters to fragment
                     String driveID = MainDriverActivity.btService.getDriveKey();
@@ -163,49 +154,6 @@ public class MainDriverFragment extends Fragment {
         filter.addAction(BluetoothOBDService.errorOccurredBroadcastIntent);
         filter.addAction(BluetoothOBDService.permissionsErrorBroadcastIntent);
         LocalBroadcastManager.getInstance(getActivity()).registerReceiver(mreceiver, filter);
-    }
-
-    private boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        View view =  inflater.inflate(R.layout.main_fragment_driver, container, false);
-        // set as active in drawer
-        // set menu as selected on startup
-        NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_driver);
-        navigationView.getMenu().getItem(0).setChecked(true);
-
-        btnStartDrive = view.findViewById(R.id.btn_start_drive);
-        Explain = view.findViewById(R.id.start_driving_explain);
-
-        //michaeltah - set title
-        String usr = null;
-        final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser.getDisplayName()!=null && !currentUser.getDisplayName().equals("")) {
-            StringBuffer MyUserName = new StringBuffer("Hello ");
-            MyUserName.append(currentUser.getDisplayName());
-            getActivity().setTitle(MyUserName);
-        }
-        else {
-            // try getting data from provider
-            for (UserInfo userInfo : currentUser.getProviderData()) {
-                if (usr == null && userInfo.getDisplayName() != null) {
-                    usr = userInfo.getDisplayName();
-                }
-            }
-            if (usr != null && !usr.equals("")) {
-                getActivity().setTitle("Hello " + usr);
-            } else {
-                getActivity().setTitle("Hello Driver");
-            }
-        }
 
         // bind to service
         // Bind to LocalService if exists
@@ -218,8 +166,14 @@ public class MainDriverFragment extends Fragment {
             Explain.setText("When you arrive at your destination, please click on \'I have arrived\'");
             startDrivePressed = true;
         }
+        else
+        {
+            btnStartDrive.setImageResource(R.drawable.startdriving);
+            Explain.setText("Click \'Start Driving\' to start the data collection");
+            startDrivePressed = false;
+        }
 
-        btnStartDrive = view.findViewById(R.id.btn_start_drive);
+        btnStartDrive = getView().findViewById(R.id.btn_start_drive);
 
         btnStartDrive.setOnClickListener( new View.OnClickListener() {
             @Override
@@ -234,6 +188,7 @@ public class MainDriverFragment extends Fragment {
                     // stop service
                     getActivity().unbindService(mConnection);
                     getActivity().stopService(intnt);
+                    isbound = false;
                     // set parameters to fragment
                     String driveID = MainDriverActivity.btService.getDriveKey();
                     MainDriverActivity.btService.mState = BluetoothOBDService.STATE_NONE;
@@ -263,7 +218,7 @@ public class MainDriverFragment extends Fragment {
                         return;
                     }
                     // make sure bluetooth device was selected
-                    if (MainDriverActivity.bluetoothDevice== null) {
+                    if (MainDriverActivity.bluetoothDevice == null) {
                         Toast toast = Toast.makeText(getActivity().getApplicationContext(), "Please select Bluetooth device", Toast.LENGTH_SHORT);
                         toast.show();
                         return;
@@ -281,11 +236,54 @@ public class MainDriverFragment extends Fragment {
                     BluetoothOBDService.restart = false;
                     getActivity().bindService(intent, mConnection, 0);
                     getActivity().startService(intnt);
+                    isbound = true;
                 }
                 // register press
                 startDrivePressed = !startDrivePressed;
             }
         });
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        View view =  inflater.inflate(R.layout.main_fragment_driver, container, false);
+        // set as active in drawer
+        // set menu as selected on startup
+        NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_driver);
+        navigationView.getMenu().getItem(0).setChecked(true);
+
+        btnStartDrive = view.findViewById(R.id.btn_start_drive);
+        Explain = view.findViewById(R.id.start_driving_explain);
+
+        String usr = null;
+        final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser.getDisplayName()!=null && !currentUser.getDisplayName().equals("")) {
+            StringBuffer MyUserName = new StringBuffer("Hello ");
+            MyUserName.append(currentUser.getDisplayName());
+            getActivity().setTitle(MyUserName);
+        }
+        else {
+            // try getting data from provider
+            for (UserInfo userInfo : currentUser.getProviderData()) {
+                if (usr == null && userInfo.getDisplayName() != null) {
+                    usr = userInfo.getDisplayName();
+                }
+            }
+            if (usr != null && !usr.equals("")) {
+                getActivity().setTitle("Hello " + usr);
+            } else {
+                getActivity().setTitle("Hello Driver");
+            }
+        }
         return view;
     }
 
@@ -293,7 +291,19 @@ public class MainDriverFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
         LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mreceiver);
-        getActivity().unbindService(mConnection);
+        if (isbound) {
+            getActivity().unbindService(mConnection);
+            isbound = false;
+        }
+    }
+
+    public void onPause() {
+        super.onPause();
+        LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mreceiver);
+        if (isbound) {
+            getActivity().unbindService(mConnection);
+            isbound = false;
+        }
     }
 
     // Will be called by activity on drive start
@@ -327,6 +337,7 @@ public class MainDriverFragment extends Fragment {
                 MainDriverActivity.btService.stopped = true;
                 getActivity().unbindService(this);
                 getActivity().stopService(intnt);
+                isbound = false;
                 // if the service stopped after it was connected go to result fragment
                 if (MainDriverActivity.btService.getDriveKey() != null) {
                     Fragment ShowRouteRes = new RouteResultFragment();

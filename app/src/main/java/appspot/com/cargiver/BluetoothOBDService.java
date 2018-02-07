@@ -20,10 +20,12 @@ import android.location.LocationManager;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.github.pires.obd.commands.SpeedCommand;
 import com.github.pires.obd.commands.engine.RPMCommand;
@@ -321,6 +323,14 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
             // failure message for failing to connect on
             Intent intent = new Intent(BluetoothOBDService.connectionFailedBroadcastIntent);
             LocalBroadcastManager.getInstance(this).sendBroadcastSync(intent);
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "Failed to Connect to OBD", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
         this.stopSelf();
     }
@@ -334,6 +344,14 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
             this.mState = STATE_NONE;
             Intent intent = new Intent(BluetoothOBDService.connectionLostBroadcastIntent);
             LocalBroadcastManager.getInstance(this).sendBroadcastSync(intent);
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(new Runnable() {
+
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "Connection with OBD is lost", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
         this.stopSelf();
     }
