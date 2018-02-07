@@ -85,7 +85,7 @@ public class RoutesListFragmentSuper extends Fragment {
                 //3.for each driver get his username:
                 DataSnapshot DBUsers = dataSnapshot.child("users");
                 for (int i=0; i<MyUsers.size(); i++) {
-                    String username = DBUsers.child(MyUsers.get(i)).child("username").getValue(String.class);
+                    String username = DBUsers.child(MyUsers.get(i)).getValue(User.class).getUsername();
                     DriverUsernames.put(MyUsers.get(i),username);
                 }
 
