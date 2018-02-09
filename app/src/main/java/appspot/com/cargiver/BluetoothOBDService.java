@@ -719,7 +719,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                                         if (countSPEED> 1) {
                                                             //this is the grading algorithm:
                                                             NumOfPunish += SetPunishForBadResult(speed, rpm, OldSpeed);
-                                                            AverageSpeed = (AverageSpeed * (count - 1) + speed) / count;
+                                                            AverageSpeed = (AverageSpeed * (countSPEED - 1) + speed) / countSPEED;
                                                             dbref.child("drives").child(driveKey).child("grade").setValue(OneGradingAlg(count, AverageSpeed, NumOfPunish, speed, rpm));
                                                             TotalNumOfMeas += 1;
                                                             TotalHighSpeed += CheckHighSpeed(speed);
@@ -784,13 +784,16 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
 
     public static int CheckGradeReason(int TotalNumOfMeas, int TotalHighSpeed, int TotalSpeedChanges){
         if(TotalNumOfMeas==0) {return 0;}
-        if ((TotalHighSpeed/TotalNumOfMeas)>0.1 && (TotalSpeedChanges/TotalNumOfMeas)>0.1){
+        double HighSpeedRate = (double)TotalHighSpeed/(double)TotalNumOfMeas;
+        double SpeedChangesRate = (double)TotalSpeedChanges/(double)TotalNumOfMeas;
+
+        if ((HighSpeedRate)>0.1 && (SpeedChangesRate)>0.1){
             return 3;
         }
-        if ((TotalSpeedChanges/TotalNumOfMeas)>0.1){
+        if ((SpeedChangesRate)>0.1){
             return 2;
         }
-        if ((TotalHighSpeed/TotalNumOfMeas)>0.1){
+        if ((HighSpeedRate)>0.1){
             return 1;
         }
         return 0;
@@ -811,7 +814,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
             return 5;
         }
         if (abs(NewSpeed-OldSpeed) > 20){ //is we got 20 km change in 1.1 second -> 10 km/s^2
-            return (int) abs(NewSpeed-OldSpeed);
+            return (int) abs(NewSpeed-OldSpeed)-15;
         }
         if (abs(NewSpeed-OldSpeed) > 10){ //not so high change of speed. but can point on "unrelaxed" driving
             return 1;
@@ -855,7 +858,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
         else{
             Grade = AverageSpeed *2/3;
         }
-        float PunishRate = 20*NumOfPunish/NumOfMeas;
+        float PunishRate = 10*NumOfPunish/NumOfMeas;
         Grade = Grade*(1+PunishRate);
         if (Grade>100){
             Grade=100;
