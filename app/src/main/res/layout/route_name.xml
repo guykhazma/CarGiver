@@ -20,7 +20,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="left"
-            app:srcCompat="@drawable/driver_draw_logo" />
+            app:srcCompat="@mipmap/driver_item" />
 
         <LinearLayout
             android:layout_width="match_parent"

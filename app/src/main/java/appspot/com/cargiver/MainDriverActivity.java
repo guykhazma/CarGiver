@@ -134,7 +134,7 @@ public class MainDriverActivity extends AppCompatActivity
         // If the adapter is null, then Bluetooth is not supported so update bluetooth icon
         if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
             Log.w(TAG, "Device has no bluetooth or bluetooth is disabled");
-            fab.setImageDrawable(getResources().getDrawable(R.drawable.stat_sys_data_bluetooth_disabled, null));
+            fab.setImageDrawable(getResources().getDrawable(R.mipmap.stat_sys_data_bluetooth_disabled, null));
             fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#9E9E9E")));
         }
         // display as connected if already connected
@@ -221,7 +221,7 @@ public class MainDriverActivity extends AppCompatActivity
                 if (state == BluetoothAdapter.STATE_OFF) {
                     Log.w(TAG, "Bluetooth Disabled");
                     // Switch to inactive bluetooth
-                    fab.setImageDrawable(getResources().getDrawable(R.drawable.stat_sys_data_bluetooth_disabled, null));
+                    fab.setImageDrawable(getResources().getDrawable(R.mipmap.stat_sys_data_bluetooth_disabled, null));
                     fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#9E9E9E")));
                     Toast toast = Toast.makeText(getApplicationContext(), "Bluetooth disconnected", Toast.LENGTH_SHORT);
                     toast.show();
@@ -269,7 +269,7 @@ public class MainDriverActivity extends AppCompatActivity
             else {
                 Log.w(TAG, "Bluetooth Disabled");
                 // Switch color to red
-                fab.setImageDrawable(getResources().getDrawable(R.drawable.stat_sys_data_bluetooth_disabled, null));
+                fab.setImageDrawable(getResources().getDrawable(R.mipmap.stat_sys_data_bluetooth_disabled, null));
                 fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#9E9E9E")));
                 Toast toast = Toast.makeText(getApplicationContext(), "Bluetooth is disabled", Toast.LENGTH_SHORT);
                 toast.show();
