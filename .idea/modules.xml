@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/CarGiver.iml" filepath="$PROJECT_DIR$/CarGiver.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/googleWorkShop.iml" filepath="$PROJECT_DIR$/googleWorkShop.iml" />
     </modules>
   </component>
 </project>
