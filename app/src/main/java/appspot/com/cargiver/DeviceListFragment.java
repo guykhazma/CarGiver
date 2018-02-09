@@ -126,7 +126,7 @@ public class DeviceListFragment extends Fragment {
             public void onClick(View v) {
                 AlertDialog.Builder DriverHlp = new AlertDialog.Builder(getActivity());
                 DriverHlp.setTitle("OBD Setup Help");
-                DriverHlp.setMessage("the OBD device doesn't appear?\nyou need to pair it for the first time using the Bluetooth scan screen\nif the device require password try 0000 or 1234");
+                DriverHlp.setMessage("The OBD device doesn't appear?\nPlease pair it for the first time using the Bluetooth scan screen\nif the device require password try 0000 or 1234\nAfter the pairing reload the page and select it");
                 DriverHlp.setPositiveButton("OK",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
