@@ -11,6 +11,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.opengl.Visibility;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -283,6 +284,12 @@ public class MainDriverFragment extends Fragment {
             } else {
                 getActivity().setTitle("Hello Driver");
             }
+        }
+
+        // if a device was already selected don't show error
+        if (MainDriverActivity.bluetoothDevice != null) {
+            TextView selectOBD = (TextView) view.findViewById(R.id.select_obd_device);
+            selectOBD.setVisibility(View.GONE);
         }
         return view;
     }
