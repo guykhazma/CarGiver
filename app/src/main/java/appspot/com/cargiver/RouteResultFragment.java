@@ -377,8 +377,14 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             // set zoom to contain all path points
             if (drive.ongoing == false) {
                 LatLngBounds bounds = mapBuilder.build();
-                // avoid a case where we have points in radius less then 200 meters
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() -1), 15));
+                // try showing all points
+                try {
+                    CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, 50);
+                    googleMap.animateCamera(cu);
+                }
+                catch (Exception ex) {
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(points.get(points.size() -1), 15));
+                }
             }
             // move to last marker
             else {
