@@ -8,31 +8,21 @@
     android:orientation="vertical"
     >
 
-    <Button
-        android:id="@+id/button_scan"
-        android:layout_width="match_parent"
-        android:layout_height="34dp"
-        android:background="@color/fui_bgTwitter"
-        android:text="@string/button_scan"
-        android:textColor="@android:color/white" />
-
     <ImageView
         android:id="@+id/img_OBD"
         android:layout_width="match_parent"
-        android:layout_height="280dp"
-        android:layout_marginBottom="40dp"
-        android:layout_marginTop="40dp"
+        android:layout_height="200dp"
         android:contentDescription="OBD"
         app:srcCompat="@drawable/obd" />
 
     <TextView
         android:id="@+id/selected_device"
         android:layout_width="match_parent"
-        android:layout_height="51dp"
+        android:layout_height="60dp"
         android:gravity="center"
         android:paddingLeft="5dp"
         android:paddingRight="5dp"
-        android:text="Please Select device"
+        android:text="No Device Selected"
         android:textColor="@android:color/black" />
 
     <TextView
@@ -49,29 +39,10 @@
         android:id="@+id/paired_devices"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:fadeScrollbars="false"
         android:fastScrollEnabled="true"
         android:choiceMode="singleChoice"
         android:listSelector="@android:color/darker_gray"
         android:layout_weight="1"
         />
-
-    <TextView
-        android:id="@+id/title_new_devices"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#666"
-        android:paddingLeft="5dp"
-        android:paddingRight="5dp"
-        android:text="@string/title_other_devices"
-        android:textColor="#fff" />
-
-    <ListView
-        android:id="@+id/new_devices"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:choiceMode="singleChoice"
-        android:listSelector="@android:color/darker_gray"
-        android:layout_weight="2"
-        >
-    </ListView>
 </LinearLayout>
