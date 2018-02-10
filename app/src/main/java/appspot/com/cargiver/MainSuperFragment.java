@@ -109,7 +109,7 @@ public class MainSuperFragment extends Fragment {
                                     DriveID = Child.getKey(); //this is the drive ID
                                     ChosenDrive = true;
                                     //print the name of the driver:
-                                    StringBuffer MyDriverName = new StringBuffer("watch ongoing drive\nDriver: ");
+                                    StringBuffer MyDriverName = new StringBuffer("Watch ongoing drive\nDriver: ");
                                     MyDriverName.append(dataSnapshot.child("users").child(CurrDrive.driverID).getValue(User.class).getUsername());
                                     btnOngoingDrive.setText(MyDriverName);
                                     btnOngoingDrive.setTextSize(25);
