@@ -126,7 +126,7 @@ public class DeviceListFragment extends Fragment {
             public void onClick(View v) {
                 AlertDialog.Builder DriverHlp = new AlertDialog.Builder(getActivity());
                 DriverHlp.setTitle("OBD Setup Help");
-                DriverHlp.setMessage("The OBD device doesn't appear?\nPlease pair it for the first time using the Bluetooth scan screen\nif the device require password try 0000 or 1234\nAfter the pairing reload the page and select it");
+                DriverHlp.setMessage("The OBD device doesn't appear?\nPlease pair it for the first time using the Bluetooth scan screen\nif the device require password try 0000 or 1234\nAfter the pairing come back to this page and select it");
                 DriverHlp.setPositiveButton("OK",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
@@ -145,6 +145,28 @@ public class DeviceListFragment extends Fragment {
 
         getActivity().setTitle("OBD Manager");
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // reload paired devices
+        pairedDevicesArrayAdapter.clear();
+        // Get the local Bluetooth adapter
+        mBtAdapter = BluetoothAdapter.getDefaultAdapter();
+        // Get a set of currently paired devices
+        Set<BluetoothDevice> pairedDevices = mBtAdapter.getBondedDevices();
+        // If there are paired devices, add each one to the ArrayAdapter
+        if (pairedDevices.size() > 0) {
+            getView().findViewById(R.id.title_paired_devices).setVisibility(View.VISIBLE);
+            for (BluetoothDevice device : pairedDevices) {
+                pairedDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+            }
+        } else {
+            String noDevices = getResources().getText(R.string.none_paired).toString();
+            pairedDevicesArrayAdapter.add(noDevices);
+        }
+    }
+
 
     @Override
     public void onDestroy() {
