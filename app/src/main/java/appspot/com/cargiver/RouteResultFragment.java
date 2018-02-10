@@ -142,6 +142,7 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
     @Override
     public void onResume(){
         super.onResume();
+        mMapView.onResume();
     }
 
     // update map when new meas added
@@ -496,5 +497,18 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         dbRef.removeEventListener(loadData);
         dbRef.removeEventListener(finishListener);
         dbRef.removeEventListener(updateMap);
+        mMapView.onDestroy();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mMapView.onPause();
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mMapView.onLowMemory();
     }
 }
