@@ -162,7 +162,7 @@ public class MainDriverFragment extends Fragment {
         getActivity().bindService(intent, mConnection, 0);
 
         // make sure to display the right option if data collection already started
-        if (MainDriverActivity.btService != null && MainDriverActivity.btService.getState() == BluetoothOBDService.STATE_CONNECTED) {
+        if (MainDriverActivity.btService != null && (MainDriverActivity.btService.getState() == BluetoothOBDService.STATE_CONNECTED || MainDriverActivity.btService.getState() == BluetoothOBDService.STATE_CONNECTING)) {
             btnStartDrive.setImageResource(R.drawable.havearrived);
             Explain.setText("When you arrive at your destination, please click on \'I have arrived\'");
             startDrivePressed = true;
@@ -297,11 +297,6 @@ public class MainDriverFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mreceiver);
-        if (isbound) {
-            getActivity().unbindService(mConnection);
-            isbound = false;
-        }
     }
 
     public void onPause() {
@@ -358,7 +353,9 @@ public class MainDriverFragment extends Fragment {
             // if service disconnected during connection
             MainDriverActivity.btService = null;
             startDrivePressed = false;
-            mProgressDlg.dismiss();
+            if (mProgressDlg != null) {
+                mProgressDlg.dismiss();
+            }
         }
     };
 }

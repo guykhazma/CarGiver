@@ -64,9 +64,6 @@ public class MainDriverActivity extends AppCompatActivity
     public static volatile BluetoothOBDService btService;
     public static BluetoothDevice bluetoothDevice;
 
-    /*------------------ Firebase DB-----------------------*/
-    private DatabaseReference dbRef;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -108,40 +105,6 @@ public class MainDriverActivity extends AppCompatActivity
         // load image
         ImageView img = (ImageView) navHeaderView.findViewById(R.id.imageView);
         Picasso.with(getBaseContext()).load(user.getPhotoUrl()).into(img);
-
-
-
-        /*------------------init DB----------------------*/
-        dbRef = FirebaseDatabase.getInstance().getReference();
-        /*------------------------- Bluetooth Init-------------------------------*/
-        // Register for broadcasts
-        IntentFilter filter = new IntentFilter();
-        // Adapter changes
-        filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
-        // connection changes
-        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
-        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
-        registerReceiver(mReceiver, filter);
-        IntentFilter filterOBD = new IntentFilter();
-        filterOBD.addAction(BluetoothOBDService.connectionConnectedBroadcastIntent);
-        filterOBD.addAction(BluetoothOBDService.connectionLostBroadcastIntent);
-        filterOBD.addAction(BluetoothOBDService.driveFinishedBroadcastIntent);
-        LocalBroadcastManager.getInstance(this).registerReceiver(mreceiverOBD, filterOBD);
-
-
-        // Bluetooth action button
-        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        // If the adapter is null, then Bluetooth is not supported so update bluetooth icon
-        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
-            Log.w(TAG, "Device has no bluetooth or bluetooth is disabled");
-            fab.setImageDrawable(getResources().getDrawable(R.mipmap.stat_sys_data_bluetooth_disabled, null));
-            fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#9E9E9E")));
-        }
-        // display as connected if already connected
-        if (btService != null && btService.getState() == BluetoothOBDService.STATE_CONNECTED) {
-            fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
-            fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
-        }
 
         /*-------------------- Main Fragment initialization --------------------------------------------*/
         // if we are just starting
@@ -300,6 +263,42 @@ public class MainDriverActivity extends AppCompatActivity
     @Override
     protected void onStart() {
         super.onStart();
+        /*------------------------- Bluetooth Init-------------------------------*/
+        // Register for broadcasts
+        IntentFilter filter = new IntentFilter();
+        // Adapter changes
+        filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
+        // connection changes
+        filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+        filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+        registerReceiver(mReceiver, filter);
+        IntentFilter filterOBD = new IntentFilter();
+        filterOBD.addAction(BluetoothOBDService.connectionConnectedBroadcastIntent);
+        filterOBD.addAction(BluetoothOBDService.connectionLostBroadcastIntent);
+        filterOBD.addAction(BluetoothOBDService.driveFinishedBroadcastIntent);
+        LocalBroadcastManager.getInstance(this).registerReceiver(mreceiverOBD, filterOBD);
+
+        // Bluetooth action button
+        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        // If the adapter is null, then Bluetooth is not supported so update bluetooth icon
+        if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
+            Log.w(TAG, "Device has no bluetooth or bluetooth is disabled");
+            fab.setImageDrawable(getResources().getDrawable(R.mipmap.stat_sys_data_bluetooth_disabled, null));
+            fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#9E9E9E")));
+        }
+        // display as connected if already connected
+        if (btService != null && btService.getState() == BluetoothOBDService.STATE_CONNECTED) {
+            fab.setImageDrawable(getResources().getDrawable(android.R.drawable.stat_sys_data_bluetooth , null));
+            fab.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // Unregister broadcast listeners
+        this.unregisterReceiver(mReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mreceiverOBD);
     }
 
     @Override
@@ -391,8 +390,6 @@ public class MainDriverActivity extends AppCompatActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Unregister broadcast listeners
-        this.unregisterReceiver(mReceiver);
     }
 
     // Bluetooth FAB on click
