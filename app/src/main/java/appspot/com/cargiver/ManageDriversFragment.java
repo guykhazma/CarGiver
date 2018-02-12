@@ -121,7 +121,12 @@ public class ManageDriversFragment extends Fragment {
                 for (DataSnapshot child : dataSnapshot.getChildren()) {
                     // Check if this user correlates to a supervisor of current user
                     if (driverIDs.contains(child.getKey())) {
-                        driverMails.add(child.getValue(User.class).getEmail());
+                        String mail=child.getValue(User.class).getEmail().split("@")[0];
+                        if(mail.length()>20)
+                        {
+                            mail=(mail.substring(0,19)).concat("...");
+                        }
+                        driverMails.add(mail);
                         MyAdapter.notifyDataSetChanged();
                     }
                 }

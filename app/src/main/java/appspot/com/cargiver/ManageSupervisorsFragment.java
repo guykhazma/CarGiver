@@ -86,7 +86,13 @@ public class ManageSupervisorsFragment extends Fragment {
                 for (DataSnapshot child: dataSnapshot.getChildren()) {
                     // Check if this user correlates to a supervisor of current user
                     if(supervisorIDs.contains(child.getKey())){
-                        supervisorMails.add(child.getValue(User.class).getEmail());
+                        //add mail to list
+                        String mail=child.getValue(User.class).getEmail().split("@")[0];
+                        if(mail.length()>20)
+                        {
+                            mail=(mail.substring(0,19)).concat("...");
+                        }
+                        supervisorMails.add(mail);
                         //listViewAdapter.notifyDataSetChanged();
                         superAdapter.notifyDataSetChanged();
                     }
@@ -155,7 +161,13 @@ public class ManageSupervisorsFragment extends Fragment {
                                                 User user = child.getValue(User.class);
                                                 if (user.email.equals(finalEmail) && user.type == User.SUPERVISOR) {
                                                     //add supervisor to his list
-                                                    supervisorMails.add(m_Text);
+                                                    String mail2=m_Text.split("@")[0];
+                                                    if(mail2.length()>20)
+                                                    {
+                                                        mail2=mail2.substring(0,19).concat("...");
+                                                    }
+                                                    supervisorMails.add(mail2);
+
                                                     //listViewAdapter.notifyDataSetChanged();
                                                     superAdapter.notifyDataSetChanged();
                                                     // Send notification to supervisor
