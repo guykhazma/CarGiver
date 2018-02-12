@@ -409,20 +409,20 @@ public class ManageDriversFragment extends Fragment {
         if (Grade < 33){
             return "Great!";
         }
-        if(TotalNumOfMeas==0) { //backword compatibale
+        if(TotalNumOfMeas==0) { //backward compatibale
             if (Grade >= 33 && Grade < 66) {
                 return "Good";
             } else {
                 return "Bad";
             }
         }
-        if ((TotalHighSpeed/TotalNumOfMeas)>0.1 && (TotalSpeedChanges/TotalNumOfMeas)>0.1){
+        if (((double)TotalHighSpeed/TotalNumOfMeas)>0.1 && ((double) TotalSpeedChanges/TotalNumOfMeas)>0.1){
             return "high speed and rapid speed changes";
         }
-        if ((TotalSpeedChanges/TotalNumOfMeas)>0.1){
+        if (((double) TotalSpeedChanges/TotalNumOfMeas)>0.1){
             return "rapid speed changes";
         }
-        if ((TotalHighSpeed/TotalNumOfMeas)>0.1){
+        if (((double) TotalHighSpeed/TotalNumOfMeas)>0.1){
             return "driving at high speed";
         }
         //if we don't have enough information about the driving
