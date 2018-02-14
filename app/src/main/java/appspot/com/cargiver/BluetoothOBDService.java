@@ -103,7 +103,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
     public volatile boolean stopped; // indicates whether failure caused the problem
     // indicates if restart was done
     public static volatile int numRestart;
-    public static volatile boolean restart; // indicate whether the restart is after a succesfull connection
+    public static volatile boolean restart; // indicate whether the restart is after a successful connection
 
     // grade
     volatile int count = 1; //num of measurements
@@ -318,6 +318,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
      * Indicate that the connection attempt failed and notify the UI Activity.
      */
     private void connectionFailed() {
+        stop();
         // Send a failure message back to the Activity
         if (!restart) {
             // failure message for failing to connect on
@@ -339,6 +340,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
      * Indicate that the connection was lost and notify the UI Activity.
      */
     private void connectionLost() {
+        stop();
         // Send a failure message back to the Activity
         if (!stopped) {
             this.mState = STATE_NONE;
@@ -498,19 +500,17 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                             MY_UUID_INSECURE);
                 }
             } catch (IOException e) {
-                //Log.e(TAG, "Socket Type: " + mSocketType + "create() failed", e);
+                connectionFailed();
             }
             mmSocket = tmp;
             mState = STATE_CONNECTING;
         }
 
         public void run() {
-            //android.os.Debug.waitForDebugger();  // this line is key
             //Log.i(TAG, "BEGIN mConnectThread SocketType:" + mSocketType);
-
             setName("ConnectThread" + mSocketType);
             // try connecting multiple times
-            while (numRestart < 4) {
+            while (numRestart < 3) {
                 // Make a connection to the BluetoothSocket
                 try {
                     // This is a blocking call and will only return on a
@@ -522,6 +522,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                     }
                     // Start the connected thread
                     connected(mmSocket, mmDevice, mSocketType);
+                    return;
                 } catch (Exception e1) {
                     //Log.d(TAG, "There was an error while establishing Bluetooth connection. Falling back..", e1);
                     Class<?> clazz = mmSocket.getRemoteDevice().getClass();
@@ -541,7 +542,8 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                         return; // finish current thread
                     } catch (Exception e2) {
                         //Log.d(TAG, "Couldn't fallback while establishing Bluetooth connection.", e2);
-                        if (numRestart > 2) {
+                        if (numRestart > 1) {
+                            numRestart++; // in order to finish loop
                             // send message accroding to failure type
                             if (!restart) {
                                 connectionFailed();
@@ -555,15 +557,13 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                             numRestart++;
                             //Log.d(TAG, "Restart" + numRestart);
                             try{
-                                Thread.sleep(4000);
+                                Thread.sleep(2500);
                             } catch(InterruptedException e){
                                 e.printStackTrace();
                             }
                         }
                     }
                 }
-                // try sending OBD command to make sure this is an OBD device
-
             }
         }
 
@@ -571,7 +571,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
             try {
                 mmSocket.close();
             } catch (IOException e) {
-                //Log.e(TAG, "close() of connect " + mSocketType + " socket failed", e);
+                connectionFailed();
             }
         }
     }
@@ -582,11 +582,12 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
      */
     private class ConnectedThread extends Thread {
         private final BluetoothSocket mmSocket;
-        private final InputStream mmInStream;
-        private final OutputStream mmOutStream;
+        private InputStream mmInStream = null;
+        private OutputStream mmOutStream = null;
+        final RPMCommand rpmCMD = new RPMCommand();
+        final SpeedCommand speedCMD = new SpeedCommand();
 
         public ConnectedThread(BluetoothSocket socket, String socketType) {
-            //android.os.Debug.waitForDebugger();  // this line is key
             //Log.d(TAG, "create ConnectedThread: " + socketType);
             mmSocket = socket;
             InputStream tmpIn = null;
@@ -599,6 +600,8 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                 tmpOut = socket.getOutputStream();
             } catch (IOException e) {
                 //Log.e(TAG, "temp sockets not created", e);
+                connectionFailed();
+                return;
             }
 
             mmInStream = tmpIn;
@@ -610,12 +613,16 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                 new LineFeedOffCommand().run(mmInStream, mmOutStream);
                 new TimeoutCommand(125).run(mmInStream, mmOutStream);
                 new SelectProtocolCommand(ObdProtocols.AUTO).run(mmInStream, mmOutStream);
+                // initiate first measurement to make sure everything is ok
+                rpmCMD.run(mmInStream, mmOutStream);
+                speedCMD.run(mmInStream, mmOutStream);
                 // location init
                 if (!(ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)) {
                     // failure message for failing to get location
                     Intent intent = new Intent(BluetoothOBDService.permissionsErrorBroadcastIntent);
                     LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcastSync(intent);
                     stopSelf();
+                    return;
                 }
                 else {
                     // if it is not a restart create drive in db
@@ -651,6 +658,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                     Intent intent = new Intent(BluetoothOBDService.errorOccurredBroadcastIntent);
                                     LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcastSync(intent);
                                     stopSelf();
+                                    return;
                                 }
 
                             }
@@ -663,15 +671,16 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                 }
             }
             catch (Exception e) {
-                //Log.e(TAG, "failed to initiate OBD general commands", e);
+                // try restarting
+                stopped = false;
+                connectionLost();
+                return;
             }
         }
 
             public void run() {
                 //Log.i(TAG, "BEGIN mConnectedThread");
                 // initiate speed and RPM commands and make mesauremnt each 5 seconds
-                final RPMCommand rpmCMD = new RPMCommand();
-                final SpeedCommand speedCMD = new SpeedCommand();
                 scheduler = Executors.newSingleThreadScheduledExecutor();
                 scheduler.scheduleAtFixedRate
                         (new Runnable() {
@@ -685,6 +694,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                         Intent intent = new Intent(BluetoothOBDService.permissionsErrorBroadcastIntent);
                                         LocalBroadcastManager.getInstance(BluetoothOBDService.this).sendBroadcastSync(intent);
                                         stopSelf();
+                                        return;
                                     }
                                     else {
                                         mFusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
@@ -761,6 +771,7 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
                                         }
                                         stopped = false;
                                         connectionLost();
+                                        return;
                                     }
                                 }
                             }

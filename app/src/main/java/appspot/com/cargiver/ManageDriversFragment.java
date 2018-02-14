@@ -438,4 +438,12 @@ public class ManageDriversFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_super);
+        navigationView.getMenu().getItem(2).setChecked(true);
+        getActivity().setTitle("Manage Drivers");
+    }
+
 }

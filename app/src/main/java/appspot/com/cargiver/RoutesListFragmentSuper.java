@@ -173,6 +173,12 @@ public class RoutesListFragmentSuper extends Fragment {
         return view;
     }
 
-
-
+    @Override
+    public void onResume() {
+        super.onResume();
+        // set menu as selected on startup
+        NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_super);
+        navigationView.getMenu().getItem(1).setChecked(true);
+        getActivity().setTitle("Routes List");
+    }
 }

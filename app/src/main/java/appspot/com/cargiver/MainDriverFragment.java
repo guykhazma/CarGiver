@@ -94,26 +94,8 @@ public class MainDriverFragment extends Fragment {
                         Toast.makeText(getActivity(), "Failed getting location permission denied", Toast.LENGTH_SHORT).show();
                     }
                 });
-                // set parameters to fragment
-                if (MainDriverActivity.btService != null) {
-                    String driveID = MainDriverActivity.btService.getDriveKey();
-                    // if there is internet and drive has finished load result
-                    if (driveID != null && isNetworkAvailable()) {
-                        Bundle bundle = new Bundle();
-                        bundle.putString("driveID", driveID);
-                        // load result fragment
-                        Fragment ShowRouteRes = new RouteResultFragment();
-                        ShowRouteRes.setArguments(bundle);
-                        getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
-                    } else {
-                        startDrivePressed = false;
-                        btnStartDrive.setImageResource(R.drawable.startdriving);
-                        Explain.setText("Click \'Start Driving\' to start the data collection");
-                        Toast.makeText(getActivity(), "Drive has been cancelled", Toast.LENGTH_SHORT).show();
-                    }
-                }
             }
-            // internal error ocurred
+            // internal error occurred
             else if (BluetoothOBDService.errorOccurredBroadcastIntent.equals(action)) {
                 getActivity().runOnUiThread(new Runnable() {
                     public void run() {
@@ -146,6 +128,9 @@ public class MainDriverFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+
+        NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_driver);
+        navigationView.getMenu().getItem(0).setChecked(true);
         // Register for broadcasts
         IntentFilter filter = new IntentFilter();
         // connection changes
@@ -297,6 +282,17 @@ public class MainDriverFragment extends Fragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        // unbind if needed
+        try {
+            LocalBroadcastManager.getInstance(getActivity()).unregisterReceiver(mreceiver);
+            if (isbound) {
+                getActivity().unbindService(mConnection);
+                isbound = false;
+            }
+        }
+        catch (Exception ex) {
+
+        }
     }
 
     public void onPause() {
@@ -347,7 +343,12 @@ public class MainDriverFragment extends Fragment {
                     Bundle bundle = new Bundle();
                     bundle.putString("driveID", MainDriverActivity.btService.getDriveKey());
                     ShowRouteRes.setArguments(bundle);
-                    getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
+                    try {
+                        getFragmentManager().beginTransaction().replace(R.id.fragment_container_driver, ShowRouteRes, ShowRouteRes.getClass().getSimpleName()).addToBackStack(null).commit();
+                    }
+                    catch (Exception ex) {
+
+                    }
                 }
             }
             // if service disconnected during connection

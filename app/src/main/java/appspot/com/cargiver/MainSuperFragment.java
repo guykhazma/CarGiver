@@ -184,4 +184,11 @@ public class MainSuperFragment extends Fragment {
 
         return view;
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_super);
+        navigationView.getMenu().getItem(0).setChecked(true);
+    }
 }

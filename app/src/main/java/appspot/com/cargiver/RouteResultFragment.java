@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -143,6 +144,20 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
     public void onResume(){
         super.onResume();
         mMapView.onResume();
+        // deselect all items
+        NavigationView navigationView;
+        try {
+            navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_driver);
+
+        }
+        catch (Exception ex) {
+            navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_super);
+        }
+        navigationView.getMenu().getItem(0).setChecked(false);
+        navigationView.getMenu().getItem(1).setChecked(false);
+        navigationView.getMenu().getItem(2).setChecked(false);
+        navigationView.getMenu().getItem(3).setChecked(false);
+
     }
 
     // update map when new meas added

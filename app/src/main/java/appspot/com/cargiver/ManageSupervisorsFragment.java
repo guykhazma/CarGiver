@@ -106,9 +106,6 @@ public class ManageSupervisorsFragment extends Fragment {
         });
         // set as active in drawer
         // set menu as selected on startup
-        NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_driver);
-        navigationView.getMenu().getItem(2).setChecked(true);
-        getActivity().setTitle("Manage Supervisors");
         final Button button = (Button) view.findViewById(R.id.addBtn);
         //code for adding supervisor. no need for now
         //handle click on buttom
@@ -254,5 +251,14 @@ public class ManageSupervisorsFragment extends Fragment {
 //        });
         return view;
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_driver);
+        navigationView.getMenu().getItem(2).setChecked(true);
+        getActivity().setTitle("Manage Supervisors");
+    }
+
 
 }

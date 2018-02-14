@@ -354,21 +354,24 @@ public class MainDriverActivity extends AppCompatActivity
 
         } else if (id == R.id.nav_sign_out_driver) {
             // stop drive if there is an active drive
-            if (btService != null) {
-                // stop service
-                Intent intnt = new Intent(this,BluetoothOBDService.class);
-                MainDriverActivity.btService.stopped = true;
-                stopService(intnt);
+            if (btService != null && btService.getState() != BluetoothOBDService.STATE_NONE) {
+                Toast toast = Toast.makeText(getApplicationContext(), "Please Finish drive before logout", Toast.LENGTH_LONG);
+                toast.show();
+                DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout_driver);
+                drawer.closeDrawer(GravityCompat.START);
+                return false;
             }
-            AuthUI.getInstance()
-                    .signOut(this)
-                    .addOnCompleteListener(new OnCompleteListener<Void>() {
-                        public void onComplete(@NonNull Task<Void> task) {
-                            // user is now signed out
-                            startActivity(new Intent(getBaseContext(), LoginActivity.class));
-                            finish();
-                        }
-                    });
+            else {
+                AuthUI.getInstance()
+                        .signOut(this)
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                            public void onComplete(@NonNull Task<Void> task) {
+                                // user is now signed out
+                                startActivity(new Intent(getBaseContext(), LoginActivity.class));
+                                finish();
+                            }
+                        });
+            }
         }
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout_driver);
         drawer.closeDrawer(GravityCompat.START);
@@ -389,6 +392,7 @@ public class MainDriverActivity extends AppCompatActivity
     };
     @Override
     protected void onDestroy() {
+
         super.onDestroy();
     }
 
