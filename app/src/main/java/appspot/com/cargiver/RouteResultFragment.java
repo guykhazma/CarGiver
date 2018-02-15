@@ -146,18 +146,20 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
         mMapView.onResume();
         // deselect all items
         NavigationView navigationView;
+        // avoid view issues
         try {
             navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_driver);
-
+            if (navigationView == null) {
+                navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_super);
+            }
+            navigationView.getMenu().getItem(0).setChecked(false);
+            navigationView.getMenu().getItem(1).setChecked(false);
+            navigationView.getMenu().getItem(2).setChecked(false);
+            navigationView.getMenu().getItem(3).setChecked(false);
         }
         catch (Exception ex) {
-            navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_super);
-        }
-        navigationView.getMenu().getItem(0).setChecked(false);
-        navigationView.getMenu().getItem(1).setChecked(false);
-        navigationView.getMenu().getItem(2).setChecked(false);
-        navigationView.getMenu().getItem(3).setChecked(false);
 
+        }
     }
 
     // update map when new meas added
