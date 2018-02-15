@@ -362,36 +362,38 @@ public class RouteResultFragment extends Fragment implements OnMapReadyCallback 
             switch (drive.GradeReason){
                 case 1 :
                     Text = "driving at high speed";
+                    rating.setTextColor(Color.parseColor("#FFFFBB33"));
                     break;
                 case 2 :
                     Text = "rapid speed changes";
+                    rating.setTextColor(Color.parseColor("#FFFFBB33"));
                     break;
                 case 3 :
                     Text = "high speed and rapid speed changes";
+                    rating.setTextColor(Color.RED);
                     break;
                 default:
                     Text = "";
+                    rating.setTextColor(Color.GREEN);
                     break;
             }
-            if(drive.GradeReason==0 && drive.grade>=33 && drive.grade<66){
-                Text = "Good";
+            // if we have no further info then grade
+            if (Text.isEmpty()) {
+                if (drive.grade>=66) {
+                    Text = "Bad";
+                    rating.setTextColor(Color.RED);
+                }
+                else if (drive.grade>=33 && drive.grade<66) {
+                    Text = "Good";
+                    rating.setTextColor(Color.parseColor("#FFFFBB33"));
+                }
+                else {
+                    Text = "Great";
+                    rating.setTextColor(Color.GREEN);
+                }
             }
-            if(drive.GradeReason==0 && drive.grade>=66) {
-                Text = "Bad";
-            }
-            if (drive.grade < 33){
-                rating.setText("Great");
-                rating.setTextColor(Color.GREEN);
-            }
-            else if (drive.grade >= 33 && drive.grade < 66) {
-                rating.setText(Text);
-                rating.setTextColor(Color.parseColor("#FFFFBB33"));
-            }
-            else {
-                rating.setText(Text);
-                rating.setTextColor(Color.RED);
-            }
-
+            // set text
+            rating.setText(Text);
             // set zoom to contain all path points
             if (drive.ongoing == false) {
                 LatLngBounds bounds = mapBuilder.build();
