@@ -835,13 +835,13 @@ public class BluetoothOBDService extends Service implements SensorEventListener 
 
     public static int SetPunishForBadResult(float CurrSpeed, float CurrRpm, float OldSpeed) {
         if (CurrSpeed>110 || CurrRpm>4000){ //high speed/rpm
-            return 1;
+            return 2;
         }
         if (abs(CurrSpeed-OldSpeed) > 20){ //not so high change of speed. but can point on "unrelaxed" driving
-            return 1;
+            return 2;
         }
         if(CurrSpeed<30 && CurrRpm>3500){ //"drifting" - high acceleration
-            return 1;
+            return 2;
         }
         return 0;
     }
