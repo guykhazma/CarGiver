@@ -24,8 +24,8 @@
             android:layout_width="303dp"
             android:layout_height="214dp"
             android:layout_gravity="center"
+            android:layout_marginTop="10dp"
             android:layout_marginBottom="5dp"
-            android:layout_marginTop="20dp"
             app:sv_endDegree="360"
             app:sv_indicator="NeedleIndicator"
             app:sv_lowSpeedPercent="33"
@@ -40,7 +40,7 @@
 
         <TextView
             android:id="@+id/DriverName"
-            android:layout_marginTop="-70dp"
+            android:layout_marginTop="-80dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Name:"
@@ -64,16 +64,15 @@
 
         <Button
             android:id="@+id/recent_drive"
-            android:layout_height="wrap_content"
             android:layout_width="match_parent"
-            android:text="no previous drives"
-            android:textColor="#FFFFFF"
-            android:textSize="30sp"
+            android:layout_height="100dp"
+            android:layout_marginTop="10dp"
             android:background="@drawable/buttonshape"
-            android:textAllCaps="false"
             android:gravity="center"
-            android:layout_marginTop="20dp"
-            />
+            android:text="no previous drives"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textSize="30sp" />
 
     </LinearLayout>
 </RelativeLayout>
