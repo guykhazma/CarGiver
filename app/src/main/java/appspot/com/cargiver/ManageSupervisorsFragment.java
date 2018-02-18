@@ -87,11 +87,7 @@ public class ManageSupervisorsFragment extends Fragment {
                     // Check if this user correlates to a supervisor of current user
                     if(supervisorIDs.contains(child.getKey())){
                         //add mail to list
-                        String mail=child.getValue(User.class).getEmail().split("@")[0];
-                        if(mail.length()>20)
-                        {
-                            mail=(mail.substring(0,19)).concat("...");
-                        }
+                        String mail=child.getValue(User.class).getEmail();
                         supervisorMails.add(mail);
                         //listViewAdapter.notifyDataSetChanged();
                         superAdapter.notifyDataSetChanged();
@@ -158,11 +154,7 @@ public class ManageSupervisorsFragment extends Fragment {
                                                 User user = child.getValue(User.class);
                                                 if (user.email.equals(finalEmail) && user.type == User.SUPERVISOR) {
                                                     //add supervisor to his list
-                                                    String mail2=m_Text.split("@")[0];
-                                                    if(mail2.length()>20)
-                                                    {
-                                                        mail2=mail2.substring(0,19).concat("...");
-                                                    }
+                                                    String mail2=m_Text;
                                                     supervisorMails.add(mail2);
 
                                                     //listViewAdapter.notifyDataSetChanged();
