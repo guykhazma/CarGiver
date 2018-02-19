@@ -46,7 +46,7 @@ public class ManageDriversFragment extends Fragment {
     DriversListAdapter MyAdapter;
     DatabaseReference dbRef;
     List<String> driverMails;
-    HashMap<String , Integer> mailPositionMap;
+    HashMap<String , String> mailIDMap;
 
     public ManageDriversFragment() {
         // Required empty public constructor
@@ -74,7 +74,7 @@ public class ManageDriversFragment extends Fragment {
         //define listview
         driverMails = new ArrayList<String>();
         driverIDs = new ArrayList<String>();
-        mailPositionMap = new HashMap<>();
+        mailIDMap = new HashMap<>();
         MyAdapter = new DriversListAdapter(getActivity(), driverMails);
         //default adapter
         final ListView listView = (ListView) view.findViewById(R.id.listItem);
@@ -102,7 +102,7 @@ public class ManageDriversFragment extends Fragment {
                             if (driverIDs.contains(child.getKey())) {
                                 String mail=child.getValue(User.class).getEmail();
                                 driverMails.add(mail);
-                                mailPositionMap.put(child.getKey(),driverMails.size() - 1);
+                                mailIDMap.put(child.getKey(),mail);
                             }
                         }
                         //if he doesn't have drivers he can see
@@ -249,8 +249,9 @@ public class ManageDriversFragment extends Fragment {
                                 String driverID = driverIDs.get(position);
                                 dbRef.child("drivers").child(driverID).child("supervisorsIDs").child(uid).removeValue();
                                 dbRef.child("supervisors").child(uid).child("authorizedDriverIDs").child(driverID).removeValue();
-                                driverMails.remove(position);
-                                driverIDs.remove(position);
+                                driverMails.remove(mailIDMap.get(driverID));
+                                driverIDs.remove(driverID);
+                                mailIDMap.remove(driverID);
                                 MyAdapter.notifyDataSetChanged();
                                 dialog.dismiss();
                                 dbRef.child("regTokens").child(driverID).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -292,7 +293,7 @@ public class ManageDriversFragment extends Fragment {
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         User usr = dataSnapshot.getValue(User.class);
                         driverMails.add(usr.getEmail());
-                        mailPositionMap.put(key, driverMails.size() - 1);
+                        mailIDMap.put(key, usr.getEmail());
                         MyAdapter.notifyDataSetChanged();
                     }
 
@@ -315,8 +316,8 @@ public class ManageDriversFragment extends Fragment {
             // if in list remove
             if (index != - 1) {
                 driverIDs.remove(removedID);
-                driverMails.remove((int) mailPositionMap.get(removedID));
-                mailPositionMap.remove(removedID);
+                driverMails.remove(mailIDMap.get(removedID));
+                mailIDMap.remove(removedID);
             }
             MyAdapter.notifyDataSetChanged();
         }

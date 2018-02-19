@@ -45,7 +45,7 @@ public class ManageSupervisorsFragment extends Fragment {
     DatabaseReference dbRef;
     List<String> supervisorIDs;
     List<String> supervisorMails;
-    HashMap<String , Integer> mailPositionMap;
+    HashMap<String , String> mailIDMap;
     public SupervisorsListViewAdapter superAdapter;
     private ProgressDialog mProgressDlg;
     public ManageSupervisorsFragment() {
@@ -58,7 +58,7 @@ public class ManageSupervisorsFragment extends Fragment {
         super.onCreateView(inflater, container, savedInstanceState);
         supervisorIDs = new ArrayList<String>();
         supervisorMails = new ArrayList<String>();
-        mailPositionMap = new HashMap<>();
+        mailIDMap = new HashMap<>();
         // Get reference
         dbRef = FirebaseDatabase.getInstance().getReference();
         final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -98,7 +98,7 @@ public class ManageSupervisorsFragment extends Fragment {
                                 //add mail to list
                                 String mail=child.getValue(User.class).getEmail();
                                 supervisorMails.add(mail);
-                                mailPositionMap.put(child.getKey(),supervisorMails.size() - 1);
+                                mailIDMap.put(child.getKey(),mail);
                             }
                         }
                         // register listener for changes
@@ -183,7 +183,7 @@ public class ManageSupervisorsFragment extends Fragment {
                                                     //add supervisor to his list
                                                     String mail2=m_Text;
                                                     supervisorMails.add(mail2);
-                                                    mailPositionMap.put(child.getKey(),supervisorMails.size() - 1);
+                                                    mailIDMap.put(child.getKey(),finalEmail);
                                                     supervisorIDs.add(child.getKey());
                                                     //add the supervisor to the drivers list
                                                     dbRef.child("drivers").child(uid).child("supervisorsIDs").child(child.getKey()).setValue(true);
@@ -257,7 +257,7 @@ public class ManageSupervisorsFragment extends Fragment {
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         User usr = dataSnapshot.getValue(User.class);
                         supervisorMails.add(usr.getEmail());
-                        mailPositionMap.put(key, supervisorMails.size() - 1);
+                        mailIDMap.put(key, usr.getEmail());
                         superAdapter.notifyDataSetChanged();
                     }
 
@@ -279,13 +279,9 @@ public class ManageSupervisorsFragment extends Fragment {
             int index = supervisorIDs.indexOf(removedID);
             // if in list remove
             if (index != - 1) {
-                // if it is a remote remove then the size is equal and we remove here, otherwise for local remove the adapter handles it.
-                if (supervisorMails.size() == supervisorIDs.size()) {
-                    supervisorMails.remove((int) mailPositionMap.get(removedID));
-                }
+                supervisorMails.remove(mailIDMap.get(removedID));
                 supervisorIDs.remove(removedID);
-                // remove email only if it's a supervisor deletion meaning mail still in list
-                mailPositionMap.remove(removedID);
+                mailIDMap.remove(removedID);
             }
             superAdapter.notifyDataSetChanged();
         }
