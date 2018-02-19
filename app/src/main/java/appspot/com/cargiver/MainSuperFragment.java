@@ -6,6 +6,7 @@ import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.NavigationView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -96,27 +97,43 @@ public class MainSuperFragment extends Fragment {
                     MyUsers.add(Child.getKey()); //all my drivers
                 }
                  //3. get all the drives that this supervisor can see
-                TheRoutesDB.addListenerForSingleValueEvent(new ValueEventListener() {
+                TheRoutesDB.child("drives").orderByChild("ongoing").equalTo(true).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        DataSnapshot Drives = dataSnapshot.child("drives");
-                        for (DataSnapshot Child : Drives.getChildren()) {
+                        for (DataSnapshot Child : dataSnapshot.getChildren()) {
                             Drives CurrDrive = Child.getValue(Drives.class);
                             if (MyUsers.contains(CurrDrive.driverID)) { //if i'm the supervisor
-                                if (CurrDrive.ongoing == true) { //we choose this drive
+                                if (CurrDrive.ongoing == true && ChosenDrive == false) { //we choose this drive
                                     DriveID = Child.getKey(); //this is the drive ID
                                     ChosenDrive = true;
                                     //print the name of the driver:
-                                    StringBuffer MyDriverName = new StringBuffer("Watch ongoing drive\nDriver: ");
-                                    MyDriverName.append(dataSnapshot.child("users").child(CurrDrive.driverID).getValue(User.class).getUsername());
-                                    btnOngoingDrive.setText(MyDriverName);
-                                    btnOngoingDrive.setTextSize(25);
-                                    btnOngoingDrive.setBackground(getResources().getDrawable(R.drawable.greenbuttonshape));
+                                    TheRoutesDB.child("users").child(CurrDrive.driverID).addListenerForSingleValueEvent(new ValueEventListener() {
+                                        @Override
+                                        public void onDataChange(DataSnapshot dataSnapshot) {
+                                            User curr = dataSnapshot.getValue(User.class);
+                                            //////////////////set driver name//////////////////////
+                                            StringBuffer MyDriverName = new StringBuffer("Watch ongoing drive\nDriver: ");
+                                            MyDriverName.append(curr.getUsername());
+                                            btnOngoingDrive.setText(MyDriverName);
+                                            btnOngoingDrive.setTextSize(25);
+                                            btnOngoingDrive.setBackground(getResources().getDrawable(R.drawable.greenbuttonshape));
+
+                                        }
+                                        @Override
+                                        public void onCancelled(DatabaseError databaseError) {}
+                                    });
+
                                 }
                             }
                         }
-                         // hide progress bar
-                        mProgressDlg.dismiss();
+                        final Handler handler = new Handler();
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                // hide progress bar
+                                mProgressDlg.dismiss();
+                            }
+                        }, 500);
                     }
                     @Override
                     public void onCancelled(DatabaseError databaseError) {

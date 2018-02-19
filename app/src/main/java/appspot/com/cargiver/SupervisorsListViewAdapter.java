@@ -27,6 +27,7 @@ import java.util.List;
 public class SupervisorsListViewAdapter extends ArrayAdapter<String> {
     //to reference the Activity
     private final Activity context;
+    public List<String> supervisorIDs;
 
     public SupervisorsListViewAdapter(Activity context,List<String> objects){
 
@@ -78,33 +79,23 @@ public class SupervisorsListViewAdapter extends ArrayAdapter<String> {
                 "Yes",
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        dialog.dismiss();
-                        dbRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        String supID = supervisorIDs.get(position);
+                        dbRef.child("drivers").child(uid).child("supervisorsIDs").child(supID).removeValue();
+                        dbRef.child("supervisors").child(supID).child("authorizedDriverIDs").child(uid).removeValue();
+                        // send notification
+                        dbRef.child("regTokens").child(supID).addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
                             public void onDataChange(DataSnapshot dataSnapshot) {
-                                String superID="";
-                                //String superMail=supervisorMails.get(position);
-                                SupervisorsListViewAdapter.super.remove(str);
-                                SupervisorsListViewAdapter.super.notifyDataSetChanged();
-                                //listViewAdapter.notifyDataSetChanged();
-                                for (DataSnapshot child : dataSnapshot.child("users").getChildren()) {
-                                    if (child.getValue(User.class).email.equals(str)) {
-                                        superID=child.getKey();
-                                        dbRef.child("drivers").child(uid).child("supervisorsIDs").child(superID).removeValue();
-                                        dbRef.child("supervisors").child(superID).child("authorizedDriverIDs").child(uid).removeValue();
-                                        // Send notification
-                                        String regToken = dataSnapshot.child("regTokens").child(superID).getValue(String.class);
-                                        NotificationService.sendNotification("Deleted you from their supervisor list!", regToken);
-                                        break;
-                                    }
-                                }
+                                String regToken = dataSnapshot.getValue(String.class);
+                                NotificationService.sendNotification("Deleted you from their supervisor list!", regToken);
                             }
-
                             @Override
                             public void onCancelled(DatabaseError databaseError) {
 
                             }
                         });
+
+                        dialog.dismiss();
                     }
                 });
 

@@ -6,8 +6,8 @@ android {
         applicationId "appspot.com.cargiver"
         minSdkVersion 21
         targetSdkVersion 26
-        versionCode 21
-        versionName "1.21"
+        versionCode 22
+        versionName "1.22"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     packagingOptions {

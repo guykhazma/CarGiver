@@ -7,6 +7,7 @@ import android.app.FragmentTransaction;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.NavigationView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -71,26 +72,32 @@ public class RoutesListFragmentSuper extends Fragment {
         final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         uid = currentUser.getUid(); // current user id
 
-
-        TheRoutesDB.addListenerForSingleValueEvent(new ValueEventListener() {
+        //get my drivers
+        TheRoutesDB.child("supervisors").child(uid).child("authorizedDriverIDs").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
 
-                //2. get my drivers
-                DataSnapshot MyDriversDB = dataSnapshot.child("supervisors").child(uid).child("authorizedDriverIDs");
-                for (DataSnapshot Child : MyDriversDB.getChildren()) {
+                for (DataSnapshot Child : dataSnapshot.getChildren()) {
                     MyUsers.add(Child.getKey());
                 }
 
                 //3.for each driver get his username:
-                DataSnapshot DBUsers = dataSnapshot.child("users");
-                for (int i=0; i<MyUsers.size(); i++) {
-                    String username = DBUsers.child(MyUsers.get(i)).getValue(User.class).getUsername();
-                    DriverUsernames.put(MyUsers.get(i),username);
-                }
+                TheRoutesDB.child("users").addListenerForSingleValueEvent(new ValueEventListener() {
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        for (int i=0; i<MyUsers.size(); i++) {
+                            String username = dataSnapshot.child(MyUsers.get(i)).getValue(User.class).getUsername();
+                            DriverUsernames.put(MyUsers.get(i),username);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
 
                 //4. get all the drives that this supervisor can see
-                TheRoutesDB.child("drives").orderByChild("StartTimeStamp").addListenerForSingleValueEvent(new ValueEventListener() {
+                TheRoutesDB.child("drives").orderByChild("StartTimeStamp").limitToFirst(20).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         int NumOfRoutes = 0; //we want only 20 routes
@@ -142,8 +149,14 @@ public class RoutesListFragmentSuper extends Fragment {
                             RouteListAdapter MyAmazingAdapter = new RouteListAdapter(getActivity(), nameArray, DrivesList, DrivesIdList);
                             RouteslistView.setAdapter(MyAmazingAdapter);
                         }
-                        // hide progress bar
-                        mProgressDlg.dismiss();
+                        final Handler handler = new Handler();
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                // hide progress bar
+                                mProgressDlg.dismiss();
+                            }
+                        }, 500);
 
                         RouteslistView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                             @Override

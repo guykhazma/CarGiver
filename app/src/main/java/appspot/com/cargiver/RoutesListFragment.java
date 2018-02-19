@@ -6,6 +6,7 @@ import android.app.FragmentManager;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.NavigationView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -88,7 +89,7 @@ public class RoutesListFragment extends Fragment {
         } );
 
         //3. get my drives list
-        TheRoutesDB.child("drives").orderByChild("StartTimeStamp").addListenerForSingleValueEvent(new ValueEventListener() {
+        TheRoutesDB.child("drives").orderByChild("driverID").equalTo(uid).limitToFirst(20).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 int NumOfRoutes = 0;
@@ -96,8 +97,8 @@ public class RoutesListFragment extends Fragment {
                     if (NumOfRoutes >= 20){break;}
                         Drives CurrDrive = Child.getValue(Drives.class);
                         if(CurrDrive.driverID.equals(uid)) {
-                            DrivesList.add(CurrDrive);
-                            DrivesIdList.add(Child.getKey());
+                            DrivesList.add(0,CurrDrive);
+                            DrivesIdList.add(0,Child.getKey());
                             NumOfRoutes++;
                         }
                 }
@@ -123,8 +124,14 @@ public class RoutesListFragment extends Fragment {
                     RouteslistView.setAdapter(MyAmazingAdapter);
                 }
 
-                // hide progress bar
-                mProgressDlg.dismiss();
+                final Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        // hide progress bar
+                        mProgressDlg.dismiss();
+                    }
+                }, 500);
 
                 RouteslistView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                     @Override

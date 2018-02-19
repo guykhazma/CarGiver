@@ -4,65 +4,58 @@ import android.app.AlertDialog;
 import android.app.FragmentManager;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.NavigationView;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.util.Patterns;
-import 	java.util.regex.Pattern;
+
+import java.util.HashMap;
 /**
  * Created by Stav on 27/11/2017.
  */
 
 import android.app.Fragment;
-import android.os.Bundle;
-import android.support.design.widget.NavigationView;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ListView;
-import android.widget.PopupWindow;
 import android.widget.TextView;
 
 import com.github.anastr.speedviewlib.Speedometer;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import org.w3c.dom.Text;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class ManageDriversFragment extends Fragment {
-    private ArrayAdapter<String> listViewAdapter;
-    private ArrayList<String> Drivernames;
-    //for popup window
-    private Button test;
-    private PopupWindow popupWindow;
-    private LayoutInflater layoutInflater;
     private ProgressDialog mProgressDlg;
     String DriveID;
     boolean ChosenDrive;
     Button btnWatchPervDrive;
     AlertDialog.Builder builder1;
     AlertDialog alert11;
+    List<String> driverIDs;
+    DriversListAdapter MyAdapter;
+    DatabaseReference dbRef;
+    List<String> driverMails;
+    HashMap<String , Integer> mailPositionMap;
 
     public ManageDriversFragment() {
         // Required empty public constructor
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        dbRef.removeEventListener(driverChanged);
     }
 
     @Override
@@ -70,91 +63,90 @@ public class ManageDriversFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.manage_drivers_fragment, container, false);
-        View elemview = inflater.inflate(R.layout.manage_driver_listitem, container, false);
-        // set as active in drawer
-        // set menu as selected on startup
-        NavigationView navigationView = (NavigationView) getActivity().findViewById(R.id.nav_view_super);
-        navigationView.getMenu().getItem(2).setChecked(true);
 
-        getActivity().setTitle("Manage Drivers");
         // Get reference
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        final DatabaseReference dbRef = database.getReference();
+        dbRef = FirebaseDatabase.getInstance().getReference();
         final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         final String uid = currentUser.getUid(); // current user id
         // Get list of authorized driver IDs.
-        final List<String> driverIDs = new ArrayList<String>();
-        //grades of drivers
-        final float[] driverGrades ;
-        final float[] driverKms ;
-        int driversCnt;
+
+
         //define listview
-        final List<String> driverMails = new ArrayList<String>();
-        //final Button button = (Button) view.findViewById(R.id.addBtn);
-        Drivernames = new ArrayList<String>();
-        //listViewAdapter=new ArrayAdapter<String>(
-        //        getActivity(),R.layout.manage_driver_listitem,R.id.textDriver,
-        //         driverMails
-        // );
-        //my adapter
-        final DriversListAdapter MyAdapter = new DriversListAdapter(getActivity(), driverMails);
+        driverMails = new ArrayList<String>();
+        driverIDs = new ArrayList<String>();
+        mailPositionMap = new HashMap<>();
+        MyAdapter = new DriversListAdapter(getActivity(), driverMails);
         //default adapter
         final ListView listView = (ListView) view.findViewById(R.id.listItem);
         listView.setAdapter(MyAdapter);
-        dbRef.child("supervisors").child(uid).child("authorizedDriverIDs").addValueEventListener(new ValueEventListener() {
+        // getting authorized drivers id's
+        // show loading
+        mProgressDlg = new ProgressDialog(getActivity());
+        mProgressDlg.setMessage("Loading...");
+        mProgressDlg.setCancelable(false);
+        mProgressDlg.show();
+        dbRef.child("supervisors").child(uid).child("authorizedDriverIDs").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 Iterable<DataSnapshot> children = dataSnapshot.getChildren();
                 for (DataSnapshot child : children) {
                     driverIDs.add(child.getKey());
                 }
-            }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-            }
-        });
-        // Convert IDs to emails
-        dbRef.child("users").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot child : dataSnapshot.getChildren()) {
-                    // Check if this user correlates to a supervisor of current user
-                    if (driverIDs.contains(child.getKey())) {
-                        String mail=child.getValue(User.class).getEmail();
-                        driverMails.add(mail);
+                // Convert IDs to emails
+                dbRef.child("users").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        for (DataSnapshot child : dataSnapshot.getChildren()) {
+                            // Check if this user correlates to a supervisor of current user
+                            if (driverIDs.contains(child.getKey())) {
+                                String mail=child.getValue(User.class).getEmail();
+                                driverMails.add(mail);
+                                mailPositionMap.put(child.getKey(),driverMails.size() - 1);
+                            }
+                        }
+                        //if he doesn't have drivers he can see
+                        if(driverMails.size()==0) {
+                            AlertDialog.Builder NoDrivers = new AlertDialog.Builder(getActivity());
+                            NoDrivers.setTitle("no drivers");
+                            NoDrivers.setMessage("you currently have no drivers to watch");
+                            NoDrivers.setNegativeButton("OK",
+                                    new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            getFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                                        }
+                                    });
+                            NoDrivers.create();
+                            NoDrivers.show();
+                        }
+
+                        // register listener for changes
+                        dbRef.child("supervisors").child(uid).child("authorizedDriverIDs").addChildEventListener(driverChanged);
                         MyAdapter.notifyDataSetChanged();
+                        final Handler handler = new Handler();
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                // hide progress bar
+                                mProgressDlg.dismiss();
+                            }
+                        }, 500);
                     }
-                }
-                //if he doesn't have drivers he can see
-                if(driverMails.size()==0) {
-                    AlertDialog.Builder NoDrivers = new AlertDialog.Builder(getActivity());
-                    NoDrivers.setTitle("no drivers");
-                    NoDrivers.setMessage("you currently have no drivers to watch");
-                    NoDrivers.setNegativeButton("OK",
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    getFragmentManager().popBackStackImmediate(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                                }
-                            });
-                    NoDrivers.create();
-                    NoDrivers.show();
-                }
-            }
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
 
+                    }
+                });
+            }
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
             }
         });
-        driversCnt=driverMails.size();
-        driverGrades=new float[driversCnt];
-        driverKms=new float[driversCnt];
+
         //set on item on list view clicked
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
                 builder1 = new AlertDialog.Builder(view.getContext());
-                //builder1.setMessage("Driver's details");
                 final View viewThis=inflater.inflate(R.layout.driver_details,null);
 
                 builder1.setView(viewThis);
@@ -180,43 +172,44 @@ public class ManageDriversFragment extends Fragment {
                 });
 
                 // get grades and totalKM of drivers
-                dbRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                dbRef.child("drivers").child(driverIDs.get(position)).addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         /////////////driver details////////////////////////
-                        DataSnapshot Drivers = dataSnapshot.child("drivers");
-                        for (DataSnapshot child : Drivers.getChildren()) {
-                            // Check if this user correlates to a supervisor of current user
-                            if (driverIDs.contains(child.getKey()) && child.getKey().equals(driverIDs.get(position))) {
-                                //set total kms
-                                TextView textViewKms = (TextView)viewThis.findViewById(R.id.DriverTotalKm);
-                                StringBuffer TotalKmText = new StringBuffer("Total KM driven: ");
-                                TotalKmText.append(Integer.toString((int)child.getValue(Driver.class).totalKm));
-                                TotalKmText.append(" km");
-                                textViewKms.setText(TotalKmText);
+                        Driver drv = dataSnapshot.getValue(Driver.class);
+                        //set total kms
+                        TextView textViewKms = (TextView)viewThis.findViewById(R.id.DriverTotalKm);
+                        StringBuffer TotalKmText = new StringBuffer("Total KM driven: ");
+                        TotalKmText.append(Integer.toString((int)drv.totalKm));
+                        TotalKmText.append(" km");
+                        textViewKms.setText(TotalKmText);
 
-                                //set drivers grade:
-                                TextView textViewGrade = (TextView)viewThis.findViewById(R.id.DriverGrade);
-                                StringBuffer myGradetext = new StringBuffer("Driver's summary: ");
-                                myGradetext.append(ConvertGradeToText(child.getValue(Driver.class).grade, child.getValue(Driver.class).TotalMeas,
-                                        child.getValue(Driver.class).TotalHighSpeed, child.getValue(Driver.class).TotalSpeedChanges));
+                        //set drivers grade:
+                        TextView textViewGrade = (TextView)viewThis.findViewById(R.id.DriverGrade);
+                        StringBuffer myGradetext = new StringBuffer("Driver's summary: ");
+                        myGradetext.append(ConvertGradeToText(drv.grade, drv.TotalMeas, drv.TotalHighSpeed, drv.TotalSpeedChanges));
 
-                                textViewGrade.setText(myGradetext);
+                        textViewGrade.setText(myGradetext);
 
-                                //set the speedometer
-                                Speedometer speedometer;
-                                speedometer = (Speedometer)  viewThis.findViewById(R.id.speedViewMD);
-                                speedometer.speedTo(child.getValue(Driver.class).grade, 1000);
-                                speedometer.setWithTremble(false);
+                        //set the speedometer
+                        Speedometer speedometer;
+                        speedometer = (Speedometer)  viewThis.findViewById(R.id.speedViewMD);
+                        speedometer.speedTo(drv.grade, 1000);
+                        speedometer.setWithTremble(false);
 
+                        dbRef.child("users").child(driverIDs.get(position)).addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                User curr = dataSnapshot.getValue(User.class);
+                                //////////////////set driver name//////////////////////
+                                TextView textViewDriverName = (TextView)viewThis.findViewById(R.id.DriverName);
+                                StringBuffer MyDriverName = new StringBuffer("Name: ");
+                                MyDriverName.append(curr.getUsername());
+                                textViewDriverName.setText(MyDriverName);
                             }
-                        }
-
-                        //////////////////set driver name//////////////////////
-                        TextView textViewDriverName = (TextView)viewThis.findViewById(R.id.DriverName);
-                        StringBuffer MyDriverName = new StringBuffer("Name: ");
-                        MyDriverName.append(dataSnapshot.child("users").child(driverIDs.get(position)).getValue(User.class).getUsername());
-                        textViewDriverName.setText(MyDriverName);
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {}
+                        });
 
                         //////////////////set route details////////////////
                         dbRef.child("drives").orderByChild("StartTimeStamp").addListenerForSingleValueEvent(new ValueEventListener() {
@@ -239,10 +232,7 @@ public class ManageDriversFragment extends Fragment {
                             @Override
                             public void onCancelled(DatabaseError databaseError) {}
                         });
-
-
                     }
-
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
 
@@ -256,27 +246,19 @@ public class ManageDriversFragment extends Fragment {
                         "Delete Driver",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
+                                String driverID = driverIDs.get(position);
+                                dbRef.child("drivers").child(driverID).child("supervisorsIDs").child(uid).removeValue();
+                                dbRef.child("supervisors").child(uid).child("authorizedDriverIDs").child(driverID).removeValue();
+                                driverMails.remove(position);
+                                driverIDs.remove(position);
+                                MyAdapter.notifyDataSetChanged();
                                 dialog.dismiss();
-                                dbRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                                dbRef.child("regTokens").child(driverID).addListenerForSingleValueEvent(new ValueEventListener() {
                                     @Override
                                     public void onDataChange(DataSnapshot dataSnapshot) {
-                                        String driverID = "";
-                                        String driverMail = driverMails.get(position);
-                                        driverMails.remove(position);
-                                        MyAdapter.notifyDataSetChanged();
-                                        for (DataSnapshot child : dataSnapshot.child("users").getChildren()) {
-                                            if (child.getValue(User.class).email.equals(driverMail)) {
-                                                driverID = child.getKey();
-                                                dbRef.child("drivers").child(driverID).child("supervisorsIDs").child(uid).removeValue();
-                                                dbRef.child("supervisors").child(uid).child("authorizedDriverIDs").child(driverID).removeValue();
-                                                // Send notification to Driver that he was deleted
-                                                String regToken = dataSnapshot.child("regTokens").child(driverID).getValue(String.class);
-                                                NotificationService.sendNotification("Deleted you from their driver list!", regToken);
-                                                break;
-                                            }
-                                        }
+                                        String regToken = dataSnapshot.getValue(String.class);
+                                        NotificationService.sendNotification("Deleted you from their drivers list!", regToken);
                                     }
-
                                     @Override
                                     public void onCancelled(DatabaseError databaseError) {
 
@@ -294,115 +276,61 @@ public class ManageDriversFragment extends Fragment {
                 mProgressDlg.show();
             }
         });
-////////////////////////////////////////////////////////////////////////////////////
-        // Present list of authorized driver names.
-        //handle click on buttom code for adding drivers
-        /*
-        button.setOnClickListener(
-                new View.OnClickListener() {
-                    public void onClick(View v) {
-                        AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-                        builder.setTitle("Add a Driver");
-                        View viewInflated = LayoutInflater.from(v.getContext()).inflate(R.layout.text_input_driver, (ViewGroup) getView(), false);
-                        // Set up the input
-                        final EditText input = (EditText) viewInflated.findViewById(R.id.input);
-                        // Specify the type of input expected;
-                        builder.setView(viewInflated);
-                        //builder alert not good mail
-                        AlertDialog.Builder builder1 = new AlertDialog.Builder(v.getContext());
-                        builder1.setMessage("This is an invalid Email.");
-                        builder1.setCancelable(true);
-                        builder1.setNegativeButton(
-                                "OK",
-                                new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int id) {
-                                        dialog.cancel();
-                                    }
-                                });
-                        final AlertDialog alert11 = builder1.create();
-                        // Set up the buttons
-                        builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                                final String m_Text = input.getText().toString();
-                                //check that mail is valid and belongs to some Driver
-                                Pattern pattern = Patterns.EMAIL_ADDRESS;
-                                final String finalEmail = new String(m_Text);
-                                final List<String> exists = new ArrayList<String>();
-                                //check tha is valid mail form
-                                if(pattern.matcher(m_Text).matches()==false  )
-                                {
-                                    //alert not valid
-                                    alert11.show();
-                                }
-                                //check if this Email exists
-                                else {
-                                    dbRef.child("users").addListenerForSingleValueEvent(new ValueEventListener() {
-                                        @Override
-                                        public void onDataChange(DataSnapshot dataSnapshot) {
-                                            for (DataSnapshot child : dataSnapshot.getChildren()) {
-                                                User user = child.getValue(User.class);
-                                                if (user.email.equals(finalEmail) && user.type == User.DRIVER) {
-                                                    //add driver to list of authorized drivers in this supervisor
-                                                    dbRef.child("supervisors").child(uid).child("authorizedDriverIDs").child(child.getKey()).setValue(true);
-                                                    //add the supervisor to the drivers list
-                                                    dbRef.child("drivers").child(child.getKey()).child("supervisorsIDs").child(uid).setValue(true);
-                                                    driverMails.add(m_Text);
-                                                    listViewAdapter.notifyDataSetChanged();
-                                                    return;
-                                                }
-                                            }
-                                            //no such mail of Driver
-                                            alert11.show();
-                                        }
-
-                                        @Override
-                                        public void onCancelled(DatabaseError databaseError) {
-
-                                        }
-                                    });
-                                }
-                            }
-                        });
-                        builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.cancel();
-                            }
-                        });
-
-                        builder.show(); }
-                });
-        //handle deleteing a driver
-//        rmvButton.setOnClickListener(
-//                new View.OnClickListener() {
-//                    public void onClick(View v) {
-//                        AlertDialog.Builder builder2 = new AlertDialog.Builder(v.getContext());
-//                        builder2.setTitle("Delete a Driver");
-//                        builder2.setMessage("Are you sure you want to delete this driver?");
-//                        // Set up the buttons
-//                        builder2.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-//                            @Override
-//                            public void onClick(DialogInterface dialog, int which) {
-//                                dialog.dismiss();
-//                                //if he pressed ok delete this driver
-//                            }
-//                        });
-//                        builder2.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-//                            @Override
-//                            public void onClick(DialogInterface dialog, int which) {
-//                                dialog.cancel();
-//                            }
-//                        });
-//
-//                        builder2.show(); }
-//                });
-*/
-
-
         return view;
     }
+
+    final ChildEventListener driverChanged = new ChildEventListener() {
+        public void onChildAdded(DataSnapshot dataSnapshot, String prevChildKey) {
+            final String key = dataSnapshot.getKey();
+            // add only if it is new and not first time
+            if (!driverIDs.contains(key)) {
+                // add id to list
+                driverIDs.add(dataSnapshot.getKey());
+                // Convert IDs to emails
+                dbRef.child("users").child(dataSnapshot.getKey()).addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        User usr = dataSnapshot.getValue(User.class);
+                        driverMails.add(usr.getEmail());
+                        mailPositionMap.put(key, driverMails.size() - 1);
+                        MyAdapter.notifyDataSetChanged();
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+
+                    }
+                });
+            }
+
+        }
+
+        @Override
+        public void onChildChanged(DataSnapshot dataSnapshot, String prevChildKey) {}
+
+        @Override
+        public void onChildRemoved(DataSnapshot dataSnapshot) {
+            String removedID = dataSnapshot.getKey();
+            int index = driverIDs.indexOf(removedID);
+            // if in list remove
+            if (index != - 1) {
+                driverIDs.remove(removedID);
+                driverMails.remove((int) mailPositionMap.get(removedID));
+                mailPositionMap.remove(removedID);
+            }
+            MyAdapter.notifyDataSetChanged();
+        }
+
+        @Override
+        public void onChildMoved(DataSnapshot dataSnapshot, String prevChildKey) {}
+
+        @Override
+        public void onCancelled(DatabaseError databaseError) {
+
+        }
+    };
+
+
     public static String ConvertGradeToText(float Grade, int TotalNumOfMeas,int TotalHighSpeed, int TotalSpeedChanges){
         if (Grade == 0){ //no drives yes
             return "Doesn't have drives yet";
