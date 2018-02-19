@@ -75,7 +75,7 @@ public class MainDriverActivity extends AppCompatActivity
         }
 
         // Set sender name for notifications.
-        if(user.getDisplayName() != null && user.getDisplayName().equals("")){
+        if(user.getDisplayName() == null || (user.getDisplayName() != null && user.getDisplayName().equals(""))){
             NotificationService.setSender(user.getEmail());
         }
         else{

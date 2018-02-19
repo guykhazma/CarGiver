@@ -62,8 +62,6 @@ public class MainSuperFragment extends Fragment {
         //1. get my user id
         final FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         uid = currentUser.getUid(); // current user id
-        //todo michaeltah getbytime
-        //michaeltah - set title
         String usr = null;
         if (currentUser.getDisplayName()!=null && !currentUser.getDisplayName().equals("")) {
             StringBuffer MyUserName = new StringBuffer("Hello ");
