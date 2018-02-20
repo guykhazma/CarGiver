@@ -147,7 +147,7 @@ public class MainDriverFragment extends Fragment {
         getActivity().bindService(intent, mConnection, 0);
 
         // make sure to display the right option if data collection already started
-        if (MainDriverActivity.btService != null && (MainDriverActivity.btService.getState() == BluetoothOBDService.STATE_CONNECTED || MainDriverActivity.btService.getState() == BluetoothOBDService.STATE_CONNECTING)) {
+        if (MainDriverActivity.btService != null && MainDriverActivity.btService.getState() == BluetoothOBDService.STATE_CONNECTED) {
             btnStartDrive.setImageResource(R.drawable.havearrived);
             Explain.setText("When you arrive at your destination, please click on \'I have arrived\'");
             startDrivePressed = true;
